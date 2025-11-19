@@ -14,11 +14,6 @@ $config = [
     'language' => "es-ES",
     'components' => [
         'request' => [
-
-
-
-
-
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'fk3TG_tHdrVbcTFW13tFkkK5RmwTCPbe',
             'enableCsrfValidation' => false,
