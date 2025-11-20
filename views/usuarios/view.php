@@ -38,6 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'rol',
             'created_at',
             'updated_at',
+            'color',
         ],
     ]) ?>
 

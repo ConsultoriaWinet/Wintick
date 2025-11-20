@@ -7,6 +7,8 @@ use app\models\TicketsSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\filters\AccessControl;
+use Yii;
 
 /**
  * TicketsController implements the CRUD actions for Tickets model.
@@ -21,6 +23,15 @@ class TicketsController extends Controller
         return array_merge(
             parent::behaviors(),
             [
+                'access' => [
+                    'class' => AccessControl::class,
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'roles' => ['@'],
+                        ],
+                    ],
+                ],
                 'verbs' => [
                     'class' => VerbFilter::className(),
                     'actions' => [
@@ -68,9 +79,33 @@ class TicketsController extends Controller
     public function actionCreate()
     {
         $model = new Tickets();
-
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
+        $model->Folio = str_pad(Tickets::find()->max('id') + 1, 4, '0', STR_PAD_LEFT);
+        
+        // Asignar usuario si está autenticado
+        if (!Yii::$app->user->isGuest) {
+            $model->Usuario_reporta = Yii::$app->user->identity->email;
+        }
+        
+        // Obtener fecha del POST si existe (viene del calendario)
+        $fechaSeleccionada = Yii::$app->request->post('fecha_seleccionada');
+        if ($fechaSeleccionada) {
+            // Convertir fecha del calendario (YYYY-MM-DD) a formato datetime
+            $model->Fecha_creacion = $fechaSeleccionada . ' ' . date('H:i:s');
+            $model->Fecha_actualizacion = $fechaSeleccionada . ' ' . date('H:i:s');
+            
+            // Guardar en sesión para mostrar mensaje
+            Yii::$app->session->setFlash('fechaDesdeCalendario', $fechaSeleccionada);
+        } else {
+            // Si no hay fecha en POST, usar fecha actual
+            $model->Fecha_creacion = date('Y-m-d H:i:s');
+            $model->Fecha_actualizacion = date('Y-m-d H:i:s');
+        }
+        
+        $model->Estado = 'Abierto';
+        
+        if ($this->request->isPost && $model->load($this->request->post())) {
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         } else {

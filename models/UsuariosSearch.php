@@ -70,6 +70,7 @@ class UsuariosSearch extends Usuarios
             ->andFilterWhere(['like', 'password_reset_token', $this->password_reset_token])
             ->andFilterWhere(['like', 'email', $this->email])
             ->andFilterWhere(['like', 'rol', $this->rol]);
+            
 
         return $dataProvider;
     }

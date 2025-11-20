@@ -28,6 +28,8 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'updated_at')->textInput() ?>
 
+    <?= $form->field($model, 'color')->input('color', ['value' => $model->color ?: '#3788d8']) ?>
+
     <div class="form-group">
         <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
     </div>
