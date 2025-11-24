@@ -28,11 +28,16 @@ use Yii;
  *
  * @property Comentarios[] $comentarios
  * @property Notificaciones[] $notificaciones
+ * @property Clientes $cliente
+ * @property Clientes $clientes
+ * @property Sistemas $sistema
+ * @property Servicios $servicio
+ * @property Usuarios $usuarioAsignado
+ * @property Usuarios $usuarioCreador
  */
 class Tickets extends \yii\db\ActiveRecord
 {
-    public $consultoresList; // <--- Agrega esta línea al inicio de la clase
-
+    public $consultoresList;
 
     /**
      * {@inheritdoc}
@@ -50,9 +55,10 @@ class Tickets extends \yii\db\ActiveRecord
         return [
             [['Solucion', 'HoraProgramada', 'HoraInicio', 'TiempoRestante', 'HoraFinalizo', 'TiempoEfectivo'], 'default', 'value' => null],
             [['Folio', 'Usuario_reporta', 'Asignado_a', 'Estado', 'Descripcion', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'required'],
-            [['Asignado_a',  'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
+            [['Asignado_a', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
             [['Descripcion', 'Solucion'], 'string'],
-            [['HoraProgramada', 'HoraInicio', 'Fecha_creacion', 'Fecha_actualizacion'], 'safe'],
+            [['HoraProgramada', 'HoraInicio', 'HoraFinalizo', 'Fecha_creacion', 'Fecha_actualizacion'], 'safe'],
+            [['TiempoRestante', 'TiempoEfectivo'], 'number'],
             [['Folio', 'Usuario_reporta', 'Estado'], 'string', 'max' => 255],
             [['Folio'], 'unique'],
         ];
@@ -105,4 +111,63 @@ class Tickets extends \yii\db\ActiveRecord
         return $this->hasMany(Notificaciones::class, ['ticket_id' => 'id']);
     }
 
+    /**
+     * Gets query for [[Cliente]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCliente()
+    {
+        return $this->hasOne(Clientes::class, ['id' => 'Cliente_id']);
+    }
+
+    /**
+     * Gets query for [[Clientes]] (alias).
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getClientes()
+    {
+        return $this->getCliente();
+    }
+
+    /**
+     * Gets query for [[Sistema]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSistema()
+    {
+        return $this->hasOne(Sistemas::class, ['id' => 'Sistema_id']);
+    }
+
+    /**
+     * Gets query for [[Servicio]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getServicio()
+    {
+        return $this->hasOne(Servicios::class, ['id' => 'Servicio_id']);
+    }
+
+    /**
+     * Gets query for [[UsuarioAsignado]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUsuarioAsignado()
+    {
+        return $this->hasOne(Usuarios::class, ['id' => 'Asignado_a']);
+    }
+
+    /**
+     * Gets query for [[UsuarioCreador]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUsuarioCreador()
+    {
+        return $this->hasOne(Usuarios::class, ['id' => 'Creado_por']);
+    }
 }

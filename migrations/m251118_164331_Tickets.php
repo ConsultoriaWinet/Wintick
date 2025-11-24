@@ -41,6 +41,7 @@ class m251118_164331_Tickets extends Migration
             "TiempoEfectivo" => $this->double()->null(),                   //TIMEPO EFECTIVO DE ATENCION EN HORAS           
             'Cliente_id' => $this->integer()->notNull(),
             'Sistema_id' => $this->integer()->notNull(),
+            'Prioridad' => $this->string()->notNull(),                      //BAJA, MEDIA, ALTA
             'Servicio_id' => $this->integer()->notNull(),
             'Creado_por' => $this->integer()->notNull(),
             'Fecha_creacion' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),

@@ -4,11 +4,26 @@ namespace app\controllers;
 
 use app\models\Tickets;
 use app\models\TicketsSearch;
+use app\models\Clientes;
+use app\models\Sistemas;
+use app\models\Servicios;
+use app\models\Usuarios;
+use app\models\Notificaciones;
+use app\models\Comentarios;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use yii\filters\AccessControl;
+use yii\data\ActiveDataProvider;
 use Yii;
+use yii\filters\AccessControl;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+
+
+
 
 /**
  * TicketsController implements the CRUD actions for Tickets model.
@@ -47,14 +62,85 @@ class TicketsController extends Controller
      *
      * @return string
      */
-    public function actionIndex()
+     public function actionIndex()
     {
         $searchModel = new TicketsSearch();
-        $dataProvider = $searchModel->search($this->request->queryParams);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        
+
+        $clientes = Clientes::find()->asArray()->all();
+        $sistemas = Sistemas::find()->asArray()->all();
+        $servicios = Servicios::find()->asArray()->all();
+        $Usuarios = Usuarios::find()->asArray()->all();
+
+        $query = Tickets::find();
+
+        // Filtro automático para Consultores
+        $currentUser = Yii::$app->user->identity;
+        if ($currentUser && $currentUser->rol=== 'Consultor') {
+            if (empty($_GET['asignado_a']) && empty($_GET['folio']) && empty($_GET['cliente_id']) && 
+                empty($_GET['sistema_id']) && empty($_GET['servicio_id']) && empty($_GET['prioridad']) && 
+                empty($_GET['estado']) && empty($_GET['mes'])) {
+                $query->andWhere(['Asignado_a' => $currentUser->id]);
+                // Mostrar solo del mes actual
+                $mesActual = date('Y-m');
+                $query->andWhere(['>=', 'Fecha_creacion', $mesActual . '-01 00:00:00']);
+                $query->andWhere(['<', 'Fecha_creacion', date('Y-m-01 00:00:00', strtotime('+1 month'))]);
+            }
+        }
+
+        if (!empty($_GET['folio'])) {
+            $query->andWhere(['like', 'Folio', $_GET['folio']]);
+        }
+        if (!empty($_GET['cliente_id'])) {
+            $query->andWhere(['Cliente_id' => $_GET['cliente_id']]);
+        }
+        if (!empty($_GET['sistema_id'])) {
+            $query->andWhere(['Sistema_id' => $_GET['sistema_id']]);
+        }
+        if (!empty($_GET['servicio_id'])) {
+            $query->andWhere(['Servicio_id' => $_GET['servicio_id']]);
+        }
+        if (!empty($_GET['asignado_a'])) {
+            $query->andWhere(['Asignado_a' => $_GET['asignado_a']]);
+        }
+        if (!empty($_GET['prioridad'])) {
+            $query->andWhere(['Prioridad' => $_GET['prioridad']]);
+        }
+        if (!empty($_GET['estado'])) {
+            $query->andWhere(['Estado' => $_GET['estado']]);
+        }
+
+        
+        // Filtro por mes
+        if (!empty($_GET['mes'])) {
+            $mes = $_GET['mes'];
+            $primerDia = $mes . '-01 00:00:00';
+            $ultimoDia = date('Y-m-t 23:59:59', strtotime($mes . '-01'));
+            $query->andWhere(['>=', 'Fecha_creacion', $primerDia]);
+            $query->andWhere(['<=', 'Fecha_creacion', $ultimoDia]);
+        } else {
+            // Si no hay filtro de mes, mostrar mes actual por defecto
+            $mesActual = date('Y-m');
+            $primerDia = $mesActual . '-01 00:00:00';
+            $ultimoDia = date('Y-m-t 23:59:59');
+            $query->andWhere(['>=', 'Fecha_creacion', $primerDia]);
+            $query->andWhere(['<=', 'Fecha_creacion', $ultimoDia]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query->orderBy(['id' => SORT_DESC]),
+            'pagination' => ['pageSize' => 20],
+        ]);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'clientes' => $clientes,
+            'sistemas' => $sistemas,
+            'servicios' => $servicios,
+            'Usuarios' => $Usuarios,
         ]);
     }
 
