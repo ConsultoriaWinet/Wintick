@@ -53,12 +53,56 @@ class UsuariosController extends Controller
      * @return string
      * @throws NotFoundHttpException if the model cannot be found
      */
+
+    /**public function actionView($id)
+        {
+            return $this->render('view', [
+                'model' => $this->findModel($id),
+            ]);
+        }
+    */
+    /**------------AJAX PARA LAS TARJETAS DE USUARIO INICIO----------*/
     public function actionView($id)
     {
+        $model = $this->findModel($id);
+
+        if (Yii::$app->request->isAjax) {
+            return $this->renderPartial('view-ajax', [
+                'model' => $model,
+            ]);
+        }
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
         ]);
     }
+
+    public function actionUpdate($id)
+    {
+        $searchModel = new UsuariosSearch();
+        $dataProvider = $searchModel->search($this->request->queryParams);
+        $model = $this->findModel($id);
+
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->render('index', [
+                'searchModel' => $searchModel,
+                'dataProvider' => $dataProvider,
+            ]);
+
+        }
+
+        if (Yii::$app->request->isAjax) {
+            return $this->renderPartial('update-ajax', [
+                'model' => $model,
+            ]);
+        }
+
+        return $this->render('update', [
+            'model' => $model,
+        ]);
+    }
+    /**----------AJAX PARA LAS TARJETAS DE USUARIO FIN----------*/
+
 
     /**
      * Creates a new Usuarios model.
@@ -103,7 +147,9 @@ class UsuariosController extends Controller
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($id)
+
+
+    /**public function actionUpdate($id)
     {
         $model = $this->findModel($id);
 
@@ -114,7 +160,7 @@ class UsuariosController extends Controller
         return $this->render('update', [
             'model' => $model,
         ]);
-    }
+    } */
 
     /**
      * Deletes an existing Usuarios model.
@@ -145,4 +191,6 @@ class UsuariosController extends Controller
 
         throw new NotFoundHttpException('The requested page does not exist.');
     }
+
+
 }

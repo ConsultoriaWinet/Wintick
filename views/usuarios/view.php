@@ -11,7 +11,18 @@ $this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
-<div class="usuarios-view">
+
+<?= Html::a('Editar', ['update', 'id' => $model->id], [
+    'class' => 'btn btn-warning btn-update-ajax'
+]) ?>
+
+<?= Html::a('Eliminar', ['delete', 'id' => $model->id], [
+    'class' => 'btn btn-danger',
+    'data-method' => 'post',
+    'data-confirm' => '¿Seguro que deseas eliminar este usuario?'
+]) ?>
+
+<!--<div class="usuarios-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
@@ -42,4 +53,4 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]) ?>
 
-</div>
+</div>-->
