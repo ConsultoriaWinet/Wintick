@@ -64,6 +64,9 @@ $this->title = 'Iniciar Sesión';
 
     .form-group {
         margin-bottom: 20px;
+    }
+
+    .password-wrapper {
         position: relative;
     }
 
@@ -71,14 +74,16 @@ $this->title = 'Iniciar Sesión';
         font-weight: 600;
         color: #495057;
         margin-bottom: 8px;
+        display: block;
     }
 
     .form-control {
-        padding: 12px 15px;
+        padding: 12px 45px 12px 15px;
         font-size: 15px;
         border-radius: 8px;
         border: 1px solid #ddd;
         transition: all 0.3s;
+        width: 100%;
     }
 
     .form-control:focus {
@@ -89,15 +94,25 @@ $this->title = 'Iniciar Sesión';
     .password-toggle {
         position: absolute;
         right: 15px;
-        top: 38px;
+        top: 50%;
+        transform: translateY(-50%);
         cursor: pointer;
         font-size: 18px;
         color: #6c757d;
         z-index: 10;
+        background: white;
+        padding: 5px;
     }
 
     .password-toggle:hover {
         color: #4CAF50;
+    }
+
+    .invalid-feedback {
+        display: block;
+        margin-top: 5px;
+        font-size: 13px;
+        color: #dc3545;
     }
 
     .remember-forgot {
@@ -105,7 +120,7 @@ $this->title = 'Iniciar Sesión';
         justify-content: space-between;
         align-items: center;
         margin-bottom: 25px;
-        margin-top: -5px;
+        margin-top: 5px;
     }
 
     .remember-forgot .form-check {
@@ -147,31 +162,6 @@ $this->title = 'Iniciar Sesión';
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
         color: white;
-    }
-
-    .divider {
-        text-align: center;
-        margin: 25px 0;
-        position: relative;
-    }
-
-    .divider::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: #eee;
-    }
-
-    .divider span {
-        background: white;
-        padding: 0 15px;
-        color: #6c757d;
-        font-size: 14px;
-        position: relative;
-        z-index: 1;
     }
 
     @media (max-width: 576px) {
@@ -225,13 +215,18 @@ $this->title = 'Iniciar Sesión';
         </div>
 
         <div class="form-group">
-            <?= $form->field($model, 'password')->passwordInput([
-                'id' => 'password',
-                'placeholder' => '••••••••'
-            ])->label('Contraseña') ?>
-            <span class="password-toggle" onclick="togglePassword()">
-                <i id="password-icon" class="bi bi-eye"></i>
-            </span>
+            <label class="form-label" for="password">Contraseña</label>
+            <div class="password-wrapper">
+                <?= Html::activePasswordInput($model, 'password', [
+                    'id' => 'password',
+                    'class' => 'form-control',
+                    'placeholder' => '••••••••'
+                ]) ?>
+                <span class="password-toggle" onclick="togglePassword()">
+                    <i id="password-icon" class="bi bi-eye"></i>
+                </span>
+            </div>
+            <?= Html::error($model, 'password', ['class' => 'invalid-feedback']) ?>
         </div>
 
         <div class="remember-forgot">
