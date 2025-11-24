@@ -38,6 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'rol',
             //'created_at',
             //'updated_at',
+            'color',
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Usuarios $model, $key, $index, $column) {

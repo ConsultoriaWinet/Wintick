@@ -2,51 +2,64 @@
 
 /** @var yii\web\View $this */
 /** @var yii\bootstrap5\ActiveForm $form */
-
 /** @var app\models\LoginForm $model */
 
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
+use yii\helpers\Url; 
 
-$this->title = 'Login';
-
-//$this->params['breadcrumbs'][] = $this->title;
+$this->title = 'Iniciar Sesión';
 ?>
+
 <style>
     body {
-        background-color: #A0BAA5;
+        background: #A0BAA5;
+        min-height: 100vh;
     }
 
-    .password-toggle {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        font-size: 18px;
-        color: #6c757d;
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 20px;
     }
 
-    .password-toggle:hover {
-        color: #495057;
-    }
-
-    .site-login {
+    .login-card {
         width: 100%;
-        max-width: 400px;
-        margin: 80px auto;
+        max-width: 450px;
         background: #ffffff;
-        padding: 35px;
-        border-radius: 10px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
-        text-align: center;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     }
 
-    .site-login h1 {
-        margin-bottom: 25px;
-        font-size: 24px;
+    .icon-lock {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .icon-lock svg {
+        width: 60px;
+        height: 60px;
+        color: #4CAF50;
+    }
+
+    .login-card h1 {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 28px;
         color: #2d6a2d;
-        font-weight: bold;
+        font-weight: 600;
+    }
+
+    .login-card .subtitle {
+        text-align: center;
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 30px;
+        line-height: 1.5;
     }
 
     .form-group {
@@ -54,41 +67,62 @@ $this->title = 'Login';
         position: relative;
     }
 
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
     .form-control {
-        text-align: center;
-        font-size: 16px;
+        padding: 12px 15px;
+        font-size: 15px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        transition: all 0.3s;
     }
 
-    .btn-login {
-        background-color: #4CAF50;
-        color: white;
-        width: 100%;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 16px;
-        border: none;
+    .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
     }
 
-    .btn-login:hover {
-        background-color: #45a049;
-        color: #fff;
+    .password-toggle {
+        position: absolute;
+        right: 15px;
+        top: 38px;
+        cursor: pointer;
+        font-size: 18px;
+        color: #6c757d;
+        z-index: 10;
+    }
+
+    .password-toggle:hover {
+        color: #4CAF50;
     }
 
     .remember-forgot {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        margin-top: -5px;
     }
 
     .remember-forgot .form-check {
-        margin-bottom: 0; /* Ensure checkbox aligns properly */
+        margin-bottom: 0;
+    }
+
+    .remember-forgot .form-check-label {
+        font-size: 14px;
+        color: #6c757d;
     }
 
     .remember-forgot a {
         color: #4CAF50;
         font-size: 14px;
         text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s;
     }
 
     .remember-forgot a:hover {
@@ -96,9 +130,57 @@ $this->title = 'Login';
         text-decoration: underline;
     }
 
+    .btn-login {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        border: none;
+        transition: all 0.3s;
+    }
+
+    .btn-login:hover {
+        background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        color: white;
+    }
+
+    .divider {
+        text-align: center;
+        margin: 25px 0;
+        position: relative;
+    }
+
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #eee;
+    }
+
+    .divider span {
+        background: white;
+        padding: 0 15px;
+        color: #6c757d;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+    }
+
     @media (max-width: 576px) {
-        .site-login {
-            padding: 20px;
+        .login-card {
+            padding: 30px 20px;
+        }
+
+        .login-card h1 {
+            font-size: 24px;
         }
 
         .form-control {
@@ -108,59 +190,69 @@ $this->title = 'Login';
         .remember-forgot {
             flex-direction: column;
             align-items: flex-start;
-        }
-
-        .remember-forgot a {
-            margin-top: 10px;
+            gap: 10px;
         }
     }
 </style>
 
-<div class="site-login">
-    <h1><?= Html::encode($this->title) ?></h1>
-    <p>Please fill out the following fields to login:</p>
-
-    <div class="row justify-content-center">
-        <div class="col-12">
-
-            <?php $form = ActiveForm::begin([
-                'id' => 'login-form',
-                'fieldConfig' => [
-                    'template' => "{label}\n{input}\n{error}",
-                    'labelOptions' => ['class' => 'form-label'],
-                    'inputOptions' => ['class' => 'form-control'],
-                    'errorOptions' => ['class' => 'invalid-feedback'],
-                ],
-            ]); ?>
-
-            <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
-
-            <div class="form-group">
-                <?= $form->field($model, 'password')->passwordInput(['id' => 'password']) ?>
-                <span class="password-toggle" onclick="togglePassword()">
-                    <i id="password-icon" class="bi bi-eye"></i>
-                </span>
-            </div>
-
-            <div class="remember-forgot">
-                <div>
-                    <?= $form->field($model, 'rememberMe')->checkbox([
-                        'template' => "<div class=\"form-check\">{input} {label}</div>",
-                        'class' => 'form-check-input',
-                    ]) ?>
-                </div>
-                <div>
-                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <?= Html::submitButton('Login', ['class' => 'btn btn-primary btn-login', 'name' => 'login-button']) ?>
-            </div>
-
-            <?php ActiveForm::end(); ?>
-
+<div class="login-container">
+    <div class="login-card">
+        <!-- Icono decorativo -->
+        <div class="icon-lock">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
         </div>
+
+        <h1><?= Html::encode($this->title) ?></h1>
+        <p class="subtitle">Ingresa tus credenciales para acceder al sistema</p>
+
+        <?php $form = ActiveForm::begin([
+            'id' => 'login-form',
+            'fieldConfig' => [
+                'template' => "{label}\n{input}\n{error}",
+                'labelOptions' => ['class' => 'form-label'],
+                'inputOptions' => ['class' => 'form-control'],
+                'errorOptions' => ['class' => 'invalid-feedback'],
+            ],
+        ]); ?>
+
+        <div class="form-group">
+            <?= $form->field($model, 'email')->textInput([
+                'autofocus' => true,
+                'placeholder' => 'correo@ejemplo.com'
+            ])->label('Correo Electrónico') ?>
+        </div>
+
+        <div class="form-group">
+            <?= $form->field($model, 'password')->passwordInput([
+                'id' => 'password',
+                'placeholder' => '••••••••'
+            ])->label('Contraseña') ?>
+            <span class="password-toggle" onclick="togglePassword()">
+                <i id="password-icon" class="bi bi-eye"></i>
+            </span>
+        </div>
+
+        <div class="remember-forgot">
+            <?= $form->field($model, 'rememberMe')->checkbox([
+                'template' => "<div class=\"form-check\">{input} {label}</div>",
+                'class' => 'form-check-input',
+                'label' => 'Recordarme',
+            ]) ?>
+            <a href="<?= Url::to(['site/requestpassword']) ?>" class="forgot-password">
+                ¿Olvidaste tu contraseña?
+            </a>
+        </div>
+
+        <div class="form-group">
+            <?= Html::submitButton(
+                '<i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión', 
+                ['class' => 'btn btn-primary btn-login', 'name' => 'login-button']
+            ) ?>
+        </div>
+
+        <?php ActiveForm::end(); ?>
     </div>
 </div>
 

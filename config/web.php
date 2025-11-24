@@ -11,7 +11,8 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm' => '@vendor/npm-asset',
     ],
-    'language' => "es-ES",
+    'language' => 'es-MX',
+    'timeZone' => 'America/Mexico_City', // Agregar esta línea
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
@@ -24,6 +25,7 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\Usuarios',
             'enableAutoLogin' => true,
+            'loginUrl' => ['site/login'],
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -32,19 +34,19 @@ $config = [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
             // send all mails to a file by default.
-            'useFileTransport' => true,
+            'useFileTransport' => false,
 
 
             //Ejemplo de la configuracion de correo 
-            /* 'transport' => [
+            'transport' => [
                  'class' => 'Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport',
                  'scheme' => 'smtp',
                  'host' => 'smtp.gmail.com',
                  'username' => 'arturo.villa.rey@gmail.com',
-                 'password' => 'kmnh fsmk hozn eyln4', 
+                 'password' => 'kmnh fsmk hozn eyln', 
                  'port' => 587,
              ],
-             */
+            
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

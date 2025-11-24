@@ -2,6 +2,8 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use yii\jui\DatePicker;
+
 
 /** @var yii\web\View $this */
 /** @var app\models\Tickets $model */
@@ -23,7 +25,7 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'Descripcion')->textarea(['rows' => 6]) ?>
 
     <?= $form->field($model, 'Solucion')->textarea(['rows' => 6]) ?>
-
+   
     <?= $form->field($model, 'HoraProgramada')->textInput() ?>
 
     <?= $form->field($model, 'HoraInicio')->textInput() ?>

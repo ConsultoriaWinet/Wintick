@@ -16,6 +16,7 @@ use Yii;
  * @property string $rol
  * @property int $created_at
  * @property int $updated_at
+ * @property string|null $color
  *
  * @property Comentarios[] $comentarios
  * @property Notificaciones[] $notificaciones
@@ -40,7 +41,7 @@ class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterfac
         return [
             [['password_reset_token'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 10],
-            [['Nombre', 'password_hash', 'email', 'rol', 'created_at', 'updated_at'], 'required'],
+            [['Nombre', 'password_hash', 'email', 'rol', 'created_at', 'updated_at', 'color'], 'required'],
             [['status', 'created_at', 'updated_at'], 'integer'],
             [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
             [['Nombre'], 'unique'],
@@ -64,6 +65,7 @@ class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterfac
             'rol' => 'Rol',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
+            'color'=> 'Color',
         ];
     }
 

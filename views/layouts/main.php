@@ -22,6 +22,18 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
 <html lang="<?= Yii::$app->language ?>" class="h-100">
+        <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js'></script>
+        <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js'></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+.elpepe{ 
+    background-color: #A0BAA5;
+}
+.elnegro{ 
+    color: #000000;
+}
+</style>
 
 <head>
     <title><?= Html::encode($this->title) ?></title>
@@ -32,34 +44,41 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     <?php $this->beginBody() ?>
 
     <header id="header">
-        <?php if (Yii::$app->controller->id !== 'site' || Yii::$app->controller->action->id !== 'login'): ?>
+        <?php if (
+            Yii::$app->controller->id !== 'site' || 
+            !in_array(Yii::$app->controller->action->id, ['login', 'requestpassword', 'resetpassword'])
+        ): ?>
             <?php
             NavBar::begin([
                 'brandLabel' => Yii::$app->name,
                 'brandUrl' => Yii::$app->homeUrl,
+<<<<<<< HEAD
                 'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark bg-primary fixed-top']
+=======
+                'options' => ['class' => 'navbar-expand-md elpepe fixed-top elnegro']
+>>>>>>> 5bc250a40dae89f22a1bd30754299a159acf84c1
             ]);
             echo Nav::widget([
                 'options' => ['class' => 'navbar-nav'],
                 'items' => [
-                    ['label' => 'Casa', 'url' => ['/site/index']],
                     ['label' => 'Clientes', 'url' => ['/clientes/index']],
-                    ['label' => 'Comentarios', 'url' => ['/comentarios/index']],
-                    ['label' => 'Notificaciones', 'url' => ['/notificaciones/index']],
                     ['label' => 'Tickets', 'url' => ['/tickets/index']],
                     ['label' => 'Usuarios', 'url' => ['/usuarios/index']],
-
-                    ['label' => 'Contact', 'url' => ['/site/contact']],
+                            ]
+            ]);
+            echo Nav::widget([
+                'options' => ['class' => 'navbar-nav ms-auto'],
+                'items' => [
                     Yii::$app->user->isGuest
-                    ? ['label' => 'Login', 'url' => ['/site/login']]
-                    : '<li class="nav-item">'
-                    . Html::beginForm(['/site/logout'])
-                    . Html::submitButton(
-                        'Logout (' . Yii::$app->user->identity->email . ')',
-                        ['class' => 'nav-link btn btn-link logout']
-                    )
-                    . Html::endForm()
-                    . '</li>'
+                        ? ['label' => 'Login', 'url' => ['/site/login']]
+                        : '<li class="nav-item elnegro">'
+                        . Html::beginForm(['/site/logout'])
+                        . Html::submitButton(
+                            'Logout (' . Yii::$app->user->identity->email . ')',
+                            ['class' => 'nav-link btn btn-link elnegro logout']
+                        )
+                        . Html::endForm()
+                        . '</li>'
                 ]
             ]);
             NavBar::end();
@@ -77,9 +96,9 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         </div>
     </main>
 
-    <footer id="footer" class="mt-auto py-3 bg-light">
+    <footer id="footer" class="mt-auto py-3 elpepe">
         <div class="container">
-            <div class="row text-muted">
+            <div class="row text-white">
                 <div class="col-md-6 text-center text-md-start">&copy; My Company <?= date('Y') ?></div>
                 <div class="col-md-6 text-center text-md-end"><?= Yii::powered() ?></div>
             </div>
