@@ -36,9 +36,9 @@ class m251118_164331_Tickets extends Migration
             "Solucion" => $this->text()->null(),                            //SOLUCION DEL TICKET
             "HoraProgramada" => $this->dateTime()->null(),                  //HORA PROGRAMADA PARA ATENCION
             "HoraInicio" => $this->dateTime()->null(),                      //HORA DE INICIO
-            "TiempoRestante" => $this->integer()->null(),                   //Tiempo Restante de Servicio
-            "HoraFinalizo" => $this->integer()->null(),                     //TIEMPO DE ATENCION
-            "TiempoEfectivo" => $this->integer()->null(),                   //TIMEPO EFECTIVO DE ATENCION EN HORAS           
+            "TiempoRestante" => $this->double()->null(),                   //Tiempo Restante de Servicio
+            "HoraFinalizo" => $this->dateTime()->null(),                     //TIEMPO DE ATENCION
+            "TiempoEfectivo" => $this->double()->null(),                   //TIMEPO EFECTIVO DE ATENCION EN HORAS           
             'Cliente_id' => $this->integer()->notNull(),
             'Sistema_id' => $this->integer()->notNull(),
             'Servicio_id' => $this->integer()->notNull(),

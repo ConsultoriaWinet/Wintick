@@ -35,8 +35,23 @@ class m251118_163618_Usuarios extends Migration
             "rol" => $this->string()->notNull(),
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
+            'color' => $this->string()->null(),
         ]);
-    }
+
+
+        
+           //crear un usuario por default para siempre por si las dudas 
+    $this->insert('Usuarios', [
+        'Nombre' => 'admin',
+        'password_hash' => Yii::$app->security->generatePasswordHash('12345'),
+        'email' => 'admin@gmail.com',
+        'rol' => 'Consultor',
+        'status' => 10,
+        'created_at' => time(),
+        'updated_at' => time(),
+        'color'=> null,
+    ]);   
+}
 
     public function down()
     {

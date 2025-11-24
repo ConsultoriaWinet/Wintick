@@ -81,10 +81,16 @@ class TicketsController extends Controller
         $model = new Tickets();
         $model->Folio = str_pad(Tickets::find()->max('id') + 1, 4, '0', STR_PAD_LEFT);
         
-        // Asignar usuario si está autenticado
-        if (!Yii::$app->user->isGuest) {
-            $model->Usuario_reporta = Yii::$app->user->identity->email;
-        }
+        // CORRECCIÓN: Seleccionar 'id' y 'email', y mapear id => email
+        $consultores = \app\models\Usuarios::find()
+            ->select(['id', 'email']) // Necesitamos el ID para guardarlo
+            ->where(['rol' => 'consultor'])
+            ->asArray()
+            ->all();
+            
+        // El primer parámetro es la clave (lo que se guarda: id), el segundo es el valor (lo que se ve: email)
+        $consultoresList = \yii\helpers\ArrayHelper::map($consultores, 'id', 'email');
+        $model->consultoresList = $consultoresList;
         
         // Obtener fecha del POST si existe (viene del calendario)
         $fechaSeleccionada = Yii::$app->request->post('fecha_seleccionada');
@@ -114,6 +120,7 @@ class TicketsController extends Controller
 
         return $this->render('create', [
             'model' => $model,
+            'consultoresList'=> $consultoresList,
         ]);
     }
 

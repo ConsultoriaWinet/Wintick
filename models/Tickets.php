@@ -16,9 +16,9 @@ use Yii;
  * @property string|null $Solucion
  * @property string|null $HoraProgramada
  * @property string|null $HoraInicio
- * @property int|null $TiempoRestante
- * @property int|null $HoraFinalizo
- * @property int|null $TiempoEfectivo
+ * @property double|null $TiempoRestante
+ * @property string|null $HoraFinalizo
+ * @property double|null $TiempoEfectivo
  * @property int $Cliente_id
  * @property int $Sistema_id
  * @property int $Servicio_id
@@ -31,6 +31,7 @@ use Yii;
  */
 class Tickets extends \yii\db\ActiveRecord
 {
+    public $consultoresList; // <--- Agrega esta línea al inicio de la clase
 
 
     /**
@@ -49,7 +50,7 @@ class Tickets extends \yii\db\ActiveRecord
         return [
             [['Solucion', 'HoraProgramada', 'HoraInicio', 'TiempoRestante', 'HoraFinalizo', 'TiempoEfectivo'], 'default', 'value' => null],
             [['Folio', 'Usuario_reporta', 'Asignado_a', 'Estado', 'Descripcion', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'required'],
-            [['Asignado_a', 'TiempoRestante', 'HoraFinalizo', 'TiempoEfectivo', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
+            [['Asignado_a',  'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
             [['Descripcion', 'Solucion'], 'string'],
             [['HoraProgramada', 'HoraInicio', 'Fecha_creacion', 'Fecha_actualizacion'], 'safe'],
             [['Folio', 'Usuario_reporta', 'Estado'], 'string', 'max' => 255],
