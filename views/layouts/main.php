@@ -52,11 +52,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
             NavBar::begin([
                 'brandLabel' => Yii::$app->name,
                 'brandUrl' => Yii::$app->homeUrl,
-<<<<<<< HEAD
-                'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark bg-primary fixed-top']
-=======
                 'options' => ['class' => 'navbar-expand-md elpepe fixed-top elnegro']
->>>>>>> 5bc250a40dae89f22a1bd30754299a159acf84c1
             ]);
             echo Nav::widget([
                 'options' => ['class' => 'navbar-nav'],
