@@ -16,7 +16,7 @@ $this->title = 'Tickets';
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
 // Obtener mes y año actual si no hay filtro
-$mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
+$mesActual = Yii::$app->request->get('mes', date('Y-m'));
 ?>
 
 <style>
@@ -96,8 +96,8 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
     #globalSearch {
         width: 100%;
         padding: 12px 45px 12px 45px;
-        background: black;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: #A0BAA5;
+        border: 2px black;
         border-radius: 10px;
         color: white;
         font-size: 14px;
@@ -110,7 +110,7 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
 
     #globalSearch:focus {
         outline: none;
-        background: black;
+        background-color: #A0BAA5;
         color: black;
         border-color: rgba(255, 255, 255, 0.6);
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
@@ -149,7 +149,7 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
     }
 
     .compact-filter-btn {
-        background: rgba(255, 255, 255, 0.15);
+        background-color: #A0BAA5;
         border: 2px solid black;
         color: black;
         padding: 10px 16px;

@@ -21,7 +21,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-
+use yii\web\Response;
 
 
 
@@ -258,5 +258,23 @@ class TicketsController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
+    }
+
+    public function actionGetNextFolio()
+    {
+        // Importante: Asegúrate de tener "use yii\web\Response;" arriba
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $ultimoTicket = Tickets::find()->orderBy(['id' => SORT_DESC])->one();
+        
+        // Calculamos siguiente ID
+        $siguienteId = $ultimoTicket ? ($ultimoTicket->id + 1) : 1;
+
+        // Formato: 0005 (Igual que en tu actionCreate)
+        $folio = str_pad($siguienteId, 4, '0', STR_PAD_LEFT);
+
+        return [
+            'nextFolio' => $folio
+        ];
     }
 }

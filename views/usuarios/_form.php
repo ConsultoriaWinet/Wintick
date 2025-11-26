@@ -24,9 +24,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'rol')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'created_at')->textInput() ?>
+    <?= $form->field($model, 'created_at')->hiddenInput()->label(false) ?>
 
-    <?= $form->field($model, 'updated_at')->textInput() ?>
+    <?= $form->field($model, 'updated_at')->hiddenInput()->label(false) ?>
 
     <?= $form->field($model, 'color')->input('color', ['value' => $model->color ?: '#3788d8']) ?>
 

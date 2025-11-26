@@ -112,6 +112,10 @@ class UsuariosController extends Controller
     public function actionCreate()
     {
         $model = new Usuarios();
+            // Timestamps
+                $model->created_at = time();
+                $model->updated_at = time();    
+        
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
@@ -120,9 +124,7 @@ class UsuariosController extends Controller
                     $model->password_hash = Yii::$app->security->generatePasswordHash($model->password_hash);
                 }
 
-                // Timestamps
-                $model->created_at = time();
-                $model->updated_at = time();
+              
 
                 if ($model->save()) {
                     Yii::$app->session->setFlash('success', 'Usuario creado exitosamente.');
