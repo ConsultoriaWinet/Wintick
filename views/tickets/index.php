@@ -24,7 +24,7 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
        CONTENEDOR PRINCIPAL
        ======================================== */
     .tickets-index {
-        background: #f8f9fa;
+       
         min-height: 100vh;
         padding: 30px 20px;
     }
@@ -33,8 +33,8 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
        HEADER PRINCIPAL
        ======================================== */
     .tickets-header {
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-        color: white;
+        
+        color: black;
         padding: 25px 30px;
         border-radius: 12px;
         margin-bottom: 20px;
@@ -96,7 +96,7 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
     #globalSearch {
         width: 100%;
         padding: 12px 45px 12px 45px;
-        background: rgba(255, 255, 255, 0.15);
+        background: black;
         border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 10px;
         color: white;
@@ -110,7 +110,8 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
 
     #globalSearch:focus {
         outline: none;
-        background: rgba(255, 255, 255, 0.25);
+        background: black;
+        color: black;
         border-color: rgba(255, 255, 255, 0.6);
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     }
@@ -149,8 +150,8 @@ $mesActual = isset($_GET['mes']) ? $_GET['mes'] : date('Y-m');
 
     .compact-filter-btn {
         background: rgba(255, 255, 255, 0.15);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        color: white;
+        border: 2px solid black;
+        color: black;
         padding: 10px 16px;
         border-radius: 10px;
         cursor: pointer;
