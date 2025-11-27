@@ -423,7 +423,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        margin: 20px; 
+        margin: 15px; 
     }
 
     .table {
@@ -1167,7 +1167,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         </table>
     </div>
 
-    <button type="button" class="mt-3" id="addMoreRows">
+    <button type="button" class="mt-3 m-3" id="addMoreRows">
         <i class="fas fa-plus"></i> Agregar más filas
     </button>
 </div>
@@ -1299,14 +1299,33 @@ function loadNextFolio(inputElement) {
 }
 
 // ========================================
-// BÚSQUEDA UNIVERSAL INSTANTÁNEA
+// CARGAR DATOS DE CLIENTE
+// ========================================
+function loadClienteData(selectElement) {
+    const row = selectElement.closest('tr');
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    
+    if (selectedOption.value === '') {
+        return;
+    }
+    
+    const prioridad = selectedOption.getAttribute('data-prioridad');
+    
+    if (prioridad) {
+        row.querySelector('.prioridad').value = prioridad;
+    }
+    row.querySelector('.estado').value = 'ABIERTO';
+}
+
+// ========================================
+// BÚSQUEDA UNIVERSAL
 // ========================================
 function normalizeText(text) {
     return text.toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
-        .replace(/[^\w\s]/gi, ' ') // Reemplazar caracteres especiales
-        .replace(/\s+/g, ' ') // Normalizar espacios
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s]/gi, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
 }
 
@@ -1387,557 +1406,6 @@ function debounce(func, wait) {
 const debouncedSearch = debounce(performSearch, 150);
 
 // ========================================
-// DROPDOWN FILTRO COMPACTO
-// ========================================
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('globalSearch');
-    const clearButton = document.getElementById('clearSearch');
-    const filterBtn = document.getElementById('compactFilterBtn');
-    const filterMenu = document.getElementById('compactFilterMenu');
-    
-    // Construir cache inicial
-    buildRowsCache();
-    
-    // Inicializar Flatpickr en todos los campos datetime
-    document.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        initializeFlatpickr(element);
-    });
-    
-    // Evento de búsqueda
-    searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        
-        // Mostrar/ocultar botón de limpiar
-        if (query) {
-            clearButton.classList.add('active');
-        } else {
-            clearButton.classList.remove('active');
-        }
-        
-        debouncedSearch(query);
-    });
-    
-    // Botón de limpiar búsqueda
-    clearButton.addEventListener('click', function() {
-        searchInput.value = '';
-        clearButton.classList.remove('active');
-        performSearch('');
-        searchInput.focus();
-    });
-    
-    // Toggle dropdown filtro compacto
-    filterBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        filterMenu.classList.toggle('show');
-        filterBtn.classList.toggle('active');
-    });
-    
-    // Cerrar dropdown al hacer clic fuera
-    document.addEventListener('click', function(e) {
-        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
-            filterMenu.classList.remove('show');
-            filterBtn.classList.remove('active');
-        }
-    });
-    
-    // Cargar folio inicial
-    const initialFolioInput = document.querySelector('.new-row .folio');
-    if (initialFolioInput) {
-        loadNextFolio(initialFolioInput);
-    }
-    
-    // Inicializar tooltips de Bootstrap
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
-        trigger: 'hover',
-        delay: { show: 300, hide: 100 }
-    }));
-});
-
-// ========================================
-// AGREGAR MÁS FILAS
-// ========================================
-document.getElementById('addMoreRows').addEventListener('click', function() {
-    const tableBody = document.getElementById('tableBody');
-    const templateRow = document.querySelector('.new-row');
-    const newRow = templateRow.cloneNode(true);
-    
-    // Limpiar valores
-    newRow.querySelectorAll('input, textarea, select').forEach(field => {
-        if (!field.classList.contains('folio')) {
-            field.value = '';
-        }
-    });
-    
-    // Cargar siguiente folio
-    const folioInput = newRow.querySelector('.folio');
-    if (folioInput) {
-        loadNextFolio(folioInput);
-    }
-    
-    // Inicializar Flatpickr en los nuevos campos
-    newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        initializeFlatpickr(element);
-    });
-    
-    // Eventos
-    const clienteSelect = newRow.querySelector('.cliente');
-    clienteSelect.addEventListener('change', function() {
-        loadClienteData(this);
-    });
-    
-    newRow.querySelector('.saveRow').addEventListener('click', function() {
-        saveTicket(newRow);
-    });
-    
-    newRow.querySelector('.deleteRow').addEventListener('click', function() {
-        newRow.remove();
-    });
-    
-    tableBody.appendChild(newRow);
-});
-
-// ========================================
-// GUARDAR TICKET
-// ========================================
-function saveTicket(row) {
-    const ticket = {
-        Folio: row.querySelector('.folio').value,
-        Cliente_id: row.querySelector('.cliente').value,
-        Sistema_id: row.querySelector('.sistema').value,
-        Servicio_id: row.querySelector('.servicio').value,
-        Usuario_reporta: row.querySelector('.usuario-reporta').value,
-        Asignado_a: row.querySelector('.asignado-a').value,
-        Descripcion: row.querySelector('.descripcion').value,
-        Prioridad: row.querySelector('.prioridad').value,
-        Estado: row.querySelector('.estado').value,
-        HoraProgramada: row.querySelector('.hora-programada').value,
-        HoraInicio: row.querySelector('.hora-inicio').value,
-    };
-
-    if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
-        alert('⚠️ Por favor completa los campos requeridos (Folio, Cliente, Usuario Reporta, Asignado A)');
-        return;
-    }
-
-    fetch('<?= Url::to(['save-bulk']) ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        },
-        body: JSON.stringify({ tickets: [ticket] })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('✅ Ticket guardado exitosamente');
-            location.reload();
-        } else {
-            alert('❌ Error al guardar: ' + JSON.stringify(data.errors || data.message || 'Error desconocido'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Error en la solicitud: ' + error);
-    });
-}
-
-// ========================================
-// ACTUALIZAR ESTADO
-// ========================================
-function updateEstado(selectElement, ticketId) {
-    const estado = selectElement.value;
-    const div = selectElement.previousElementSibling;
-    
-    div.className = 'estado-clickeable ' + getEstadoClass(estado);
-    div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
-    div.style.display = 'inline-flex';
-    selectElement.style.display = 'none';
-    
-    fetch('<?= Url::to(['update-estado']) ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        },
-        body: JSON.stringify({ id: ticketId, estado: estado })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('✅ Estado actualizado');
-            // Reconstruir cache para búsqueda
-            buildRowsCache();
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
-
-function toggleEstadoSelect(element, ticketId) {
-    const select = document.querySelector('.estado-' + ticketId);
-    if (select.style.display === 'none') {
-        element.style.display = 'none';
-        select.style.display = 'block';
-        select.focus();
-    } else {
-        element.style.display = 'inline-flex';
-        select.style.display = 'none';
-    }
-}
-
-function getEstadoClass(estado) {
-    const classes = {
-        'ABIERTO': 'bg-primary text-white',
-        'EN PROCESO': 'bg-info text-dark',
-        'CERRADO': 'bg-danger text-white'
-    };
-    return classes[estado] || 'bg-secondary';
-}
-
-function getEstadoIcon(estado) {
-    const icons = {
-        'ABIERTO': 'fa-circle-notch',
-        'EN PROCESO': 'fa-spinner',
-        'CERRADO': 'fa-check-circle'
-    };
-    return icons[estado] || 'fa-question-circle';
-}
-
-function openSolutionModal(ticketId, folio) {
-    const selectElement = document.querySelector('.estado-' + ticketId);
-    const estado = selectElement.value;
-    
-    if (estado !== 'CERRADO') {
-        alert('⚠️ El ticket debe estar en estado CERRADO para agregar solución');
-        return;
-    }
-    
-    document.getElementById('ticketId').value = ticketId;
-    
-    fetch('<?= Url::to(['get-ticket-data']) ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        },
-        body: JSON.stringify({ id: ticketId })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('horaFinalizo').value = data.ticket.HoraFinalizo || '';
-            document.getElementById('solucion').value = data.ticket.Solucion || '';
-            document.getElementById('tiempoEfectivo').value = data.ticket.TiempoEfectivo || '';
-        }
-    })
-    .catch(error => console.error('Error:', error));
-    
-    const modal = document.getElementById('solutionModal');
-    modal.classList.add('show');
-    modal.style.display = 'block';
-    document.body.classList.add('modal-open');
-    
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    document.body.appendChild(backdrop);
-}
-
-function saveSolution() {
-    const ticketId = document.getElementById('ticketId').value;
-    const solucion = document.getElementById('solucion').value;
-    const horaFinalizo = document.getElementById('horaFinalizo').value;
-    const tiempoEfectivo = document.getElementById('tiempoEfectivo').value;
-    
-    if (!solucion || !horaFinalizo || !tiempoEfectivo) {
-        alert('⚠️ Por favor completa todos los campos');
-        return;
-    }
-    
-    fetch('<?= Url::to(['save-solution']) ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        },
-        body: JSON.stringify({ 
-            id: ticketId, 
-            solucion: solucion, 
-            horaFinalizo: horaFinalizo,
-            tiempoEfectivo: tiempoEfectivo
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Solución guardada exitosamente');
-            closeModal();
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'No se pudo guardar'));
-            console.log(data.errors);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error en la solicitud: ' + error);
-    });
-}
-
-function closeModal() {
-    const modal = document.getElementById('solutionModal');
-    modal.classList.remove('show');
-    modal.style.display = 'none';
-    document.body.classList.remove('modal-open');
-    
-    const backdrop = document.querySelector('.modal-backdrop');
-    if (backdrop) backdrop.remove();
-    
-    document.getElementById('horaFinalizo').value = '';
-    document.getElementById('solucion').value = '';
-    document.getElementById('tiempoEfectivo').value = '';
-}
-
-function loadClienteData(selectElement) {
-    const row = selectElement.closest('tr');
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    
-    if (selectedOption.value === '') {
-        return;
-    }
-    
-    const prioridad = selectedOption.getAttribute('data-prioridad');
-    
-    if (prioridad) {
-        row.querySelector('.prioridad').value = prioridad;
-    }
-    row.querySelector('.estado').value = 'ABIERTO';
-}
-
-function toggleFilters(header) {
-    const content = header.nextElementSibling;
-    header.classList.toggle('collapsed');
-    content.classList.toggle('show');
-}
-
-// Busca la función addNewRow() y modifica esta parte:
-function addNewRow() {
-    const table = document.getElementById('ticketsTable');
-    const tbody = table.querySelector('tbody');
-    
-    // ✅ OBTENER EL SIGUIENTE FOLIO AUTOMÁTICAMENTE
-    fetch('<?= \yii\helpers\Url::to(['/tickets/get-next-folio']) ?>')
-        .then(response => response.json())
-        .then(data => {
-            const nextFolio = data.nextFolio || '';
-            
-            const newRow = tbody.insertRow(1); // Insertar después del header
-            newRow.classList.add('new-row');
-            newRow.dataset.isNew = 'true';
-            
-            newRow.innerHTML = `
-                <td><input type="text" class="form-control form-control-sm" value="${nextFolio}" readonly style="background: #e9ecef;"></td>
-                <td>
-                    <select class="form-select form-select-sm" name="Cliente_id" required onchange="cargarSistemas(this)">
-                        <option value="">Seleccionar</option>
-                        <?php foreach ($clientes as $cliente): ?>
-                            <option value="<?= $cliente['id'] ?>"><?= $cliente['Nombre'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" name="Sistema_id" required>
-                        <option value="">Seleccionar</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" name="Servicio_id">
-                        <option value="">Seleccionar</option>
-                        <?php foreach ($servicios as $servicio): ?>
-                            <option value="<?= $servicio['id'] ?>"><?= $servicio['Nombre'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td><input type="text" class="form-control form-control-sm" name="Usuario_reporta" required></td>
-                <td>
-                    <select class="form-select form-select-sm" name="Asignado_a">
-                        <option value="">Seleccionar</option>
-                        <?php foreach ($Usuarios as $usuario): ?>
-                            <option value="<?= $usuario['id'] ?>"><?= $usuario['email'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td><input type="datetime-local" class="form-control form-control-sm" name="HoraProgramada"></td>
-                <td><input type="datetime-local" class="form-control form-control-sm" name="HoraInicio"></td>
-                <td><textarea class="form-control form-control-sm" name="Descripcion" rows="1" required></textarea></td>
-                <td>
-                    <select class="form-select form-select-sm" name="Prioridad">
-                        <option value="BAJA">BAJA</option>
-                        <option value="MEDIA" selected>MEDIA</option>
-                        <option value="ALTA">ALTA</option>
-                        <option value="URGENTE">URGENTE</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" name="Estado">
-                        <option value="ABIERTO" selected>Abierto</option>
-                        <option value="EN PROCESO">En Proceso</option>
-                        <option value="CERRADO">Cerrado</option>
-                    </select>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-success" onclick="saveNewRow(this)">
-                        <i class="fas fa-save"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="cancelNewRow(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </td>
-            `;
-        })
-        .catch(error => {
-            console.error('Error obteniendo folio:', error);
-            alert('Error al obtener el siguiente folio');
-        });
-}
-
-// ✅ FUNCIONES PARA COMENTARIOS
-function openComentariosModal(ticketId, folio) {
-    document.getElementById('ticketIdComentarios').value = ticketId;
-    document.getElementById('ticketFolioComentarios').textContent = folio;
-    document.getElementById('nuevoComentario').value = '';
-    document.getElementById('tipoComentario').value = 'comentario';
-    
-    cargarComentarios(ticketId);
-    
-    const modal = document.getElementById('comentariosModal');
-    modal.classList.add('show');
-    modal.style.display = 'block';
-    document.body.classList.add('modal-open');
-    
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    backdrop.id = 'comentariosBackdrop';
-    document.body.appendChild(backdrop);
-}
-
-function cargarComentarios(ticketId) {
-    const lista = document.getElementById('listaComentarios');
-    lista.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>';
-    
-    fetch('<?= Url::to(['/tickets/obtener-comentarios']) ?>?ticket_id=' + ticketId, {
-        headers: {
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            mostrarComentarios(data.comentarios);
-        } else {
-            lista.innerHTML = '<div class="alert alert-danger">Error al cargar comentarios</div>';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        lista.innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
-    });
-}
-
-function mostrarComentarios(comentarios) {
-    const lista = document.getElementById('listaComentarios');
-    
-    if (comentarios.length === 0) {
-        lista.innerHTML = `
-            <div class="comentarios-empty">
-                <i class="fas fa-comments"></i>
-                <p>No hay comentarios aún</p>
-                <small>Sé el primero en comentar</small>
-            </div>
-        `;
-        return;
-    }
-    
-    lista.innerHTML = comentarios.map(c => `
-        <div class="comentario-item ${c.tipo}">
-            <div class="comentario-header">
-                <div class="comentario-usuario">
-                    <i class="fas fa-user-circle"></i>
-                    ${c.usuario}
-                    <span class="comentario-tipo ${c.tipo}">${getTipoLabel(c.tipo)}</span>
-                </div>
-                <span class="comentario-fecha">
-                    <i class="fas fa-clock"></i> ${c.fecha}
-                </span>
-            </div>
-            <p class="comentario-texto">${escapeHtml(c.comentario)}</p>
-        </div>
-    `).join('');
-}
-
-function agregarComentario() {
-    const ticketId = document.getElementById('ticketIdComentarios').value;
-    const comentario = document.getElementById('nuevoComentario').value.trim();
-    const tipo = document.getElementById('tipoComentario').value;
-    
-    if (!comentario) {
-        alert('Por favor escribe un comentario');
-        return;
-    }
-    
-    fetch('<?= Url::to(['/tickets/agregar-comentario']) ?>', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        },
-        body: JSON.stringify({
-            ticket_id: ticketId,
-            comentario: comentario,
-            tipo: tipo
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('nuevoComentario').value = '';
-            cargarComentarios(ticketId);
-        } else {
-            alert('Error al agregar comentario: ' + (data.message || 'Desconocido'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión');
-    });
-}
-
-function closeComentariosModal() {
-    const modal = document.getElementById('comentariosModal');
-    modal.classList.remove('show');
-    modal.style.display = 'none';
-    document.body.classList.remove('modal-open');
-    
-    const backdrop = document.getElementById('comentariosBackdrop');
-    if (backdrop) backdrop.remove();
-}
-
-function getTipoLabel(tipo) {
-    const labels = {
-        'comentario': '💬 Comentario',
-        'nota_interna': '📝 Nota Interna',
-        'solucion': '✅ Solución'
-    };
-    return labels[tipo] || tipo;
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ========================================
 // INICIALIZAR FLATPICKR
 // ========================================
 function initializeFlatpickr(element) {
@@ -1951,128 +1419,16 @@ function initializeFlatpickr(element) {
         defaultMinute: 0,
         allowInput: true,
         clickOpens: true,
-        theme: "airbnb",
-        onReady: function(selectedDates, dateStr, instance) {
-            instance.calendarContainer.classList.add('flatpickr-custom');
-        }
+        theme: "airbnb"
     });
 }
-
-// ========================================
-// DOCUMENT READY
-// ========================================
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('globalSearch');
-    const clearButton = document.getElementById('clearSearch');
-    const filterBtn = document.getElementById('compactFilterBtn');
-    const filterMenu = document.getElementById('compactFilterMenu');
-    
-    // Construir cache inicial
-    buildRowsCache();
-    
-    // Inicializar Flatpickr en todos los campos datetime
-    document.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        initializeFlatpickr(element);
-    });
-    
-    // Evento de búsqueda
-    searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        
-        // Mostrar/ocultar botón de limpiar
-        if (query) {
-            clearButton.classList.add('active');
-        } else {
-            clearButton.classList.remove('active');
-        }
-        
-        debouncedSearch(query);
-    });
-    
-    // Botón de limpiar búsqueda
-    clearButton.addEventListener('click', function() {
-        searchInput.value = '';
-        clearButton.classList.remove('active');
-        performSearch('');
-        searchInput.focus();
-    });
-    
-    // Toggle dropdown filtro compacto
-    filterBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        filterMenu.classList.toggle('show');
-        filterBtn.classList.toggle('active');
-    });
-    
-    // Cerrar dropdown al hacer clic fuera
-    document.addEventListener('click', function(e) {
-        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
-            filterMenu.classList.remove('show');
-            filterBtn.classList.remove('active');
-        }
-    });
-    
-    // Cargar folio inicial
-    const initialFolioInput = document.querySelector('.new-row .folio');
-    if (initialFolioInput) {
-        loadNextFolio(initialFolioInput);
-    }
-    
-    // Inicializar tooltips de Bootstrap
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
-        trigger: 'hover',
-        delay: { show: 300, hide: 100 }
-    }));
-});
-
-// ========================================
-// AGREGAR MÁS FILAS
-// ========================================
-document.getElementById('addMoreRows').addEventListener('click', function() {
-    const tableBody = document.getElementById('tableBody');
-    const templateRow = document.querySelector('.new-row');
-    const newRow = templateRow.cloneNode(true);
-    
-    // Limpiar valores
-    newRow.querySelectorAll('input, textarea, select').forEach(field => {
-        if (!field.classList.contains('folio')) {
-            field.value = '';
-        }
-    });
-    
-    // Cargar siguiente folio
-    const folioInput = newRow.querySelector('.folio');
-    if (folioInput) {
-        loadNextFolio(folioInput);
-    }
-    
-    // Inicializar Flatpickr en los nuevos campos
-    newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        initializeFlatpickr(element);
-    });
-    
-    // Eventos
-    const clienteSelect = newRow.querySelector('.cliente');
-    clienteSelect.addEventListener('change', function() {
-        loadClienteData(this);
-    });
-    
-    newRow.querySelector('.saveRow').addEventListener('click', function() {
-        saveTicket(newRow);
-    });
-    
-    newRow.querySelector('.deleteRow').addEventListener('click', function() {
-        newRow.remove();
-    });
-    
-    tableBody.appendChild(newRow);
-});
 
 // ========================================
 // GUARDAR TICKET
 // ========================================
 function saveTicket(row) {
+    console.log('🚀 Guardando ticket...');
+    
     const ticket = {
         Folio: row.querySelector('.folio').value,
         Cliente_id: row.querySelector('.cliente').value,
@@ -2087,10 +1443,22 @@ function saveTicket(row) {
         HoraInicio: row.querySelector('.hora-inicio').value,
     };
 
+    console.log('📋 Datos del ticket:', ticket);
+
     if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
-        alert('⚠️ Por favor completa los campos requeridos (Folio, Cliente, Usuario Reporta, Asignado A)');
+        alert('⚠️ Por favor completa los campos requeridos');
         return;
     }
+
+    if (!ticket.Descripcion || ticket.Descripcion.trim() === '') {
+        alert('⚠️ Por favor escribe una descripción');
+        return;
+    }
+
+    const saveBtn = row.querySelector('.saveRow');
+    const originalHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     fetch('<?= Url::to(['save-bulk']) ?>', {
         method: 'POST',
@@ -2100,23 +1468,36 @@ function saveTicket(row) {
         },
         body: JSON.stringify({ tickets: [ticket] })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('📡 Respuesta:', response.status);
+        if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('📦 Datos:', data);
+        
         if (data.success) {
-            alert('✅ Ticket guardado exitosamente');
+            alert('✅ Ticket guardado: ' + ticket.Folio);
             location.reload();
         } else {
-            alert('❌ Error al guardar: ' + JSON.stringify(data.errors || data.message || 'Error desconocido'));
+            console.error('❌ Error:', data);
+            alert('❌ Error: ' + (data.message || JSON.stringify(data.errors || 'Desconocido')));
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalHtml;
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Error en la solicitud: ' + error);
+        console.error('💥 Error:', error);
+        alert('❌ Error: ' + error.message);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHtml;
     });
 }
 
 // ========================================
-// ACTUALIZAR ESTADO
+// ESTADOS
 // ========================================
 function updateEstado(selectElement, ticketId) {
     const estado = selectElement.value;
@@ -2138,8 +1519,6 @@ function updateEstado(selectElement, ticketId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('✅ Estado actualizado');
-            // Reconstruir cache para búsqueda
             buildRowsCache();
         }
     })
@@ -2176,12 +1555,15 @@ function getEstadoIcon(estado) {
     return icons[estado] || 'fa-question-circle';
 }
 
+// ========================================
+// MODALES
+// ========================================
 function openSolutionModal(ticketId, folio) {
     const selectElement = document.querySelector('.estado-' + ticketId);
     const estado = selectElement.value;
     
     if (estado !== 'CERRADO') {
-        alert('⚠️ El ticket debe estar en estado CERRADO para agregar solución');
+        alert('⚠️ El ticket debe estar CERRADO');
         return;
     }
     
@@ -2202,8 +1584,7 @@ function openSolutionModal(ticketId, folio) {
             document.getElementById('solucion').value = data.ticket.Solucion || '';
             document.getElementById('tiempoEfectivo').value = data.ticket.TiempoEfectivo || '';
         }
-    })
-    .catch(error => console.error('Error:', error));
+    });
     
     const modal = document.getElementById('solutionModal');
     modal.classList.add('show');
@@ -2222,7 +1603,7 @@ function saveSolution() {
     const tiempoEfectivo = document.getElementById('tiempoEfectivo').value;
     
     if (!solucion || !horaFinalizo || !tiempoEfectivo) {
-        alert('⚠️ Por favor completa todos los campos');
+        alert('⚠️ Completa todos los campos');
         return;
     }
     
@@ -2242,17 +1623,12 @@ function saveSolution() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Solución guardada exitosamente');
+            alert('✅ Solución guardada');
             closeModal();
             location.reload();
         } else {
-            alert('Error: ' + (data.message || 'No se pudo guardar'));
-            console.log(data.errors);
+            alert('Error: ' + (data.message || 'Desconocido'));
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error en la solicitud: ' + error);
     });
 }
 
@@ -2270,110 +1646,6 @@ function closeModal() {
     document.getElementById('tiempoEfectivo').value = '';
 }
 
-function loadClienteData(selectElement) {
-    const row = selectElement.closest('tr');
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    
-    if (selectedOption.value === '') {
-        return;
-    }
-    
-    const prioridad = selectedOption.getAttribute('data-prioridad');
-    
-    if (prioridad) {
-        row.querySelector('.prioridad').value = prioridad;
-    }
-    row.querySelector('.estado').value = 'ABIERTO';
-}
-
-function toggleFilters(header) {
-    const content = header.nextElementSibling;
-    header.classList.toggle('collapsed');
-    content.classList.toggle('show');
-}
-
-// Busca la función addNewRow() y modifica esta parte:
-function addNewRow() {
-    const table = document.getElementById('ticketsTable');
-    const tbody = table.querySelector('tbody');
-    
-    // ✅ OBTENER EL SIGUIENTE FOLIO AUTOMÁTICAMENTE
-    fetch('<?= \yii\helpers\Url::to(['/tickets/get-next-folio']) ?>')
-        .then(response => response.json())
-        .then(data => {
-            const nextFolio = data.nextFolio || '';
-            
-            const newRow = tbody.insertRow(1); // Insertar después del header
-            newRow.classList.add('new-row');
-            newRow.dataset.isNew = 'true';
-            
-            newRow.innerHTML = `
-                <td><input type="text" class="form-control form-control-sm" value="${nextFolio}" readonly style="background: #e9ecef;"></td>
-                <td>
-                    <select class="form-select form-select-sm" name="Cliente_id" required onchange="cargarSistemas(this)">
-                        <option value="">Seleccionar</option>
-                        <?php foreach ($clientes as $cliente): ?>
-                            <option value="<?= $cliente['id'] ?>"><?= $cliente['Nombre'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" name="Sistema_id" required>
-                        <option value="">Seleccionar</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" name="Servicio_id">
-                        <option value="">Seleccionar</option>
-                        <?php foreach ($servicios as $servicio): ?>
-                            <option value="<?= $servicio['id'] ?>"><?= $servicio['Nombre'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td><input type="text" class="form-control form-control-sm" name="Usuario_reporta" required></td>
-                <td>
-                    <select class="form-select form-select-sm" name="Asignado_a">
-                        <option value="">Seleccionar</option>
-                        <?php foreach ($Usuarios as $usuario): ?>
-                            <option value="<?= $usuario['id'] ?>"><?= $usuario['email'] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td><input type="datetime-local" class="form-control form-control-sm" name="HoraProgramada"></td>
-                <td><input type="datetime-local" class="form-control form-control-sm" name="HoraInicio"></td>
-                <td><textarea class="form-control form-control-sm" name="Descripcion" rows="1" required></textarea></td>
-                <td>
-                    <select class="form-select form-select-sm" name="Prioridad">
-                        <option value="BAJA">BAJA</option>
-                        <option value="MEDIA" selected>MEDIA</option>
-                        <option value="ALTA">ALTA</option>
-                        <option value="URGENTE">URGENTE</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" name="Estado">
-                        <option value="ABIERTO" selected>Abierto</option>
-                        <option value="EN PROCESO">En Proceso</option>
-                        <option value="CERRADO">Cerrado</option>
-                    </select>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-success" onclick="saveNewRow(this)">
-                        <i class="fas fa-save"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="cancelNewRow(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </td>
-            `;
-        })
-        .catch(error => {
-            console.error('Error obteniendo folio:', error);
-            alert('Error al obtener el siguiente folio');
-        });
-}
-
-// ✅ FUNCIONES PARA COMENTARIOS
 function openComentariosModal(ticketId, folio) {
     document.getElementById('ticketIdComentarios').value = ticketId;
     document.getElementById('ticketFolioComentarios').textContent = folio;
@@ -2395,24 +1667,16 @@ function openComentariosModal(ticketId, folio) {
 
 function cargarComentarios(ticketId) {
     const lista = document.getElementById('listaComentarios');
-    lista.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>';
+    lista.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
     
-    fetch('<?= Url::to(['/tickets/obtener-comentarios']) ?>?ticket_id=' + ticketId, {
-        headers: {
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        }
-    })
+    fetch('<?= Url::to(['/tickets/obtener-comentarios']) ?>?ticket_id=' + ticketId)
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             mostrarComentarios(data.comentarios);
         } else {
-            lista.innerHTML = '<div class="alert alert-danger">Error al cargar comentarios</div>';
+            lista.innerHTML = '<div class="alert alert-danger">Error al cargar</div>';
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        lista.innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
     });
 }
 
@@ -2423,8 +1687,7 @@ function mostrarComentarios(comentarios) {
         lista.innerHTML = `
             <div class="comentarios-empty">
                 <i class="fas fa-comments"></i>
-                <p>No hay comentarios aún</p>
-                <small>Sé el primero en comentar</small>
+                <p>No hay comentarios</p>
             </div>
         `;
         return;
@@ -2453,7 +1716,7 @@ function agregarComentario() {
     const tipo = document.getElementById('tipoComentario').value;
     
     if (!comentario) {
-        alert('Por favor escribe un comentario');
+        alert('Escribe un comentario');
         return;
     }
     
@@ -2475,12 +1738,8 @@ function agregarComentario() {
             document.getElementById('nuevoComentario').value = '';
             cargarComentarios(ticketId);
         } else {
-            alert('Error al agregar comentario: ' + (data.message || 'Desconocido'));
+            alert('Error: ' + data.message);
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error de conexión');
     });
 }
 
@@ -2508,4 +1767,123 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ========================================
+// DOCUMENT READY
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('globalSearch');
+    const clearButton = document.getElementById('clearSearch');
+    const filterBtn = document.getElementById('compactFilterBtn');
+    const filterMenu = document.getElementById('compactFilterMenu');
+    
+    buildRowsCache();
+    
+    document.querySelectorAll('.flatpickr-datetime').forEach(initializeFlatpickr);
+    
+    const initialSaveBtn = document.querySelector('.new-row .saveRow');
+    if (initialSaveBtn) {
+        initialSaveBtn.addEventListener('click', function() {
+            saveTicket(this.closest('tr'));
+        });
+    }
+    
+    const initialDeleteBtn = document.querySelector('.new-row .deleteRow');
+    if (initialDeleteBtn) {
+        initialDeleteBtn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            row.querySelectorAll('input, textarea, select').forEach(field => {
+                if (!field.classList.contains('folio')) {
+                    field.value = '';
+                }
+            });
+            loadNextFolio(row.querySelector('.folio'));
+        });
+    }
+    
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        clearButton.classList.toggle('active', query);
+        debouncedSearch(query);
+    });
+    
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearButton.classList.remove('active');
+        performSearch('');
+        searchInput.focus();
+    });
+    
+    filterBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        filterMenu.classList.toggle('show');
+        filterBtn.classList.toggle('active');
+    });
+    
+    document.addEventListener('click', function(e) {
+        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+            filterMenu.classList.remove('show');
+            filterBtn.classList.remove('active');
+        }
+    });
+    
+    loadNextFolio(document.querySelector('.new-row .folio'));
+    
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger: 'hover',
+        delay: { show: 300, hide: 100 }
+    }));
+});
+
+// ========================================
+// AGREGAR FILAS
+// ========================================
+document.getElementById('addMoreRows').addEventListener('click', function() {
+    const tableBody = document.getElementById('tableBody');
+    const templateRow = document.querySelector('.new-row');
+    const newRow = templateRow.cloneNode(true);
+    
+    newRow.querySelectorAll('input, textarea, select').forEach(field => {
+        if (!field.classList.contains('folio')) {
+            field.value = '';
+        }
+        if (field.tagName === 'SELECT' && !field.classList.contains('estado')) {
+            field.selectedIndex = 0;
+        }
+    });
+    
+    loadNextFolio(newRow.querySelector('.folio'));
+    
+    newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
+        if (element._flatpickr) {
+            element._flatpickr.destroy();
+        }
+        initializeFlatpickr(element);
+    });
+    
+    const saveBtn = newRow.querySelector('.saveRow');
+    const deleteBtn = newRow.querySelector('.deleteRow');
+    const clienteSelect = newRow.querySelector('.cliente');
+    
+    saveBtn.removeAttribute('onclick');
+    deleteBtn.removeAttribute('onclick');
+    clienteSelect.removeAttribute('onchange');
+    
+    saveBtn.addEventListener('click', function() {
+        saveTicket(newRow);
+    });
+    
+    deleteBtn.addEventListener('click', function() {
+        if (confirm('¿Eliminar fila?')) {
+            newRow.remove();
+        }
+    });
+    
+    clienteSelect.addEventListener('change', function() {
+        loadClienteData(this);
+    });
+    
+    tableBody.appendChild(newRow);
+});
 </script>
