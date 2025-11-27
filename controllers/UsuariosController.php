@@ -13,23 +13,30 @@ use Yii;
  */
 class UsuariosController extends Controller
 {
-    /**
-     * @inheritDoc
-     */
-    public function behaviors()
+    public function beforeAction($action)
     {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
-                ],
-            ]
-        );
+        if (Yii::$app->request->isAjax) {
+            $this->layout = false;
+        }
+
+        return parent::beforeAction($action);
     }
+
+    public function actionView($id)
+    {
+        $model = $this->findModel($id);
+
+        if (Yii::$app->request->isAjax) {
+            return $this->renderPartial('view', [
+                'model' => $model,
+            ]);
+        }
+
+        return $this->render('view', [
+            'model' => $model,
+        ]);
+    }
+
 
     /**
      * Lists all Usuarios models.
@@ -62,45 +69,51 @@ class UsuariosController extends Controller
         }
     */
     /**------------AJAX PARA LAS TARJETAS DE USUARIO INICIO----------*/
-    public function actionView($id)
-    {
-        $model = $this->findModel($id);
 
-        if (Yii::$app->request->isAjax) {
-            return $this->renderPartial('view-ajax', [
-                'model' => $model,
-            ]);
-        }
-
-        return $this->render('view', [
-            'model' => $model,
-        ]);
-    }
 
     public function actionUpdate($id)
     {
-        $searchModel = new UsuariosSearch();
-        $dataProvider = $searchModel->search($this->request->queryParams);
         $model = $this->findModel($id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->render('index', [
-                'searchModel' => $searchModel,
-                'dataProvider' => $dataProvider,
-            ]);
+        // --- GUARDAR VIA AJAX ---
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post())) {
 
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+            if ($model->save()) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'Nombre' => $model->Nombre,
+                        'email' => $model->email,
+                        'color' => $model->color,
+                    ]
+                ];
+            }
+
+            return [
+                'success' => false,
+                'errors' => $model->errors
+            ];
         }
 
+        // --- CARGAR FORMULARIO VIA AJAX ---
         if (Yii::$app->request->isAjax) {
             return $this->renderPartial('update-ajax', [
                 'model' => $model,
             ]);
         }
 
+        // --- COMPORTAMIENTO NORMAL (NO AJAX) ---
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
+        }
+
         return $this->render('update', [
             'model' => $model,
         ]);
     }
+
     /**----------AJAX PARA LAS TARJETAS DE USUARIO FIN----------*/
 
 
@@ -112,10 +125,10 @@ class UsuariosController extends Controller
     public function actionCreate()
     {
         $model = new Usuarios();
-            // Timestamps
-                $model->created_at = time();
-                $model->updated_at = time();    
-        
+        // Timestamps
+        $model->created_at = time();
+        $model->updated_at = time();
+
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
@@ -124,7 +137,7 @@ class UsuariosController extends Controller
                     $model->password_hash = Yii::$app->security->generatePasswordHash($model->password_hash);
                 }
 
-              
+
 
                 if ($model->save()) {
                     Yii::$app->session->setFlash('success', 'Usuario creado exitosamente.');
