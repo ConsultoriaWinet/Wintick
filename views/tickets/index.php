@@ -12,28 +12,66 @@ use yii\helpers\ArrayHelper;
 
 $this->title = 'Tickets';
 
-// Registrar Font Awesome
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-
+// Estilos de Flatpickr (Tema Airbnb)
+$this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
+$this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css');
+// Scripts de Flatpickr + Idioma Español
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
 // Obtener mes y año actual si no hay filtro
 $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 ?>
 
 <style>
     /* ========================================
+       REMOVER CONTAINER DE YII2 (SOLO ESTA PÁGINA)
+       ======================================== */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .tickets-index {
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Sobrescribir containers de Yii2 en esta página */
+    .container:has(.tickets-index),
+    .container-fluid:has(.tickets-index) {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Si el container está arriba en la jerarquía */
+    .wrap:has(.tickets-index) > .container,
+    .wrap:has(.tickets-index) > .container-fluid {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* ========================================
        CONTENEDOR PRINCIPAL
        ======================================== */
     .tickets-index {
-       
+        
         min-height: 100vh;
         padding: 30px 20px;
+        
+        
     }
 
     /* ========================================
        HEADER PRINCIPAL
        ======================================== */
     .tickets-header {
-        
+        margin: 50px;
+        margin-top: 3%;
+        background: white;
         color: black;
         padding: 25px 30px;
         border-radius: 12px;
@@ -88,7 +126,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         left: 15px;
         top: 50%;
         transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.6);
+        color: black;
         font-size: 16px;
         pointer-events: none;
     }
@@ -96,8 +134,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     #globalSearch {
         width: 100%;
         padding: 12px 45px 12px 45px;
-        background: #A0BAA5;
-        border: 2px black;
+        background: rgba(0, 0, 0, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 10px;
         color: white;
         font-size: 14px;
@@ -105,15 +143,14 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     }
 
     #globalSearch::placeholder {
-        color: rgba(255, 255, 255, 0.6);
+        color: black;
     }
 
     #globalSearch:focus {
         outline: none;
-        background-color: #A0BAA5;
-        color: black;
-        border-color: rgba(255, 255, 255, 0.6);
-        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.25);
+        border-color: rgba(0, 0, 0, 0.6);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     }
 
     .search-clear-btn {
@@ -121,9 +158,9 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         right: 10px;
         top: 50%;
         transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.2);
         border: none;
-        color: white;
+        color: black;
         width: 28px;
         height: 28px;
         border-radius: 50%;
@@ -135,7 +172,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     }
 
     .search-clear-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
+        background: black;
         transform: translateY(-50%) scale(1.1);
     }
 
@@ -149,8 +186,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     }
 
     .compact-filter-btn {
-        background-color: #A0BAA5;
-        border: 2px solid black;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         color: black;
         padding: 10px 16px;
         border-radius: 10px;
@@ -187,6 +224,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         display: none;
         z-index: 1000;
         animation: slideDownFade 0.3s ease;
+        margin: 30px;
+        padding: 30px;
     }
 
     .compact-filter-menu.show {
@@ -300,6 +339,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         display: inline-flex;
         align-items: center;
         gap: 10px;
+        margin-left: 3%;
     }
 
     .mes-actual i {
@@ -311,13 +351,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
        ======================================== */
     .stats-bar {
         background: white;
-        padding: 15px 20px;
-        border-radius: 10px;
+        border-radius: 12px;
         margin-bottom: 20px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        margin: 0 50px 20px 50px; 
     }
 
     .tickets-count {
@@ -328,6 +365,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         display: flex;
         align-items: center;
         gap: 8px;
+        padding:10px;
     }
 
     .tickets-count strong {
@@ -385,6 +423,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin: 20px; 
     }
 
     .table {
@@ -741,6 +780,47 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
             gap: 15px;
         }
     }
+
+    /* ========================================
+       FLATPICKR CUSTOM STYLES
+       ======================================== */
+    .flatpickr-input {
+        background: white !important;
+        border: 2px solid #e5e7eb !important;
+        border-radius: 8px !important;
+        padding: 8px 35px 8px 12px !important;
+        font-size: 12px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+
+    .flatpickr-input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        outline: none !important;
+    }
+
+    .flatpickr-input:hover {
+        border-color: #667eea !important;
+    }
+
+    /* Icono de calendario */
+    .datetime-wrapper {
+        position: relative;
+    }
+
+    .datetime-wrapper::after {
+        content: '\f073';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #667eea;
+        pointer-events: none;
+        font-size: 14px;
+    }
 </style>
 
 <div class="tickets-index">
@@ -1049,10 +1129,14 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </select>
                     </td>
                     <td>
-                        <input type="datetime-local" class="form-control form-control-sm hora-programada" style="font-size: 11px;">
+                        <div class="datetime-wrapper">
+                            <input type="text" class="form-control form-control-sm hora-programada flatpickr-datetime" placeholder="Seleccionar fecha">
+                        </div>
                     </td>
                     <td>
-                        <input type="datetime-local" class="form-control form-control-sm hora-inicio" style="font-size: 11px;">
+                        <div class="datetime-wrapper">
+                            <input type="text" class="form-control form-control-sm hora-inicio flatpickr-datetime" placeholder="Seleccionar fecha">
+                        </div>
                     </td>
                     <td><textarea class="form-control form-control-sm descripcion" rows="1" placeholder="Descripción" style="font-size: 12px;"></textarea></td>
                     <td>
@@ -1314,6 +1398,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Construir cache inicial
     buildRowsCache();
     
+    // Inicializar Flatpickr en todos los campos datetime
+    document.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
+        initializeFlatpickr(element);
+    });
+    
     // Evento de búsqueda
     searchInput.addEventListener('input', function(e) {
         const query = e.target.value.trim();
@@ -1386,6 +1475,11 @@ document.getElementById('addMoreRows').addEventListener('click', function() {
         loadNextFolio(folioInput);
     }
     
+    // Inicializar Flatpickr en los nuevos campos
+    newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
+        initializeFlatpickr(element);
+    });
+    
     // Eventos
     const clienteSelect = newRow.querySelector('.cliente');
     clienteSelect.addEventListener('change', function() {
@@ -1406,24 +1500,6 @@ document.getElementById('addMoreRows').addEventListener('click', function() {
 // ========================================
 // GUARDAR TICKET
 // ========================================
-document.querySelector('.saveRow').addEventListener('click', function() {
-    saveTicket(document.querySelector('.new-row'));
-});
-
-document.querySelector('.deleteRow').addEventListener('click', function() {
-    const row = document.querySelector('.new-row');
-    row.querySelectorAll('input, textarea, select').forEach(field => {
-        if (!field.classList.contains('folio')) {
-            field.value = '';
-        }
-    });
-    // Recargar folio
-    const folioInput = row.querySelector('.folio');
-    if (folioInput) {
-        loadNextFolio(folioInput);
-    }
-});
-
 function saveTicket(row) {
     const ticket = {
         Folio: row.querySelector('.folio').value,
@@ -1861,14 +1937,575 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ✅ INICIALIZAR TOOLTIPS DE BOOTSTRAP
-document.addEventListener('DOMContentLoaded', function() {
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => {
-        return new bootstrap.Tooltip(tooltipTriggerEl, {
-            trigger: 'hover',
-            delay: { show: 300, hide: 100 }
-        });
+// ========================================
+// INICIALIZAR FLATPICKR
+// ========================================
+function initializeFlatpickr(element) {
+    flatpickr(element, {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        time_24hr: true,
+        locale: "es",
+        minuteIncrement: 15,
+        defaultHour: 9,
+        defaultMinute: 0,
+        allowInput: true,
+        clickOpens: true,
+        theme: "airbnb",
+        onReady: function(selectedDates, dateStr, instance) {
+            instance.calendarContainer.classList.add('flatpickr-custom');
+        }
     });
+}
+
+// ========================================
+// DOCUMENT READY
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('globalSearch');
+    const clearButton = document.getElementById('clearSearch');
+    const filterBtn = document.getElementById('compactFilterBtn');
+    const filterMenu = document.getElementById('compactFilterMenu');
+    
+    // Construir cache inicial
+    buildRowsCache();
+    
+    // Inicializar Flatpickr en todos los campos datetime
+    document.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
+        initializeFlatpickr(element);
+    });
+    
+    // Evento de búsqueda
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        // Mostrar/ocultar botón de limpiar
+        if (query) {
+            clearButton.classList.add('active');
+        } else {
+            clearButton.classList.remove('active');
+        }
+        
+        debouncedSearch(query);
+    });
+    
+    // Botón de limpiar búsqueda
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearButton.classList.remove('active');
+        performSearch('');
+        searchInput.focus();
+    });
+    
+    // Toggle dropdown filtro compacto
+    filterBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        filterMenu.classList.toggle('show');
+        filterBtn.classList.toggle('active');
+    });
+    
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+            filterMenu.classList.remove('show');
+            filterBtn.classList.remove('active');
+        }
+    });
+    
+    // Cargar folio inicial
+    const initialFolioInput = document.querySelector('.new-row .folio');
+    if (initialFolioInput) {
+        loadNextFolio(initialFolioInput);
+    }
+    
+    // Inicializar tooltips de Bootstrap
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger: 'hover',
+        delay: { show: 300, hide: 100 }
+    }));
 });
+
+// ========================================
+// AGREGAR MÁS FILAS
+// ========================================
+document.getElementById('addMoreRows').addEventListener('click', function() {
+    const tableBody = document.getElementById('tableBody');
+    const templateRow = document.querySelector('.new-row');
+    const newRow = templateRow.cloneNode(true);
+    
+    // Limpiar valores
+    newRow.querySelectorAll('input, textarea, select').forEach(field => {
+        if (!field.classList.contains('folio')) {
+            field.value = '';
+        }
+    });
+    
+    // Cargar siguiente folio
+    const folioInput = newRow.querySelector('.folio');
+    if (folioInput) {
+        loadNextFolio(folioInput);
+    }
+    
+    // Inicializar Flatpickr en los nuevos campos
+    newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
+        initializeFlatpickr(element);
+    });
+    
+    // Eventos
+    const clienteSelect = newRow.querySelector('.cliente');
+    clienteSelect.addEventListener('change', function() {
+        loadClienteData(this);
+    });
+    
+    newRow.querySelector('.saveRow').addEventListener('click', function() {
+        saveTicket(newRow);
+    });
+    
+    newRow.querySelector('.deleteRow').addEventListener('click', function() {
+        newRow.remove();
+    });
+    
+    tableBody.appendChild(newRow);
+});
+
+// ========================================
+// GUARDAR TICKET
+// ========================================
+function saveTicket(row) {
+    const ticket = {
+        Folio: row.querySelector('.folio').value,
+        Cliente_id: row.querySelector('.cliente').value,
+        Sistema_id: row.querySelector('.sistema').value,
+        Servicio_id: row.querySelector('.servicio').value,
+        Usuario_reporta: row.querySelector('.usuario-reporta').value,
+        Asignado_a: row.querySelector('.asignado-a').value,
+        Descripcion: row.querySelector('.descripcion').value,
+        Prioridad: row.querySelector('.prioridad').value,
+        Estado: row.querySelector('.estado').value,
+        HoraProgramada: row.querySelector('.hora-programada').value,
+        HoraInicio: row.querySelector('.hora-inicio').value,
+    };
+
+    if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
+        alert('⚠️ Por favor completa los campos requeridos (Folio, Cliente, Usuario Reporta, Asignado A)');
+        return;
+    }
+
+    fetch('<?= Url::to(['save-bulk']) ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        },
+        body: JSON.stringify({ tickets: [ticket] })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Ticket guardado exitosamente');
+            location.reload();
+        } else {
+            alert('❌ Error al guardar: ' + JSON.stringify(data.errors || data.message || 'Error desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error en la solicitud: ' + error);
+    });
+}
+
+// ========================================
+// ACTUALIZAR ESTADO
+// ========================================
+function updateEstado(selectElement, ticketId) {
+    const estado = selectElement.value;
+    const div = selectElement.previousElementSibling;
+    
+    div.className = 'estado-clickeable ' + getEstadoClass(estado);
+    div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
+    div.style.display = 'inline-flex';
+    selectElement.style.display = 'none';
+    
+    fetch('<?= Url::to(['update-estado']) ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        },
+        body: JSON.stringify({ id: ticketId, estado: estado })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Estado actualizado');
+            // Reconstruir cache para búsqueda
+            buildRowsCache();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function toggleEstadoSelect(element, ticketId) {
+    const select = document.querySelector('.estado-' + ticketId);
+    if (select.style.display === 'none') {
+        element.style.display = 'none';
+        select.style.display = 'block';
+        select.focus();
+    } else {
+        element.style.display = 'inline-flex';
+        select.style.display = 'none';
+    }
+}
+
+function getEstadoClass(estado) {
+    const classes = {
+        'ABIERTO': 'bg-primary text-white',
+        'EN PROCESO': 'bg-info text-dark',
+        'CERRADO': 'bg-danger text-white'
+    };
+    return classes[estado] || 'bg-secondary';
+}
+
+function getEstadoIcon(estado) {
+    const icons = {
+        'ABIERTO': 'fa-circle-notch',
+        'EN PROCESO': 'fa-spinner',
+        'CERRADO': 'fa-check-circle'
+    };
+    return icons[estado] || 'fa-question-circle';
+}
+
+function openSolutionModal(ticketId, folio) {
+    const selectElement = document.querySelector('.estado-' + ticketId);
+    const estado = selectElement.value;
+    
+    if (estado !== 'CERRADO') {
+        alert('⚠️ El ticket debe estar en estado CERRADO para agregar solución');
+        return;
+    }
+    
+    document.getElementById('ticketId').value = ticketId;
+    
+    fetch('<?= Url::to(['get-ticket-data']) ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        },
+        body: JSON.stringify({ id: ticketId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('horaFinalizo').value = data.ticket.HoraFinalizo || '';
+            document.getElementById('solucion').value = data.ticket.Solucion || '';
+            document.getElementById('tiempoEfectivo').value = data.ticket.TiempoEfectivo || '';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+    
+    const modal = document.getElementById('solutionModal');
+    modal.classList.add('show');
+    modal.style.display = 'block';
+    document.body.classList.add('modal-open');
+    
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    document.body.appendChild(backdrop);
+}
+
+function saveSolution() {
+    const ticketId = document.getElementById('ticketId').value;
+    const solucion = document.getElementById('solucion').value;
+    const horaFinalizo = document.getElementById('horaFinalizo').value;
+    const tiempoEfectivo = document.getElementById('tiempoEfectivo').value;
+    
+    if (!solucion || !horaFinalizo || !tiempoEfectivo) {
+        alert('⚠️ Por favor completa todos los campos');
+        return;
+    }
+    
+    fetch('<?= Url::to(['save-solution']) ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        },
+        body: JSON.stringify({ 
+            id: ticketId, 
+            solucion: solucion, 
+            horaFinalizo: horaFinalizo,
+            tiempoEfectivo: tiempoEfectivo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Solución guardada exitosamente');
+            closeModal();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'No se pudo guardar'));
+            console.log(data.errors);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error en la solicitud: ' + error);
+    });
+}
+
+function closeModal() {
+    const modal = document.getElementById('solutionModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) backdrop.remove();
+    
+    document.getElementById('horaFinalizo').value = '';
+    document.getElementById('solucion').value = '';
+    document.getElementById('tiempoEfectivo').value = '';
+}
+
+function loadClienteData(selectElement) {
+    const row = selectElement.closest('tr');
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    
+    if (selectedOption.value === '') {
+        return;
+    }
+    
+    const prioridad = selectedOption.getAttribute('data-prioridad');
+    
+    if (prioridad) {
+        row.querySelector('.prioridad').value = prioridad;
+    }
+    row.querySelector('.estado').value = 'ABIERTO';
+}
+
+function toggleFilters(header) {
+    const content = header.nextElementSibling;
+    header.classList.toggle('collapsed');
+    content.classList.toggle('show');
+}
+
+// Busca la función addNewRow() y modifica esta parte:
+function addNewRow() {
+    const table = document.getElementById('ticketsTable');
+    const tbody = table.querySelector('tbody');
+    
+    // ✅ OBTENER EL SIGUIENTE FOLIO AUTOMÁTICAMENTE
+    fetch('<?= \yii\helpers\Url::to(['/tickets/get-next-folio']) ?>')
+        .then(response => response.json())
+        .then(data => {
+            const nextFolio = data.nextFolio || '';
+            
+            const newRow = tbody.insertRow(1); // Insertar después del header
+            newRow.classList.add('new-row');
+            newRow.dataset.isNew = 'true';
+            
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control form-control-sm" value="${nextFolio}" readonly style="background: #e9ecef;"></td>
+                <td>
+                    <select class="form-select form-select-sm" name="Cliente_id" required onchange="cargarSistemas(this)">
+                        <option value="">Seleccionar</option>
+                        <?php foreach ($clientes as $cliente): ?>
+                            <option value="<?= $cliente['id'] ?>"><?= $cliente['Nombre'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" name="Sistema_id" required>
+                        <option value="">Seleccionar</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" name="Servicio_id">
+                        <option value="">Seleccionar</option>
+                        <?php foreach ($servicios as $servicio): ?>
+                            <option value="<?= $servicio['id'] ?>"><?= $servicio['Nombre'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm" name="Usuario_reporta" required></td>
+                <td>
+                    <select class="form-select form-select-sm" name="Asignado_a">
+                        <option value="">Seleccionar</option>
+                        <?php foreach ($Usuarios as $usuario): ?>
+                            <option value="<?= $usuario['id'] ?>"><?= $usuario['email'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+                <td><input type="datetime-local" class="form-control form-control-sm" name="HoraProgramada"></td>
+                <td><input type="datetime-local" class="form-control form-control-sm" name="HoraInicio"></td>
+                <td><textarea class="form-control form-control-sm" name="Descripcion" rows="1" required></textarea></td>
+                <td>
+                    <select class="form-select form-select-sm" name="Prioridad">
+                        <option value="BAJA">BAJA</option>
+                        <option value="MEDIA" selected>MEDIA</option>
+                        <option value="ALTA">ALTA</option>
+                        <option value="URGENTE">URGENTE</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm" name="Estado">
+                        <option value="ABIERTO" selected>Abierto</option>
+                        <option value="EN PROCESO">En Proceso</option>
+                        <option value="CERRADO">Cerrado</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-success" onclick="saveNewRow(this)">
+                        <i class="fas fa-save"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="cancelNewRow(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+        })
+        .catch(error => {
+            console.error('Error obteniendo folio:', error);
+            alert('Error al obtener el siguiente folio');
+        });
+}
+
+// ✅ FUNCIONES PARA COMENTARIOS
+function openComentariosModal(ticketId, folio) {
+    document.getElementById('ticketIdComentarios').value = ticketId;
+    document.getElementById('ticketFolioComentarios').textContent = folio;
+    document.getElementById('nuevoComentario').value = '';
+    document.getElementById('tipoComentario').value = 'comentario';
+    
+    cargarComentarios(ticketId);
+    
+    const modal = document.getElementById('comentariosModal');
+    modal.classList.add('show');
+    modal.style.display = 'block';
+    document.body.classList.add('modal-open');
+    
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    backdrop.id = 'comentariosBackdrop';
+    document.body.appendChild(backdrop);
+}
+
+function cargarComentarios(ticketId) {
+    const lista = document.getElementById('listaComentarios');
+    lista.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>';
+    
+    fetch('<?= Url::to(['/tickets/obtener-comentarios']) ?>?ticket_id=' + ticketId, {
+        headers: {
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarComentarios(data.comentarios);
+        } else {
+            lista.innerHTML = '<div class="alert alert-danger">Error al cargar comentarios</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        lista.innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+    });
+}
+
+function mostrarComentarios(comentarios) {
+    const lista = document.getElementById('listaComentarios');
+    
+    if (comentarios.length === 0) {
+        lista.innerHTML = `
+            <div class="comentarios-empty">
+                <i class="fas fa-comments"></i>
+                <p>No hay comentarios aún</p>
+                <small>Sé el primero en comentar</small>
+            </div>
+        `;
+        return;
+    }
+    
+    lista.innerHTML = comentarios.map(c => `
+        <div class="comentario-item ${c.tipo}">
+            <div class="comentario-header">
+                <div class="comentario-usuario">
+                    <i class="fas fa-user-circle"></i>
+                    ${c.usuario}
+                    <span class="comentario-tipo ${c.tipo}">${getTipoLabel(c.tipo)}</span>
+                </div>
+                <span class="comentario-fecha">
+                    <i class="fas fa-clock"></i> ${c.fecha}
+                </span>
+            </div>
+            <p class="comentario-texto">${escapeHtml(c.comentario)}</p>
+        </div>
+    `).join('');
+}
+
+function agregarComentario() {
+    const ticketId = document.getElementById('ticketIdComentarios').value;
+    const comentario = document.getElementById('nuevoComentario').value.trim();
+    const tipo = document.getElementById('tipoComentario').value;
+    
+    if (!comentario) {
+        alert('Por favor escribe un comentario');
+        return;
+    }
+    
+    fetch('<?= Url::to(['/tickets/agregar-comentario']) ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        },
+        body: JSON.stringify({
+            ticket_id: ticketId,
+            comentario: comentario,
+            tipo: tipo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('nuevoComentario').value = '';
+            cargarComentarios(ticketId);
+        } else {
+            alert('Error al agregar comentario: ' + (data.message || 'Desconocido'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+
+function closeComentariosModal() {
+    const modal = document.getElementById('comentariosModal');
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    
+    const backdrop = document.getElementById('comentariosBackdrop');
+    if (backdrop) backdrop.remove();
+}
+
+function getTipoLabel(tipo) {
+    const labels = {
+        'comentario': '💬 Comentario',
+        'nota_interna': '📝 Nota Interna',
+        'solucion': '✅ Solución'
+    };
+    return labels[tipo] || tipo;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 </script>

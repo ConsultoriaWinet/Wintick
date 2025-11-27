@@ -36,6 +36,8 @@ class m251118_164345_Clientes extends Migration
             'Tiempo' => $this->integer()->notNull(),        //Tiempo Comprado de la empresa - OPCIONAL
             "Whatsapp_contacto" => $this->integer()->notNull(),      //Whatsapp de la empresa
             "Telefono" => $this->integer()->notNull(),      //Telefono de la empresa
+            'Prioridad' => $this->string()->notNull(), //Prioridad del cliente
+            'Tipo_servicio' => $this->string()->notNull(), //Tipo de servicio contratado
             'Estado' => $this->boolean()->notNull()->defaultValue(1),
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
