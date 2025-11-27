@@ -483,6 +483,21 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
 
     <!-- JavaScript para notificaciones -->
     <script>
+    // ========================================
+    // CONFIGURACIÓN DE TOAST (SweetAlert2)
+    // ========================================
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    });
+
     let notificationCheckInterval;
 
     function inicializarNotificaciones() {
@@ -585,10 +600,20 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                Toast.fire({
+                    icon: "success",
+                    title: "Notificación marcada como leída"
+                });
                 cargarNotificaciones();
             }
         })
-        .catch(error => console.error('❌ Error:', error));
+        .catch(error => {
+            console.error('❌ Error:', error);
+            Toast.fire({
+                icon: "error",
+                title: "Error al marcar notificación"
+            });
+        });
     }
 
     function marcarTodasLeidas(event) {
@@ -607,10 +632,20 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                Toast.fire({
+                    icon: "success",
+                    title: "Todas las notificaciones marcadas"
+                });
                 cargarNotificaciones();
             }
         })
-        .catch(error => console.error('❌ Error:', error));
+        .catch(error => {
+            console.error('❌ Error:', error);
+            Toast.fire({
+                icon: "error",
+                title: "Error al marcar notificaciones"
+            });
+        });
     }
 
     function getIconoNotificacion(tipo) {
@@ -640,6 +675,16 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
     document.addEventListener('DOMContentLoaded', function() {
         <?php if (!Yii::$app->user->isGuest): ?>
             inicializarNotificaciones();
+            
+            // Mostrar Toast de bienvenida después del login
+            <?php if (Yii::$app->session->hasFlash('loginSuccess')): ?>
+                setTimeout(function() {
+                    Toast.fire({
+                        icon: "success",
+                        title: "¡Bienvenido de nuevo! 👋"
+                    });
+                }, 300);
+            <?php endif; ?>
         <?php endif; ?>
     });
     </script>

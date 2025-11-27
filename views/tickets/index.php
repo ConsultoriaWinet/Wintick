@@ -487,7 +487,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     }
 
     .no-results-row.active {
-        display: table-row;
+        display: table-row; 
     }
 
     /* ========================================
