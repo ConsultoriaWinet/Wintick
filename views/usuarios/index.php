@@ -4,8 +4,6 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
-$this->title = 'Usuarios';
-$this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="usuarios-index">
@@ -104,9 +102,54 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 </div>
 
+<!-- SWEETALERT TOAST -->
+<script>
+    window.addEventListener("DOMContentLoaded", function () {
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        <?php if (Yii::$app->request->get('created')): ?>
+            Toast.fire({
+                icon: "success",
+                title: "Usuario creado correctamente"
+            });
+        <?php endif; ?>
+
+        <?php if (Yii::$app->request->get('updated')): ?>
+            Toast.fire({
+                icon: "success",
+                title: "Usuario actualizado correctamente"
+            });
+        <?php endif; ?>
+
+        <?php if (Yii::$app->request->get('deleted')): ?>
+            Toast.fire({
+                icon: "success",
+                title: "Usuario eliminado correctamente"
+            });
+        <?php endif; ?>
+
+    });
+</script>
+
 <?php
 /* ------------------ CSS ------------------ */
 $this->registerCss("
+
+body {
+    padding-top: 0px; /* Ajusta según la altura de tu navbar */
+}
+    
 .usuario-card {
     min-height: 260px;
     border-radius: 12px;
@@ -161,12 +204,6 @@ document.querySelectorAll('.usuario-card').forEach(card => {
         const email = this.dataset.email;
         const color = this.dataset.color;
 
-// Cerrar automáticamente el color picker al seleccionar un color
-        const colorInput = document.getElementById('editUserColor');
-        colorInput.addEventListener('mouseup', function() {
-            this.blur();
-        });
-        
         document.getElementById('usuarioModalLabel').textContent = nombre;
         const avatar = document.getElementById('usuarioModalAvatar');
         avatar.textContent = nombre[0].toUpperCase();
@@ -180,7 +217,7 @@ document.querySelectorAll('.usuario-card').forEach(card => {
         document.getElementById('modalEditBtn').dataset.email = email;
         document.getElementById('modalEditBtn').dataset.color = color;
 
-        document.getElementById('modalDeleteBtn').href = 'delete?id=' + id;
+        document.getElementById('modalDeleteBtn').dataset.id = id;
 
         document.getElementById('usuarioModalView').style.display = '';
         document.getElementById('usuarioModalEdit').style.display = 'none';
@@ -196,26 +233,46 @@ document.getElementById('modalEditBtn').addEventListener('click', function(e) {
     document.getElementById('usuarioModalView').style.display = 'none';
     document.getElementById('usuarioModalEdit').style.display = '';
 
-    // Rellenar el formulario con los datos actuales
+    // Llenar el formulario
     document.getElementById('editUserId').value = this.dataset.id;
     document.getElementById('editUserNombre').value = this.dataset.nombre;
     document.getElementById('editUserEmail').value = this.dataset.email;
     document.getElementById('editUserColor').value = this.dataset.color;
 
-    // Cambiar el action para incluir el id en la URL
     document.getElementById('editUserForm').action = 'update?id=' + this.dataset.id;
 });
 
-// Botón cancelar vuelve a la vista normal
+// Botón cancelar
 document.getElementById('cancelEditBtn').addEventListener('click', function() {
     document.getElementById('usuarioModalView').style.display = '';
     document.getElementById('usuarioModalEdit').style.display = 'none';
 });
 
-// Puedes manejar el submit del formulario aquí si lo deseas
-document.getElementById('editUserForm').addEventListener('submit', function(e) {
-    // No pongas e.preventDefault(); para que el formulario se envíe normalmente
-    // El formulario se enviará al action del modal (puedes ajustar el action si lo necesitas)
+// Cerrar color picker automáticamente
+const colorInput = document.getElementById('editUserColor');
+colorInput.addEventListener('input', function () {
+    this.blur();
+});
+
+// Confirmación al eliminar usuario
+document.getElementById('modalDeleteBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const id = this.dataset.id;
+
+    Swal.fire({
+        title: "¿Eliminar usuario?",
+        text: "Esta acción no se puede deshacer",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Eliminar",
+        cancelButtonText: "Cancelar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = 'delete?id=' + id;
+        }
+    });
 });
 JS;
 

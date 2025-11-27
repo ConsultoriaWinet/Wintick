@@ -82,6 +82,24 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
     }
 
     /* ========================================
+       Animacion Header
+       ======================================== */
+    #mainHeader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1030;
+        transition: top 0.3s, background-color 0.3s;
+    }
+
+    /* Ajusta el padding del body según la altura de tu navbar */
+    body {
+        padding-top: 70px;
+    }
+
+
+    /* ========================================
        DROPDOWN USUARIO
        ======================================== */
     .user-dropdown {
@@ -141,6 +159,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
             opacity: 0;
             transform: translateY(-10px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -383,18 +402,21 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
 <body class="d-flex flex-column h-100">
     <?php $this->beginBody() ?>
 
-    <header id="header">
+    <header id="mainHeader">
         <?php if (
             Yii::$app->controller->id !== 'site' ||
             !in_array(Yii::$app->controller->action->id, ['login', 'requestpassword', 'resetpassword'])
         ): ?>
             <?php
+
             NavBar::begin([
                 'brandLabel' => Yii::$app->name,
                 'brandUrl' => Yii::$app->homeUrl,
-                'options' => ['class' => 'navbar-expand-md elpepe fixed-top']
+                'options' => [
+                    'class' => 'navbar navbar-expand-lg navbar-light bg-light shadow-sm',
+                ],
             ]);
-            
+
             echo Nav::widget([
                 'options' => ['class' => 'navbar-nav'],
                 'items' => [
@@ -412,7 +434,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                     <div class="notification-bell" onclick="toggleNotifications()" style="position: relative;">
                         <i class="fas fa-bell"></i>
                         <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
-                        
+
                         <div class="notification-dropdown" id="notificationDropdown">
                             <div class="notification-header">
                                 <span><i class="fas fa-bell"></i> Notificaciones</span>
@@ -436,18 +458,18 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                             <span><?= Html::encode(Yii::$app->user->identity->email) ?></span>
                             <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
                         </div>
-                        
+
                         <div class="user-dropdown-menu" id="userDropdownMenu">
                             <div class="user-dropdown-header">
                                 <strong><?= Html::encode(Yii::$app->user->identity->email) ?></strong>
                                 <small>Usuario Activo</small>
                             </div>
-                            
+
                             <?= Html::beginForm(['/site/logout'], 'post') ?>
-                                <button type="submit" class="user-dropdown-item logout-btn">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Cerrar Sesión
-                                </button>
+                            <button type="submit" class="user-dropdown-item logout-btn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Cerrar Sesión
+                            </button>
                             <?= Html::endForm() ?>
                         </div>
                     </div>
@@ -481,68 +503,91 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         </div>
     </footer>
 
+    <?php
+    $js = <<<JS
+let lastScrollTop = 0;
+const header = document.getElementById('mainHeader');
+
+window.addEventListener('scroll', function() {
+    let st = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (st > lastScrollTop && st > 100) {
+        // Scrolleando hacia abajo, ocultar
+        header.style.top = "-80px"; // Ajusta según la altura de tu navbar
+    } else if (st < lastScrollTop) {
+        // Scrolleando hacia arriba, mostrar
+        header.style.top = "0";
+    }
+
+    lastScrollTop = st <= 0 ? 0 : st;
+});
+JS;
+
+    $this->registerJs($js);
+    ?>
+
     <!-- JavaScript para notificaciones -->
     <script>
-    let notificationCheckInterval;
+        let notificationCheckInterval;
 
-    function inicializarNotificaciones() {
-        console.log('🔔 Inicializando notificaciones...');
-        notificationCheckInterval = setInterval(cargarNotificaciones, 8000);
-        cargarNotificaciones();
-    }
-
-    function cargarNotificaciones() {
-        console.log('📡 Cargando notificaciones...');
-        
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        const token = csrfToken ? csrfToken.getAttribute('content') : '';
-        
-        fetch('<?= Url::to(['/tickets/obtener-notificaciones']) ?>', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-Token': token,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('📊 Datos recibidos:', data);
-            if (data.success) {
-                mostrarNotificaciones(data.notificaciones);
-            }
-        })
-        .catch(error => console.error('❌ Error cargando notificaciones:', error));
-    }
-
-    function mostrarNotificaciones(notificaciones) {
-        console.log('👀 Total de notificaciones:', notificaciones.length);
-        const notifList = document.getElementById('notificationList');
-        const badge = document.getElementById('notificationCount');
-        const noLeidas = notificaciones.filter(n => !n.leida).length;
-        
-        console.log('📢 No leídas:', noLeidas);
-        
-        if (noLeidas > 0) {
-            badge.textContent = noLeidas;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
+        function inicializarNotificaciones() {
+            console.log('🔔 Inicializando notificaciones...');
+            notificationCheckInterval = setInterval(cargarNotificaciones, 8000);
+            cargarNotificaciones();
         }
-        
-        if (notificaciones.length === 0) {
-            notifList.innerHTML = `
+
+        function cargarNotificaciones() {
+            console.log('📡 Cargando notificaciones...');
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            const token = csrfToken ? csrfToken.getAttribute('content') : '';
+
+            fetch('<?= Url::to(['/tickets/obtener-notificaciones']) ?>', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': token,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📊 Datos recibidos:', data);
+                    if (data.success) {
+                        mostrarNotificaciones(data.notificaciones);
+                    }
+                })
+                .catch(error => console.error('❌ Error cargando notificaciones:', error));
+        }
+
+        function mostrarNotificaciones(notificaciones) {
+            console.log('👀 Total de notificaciones:', notificaciones.length);
+            const notifList = document.getElementById('notificationList');
+            const badge = document.getElementById('notificationCount');
+            const noLeidas = notificaciones.filter(n => !n.leida).length;
+
+            console.log('📢 No leídas:', noLeidas);
+
+            if (noLeidas > 0) {
+                badge.textContent = noLeidas;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (notificaciones.length === 0) {
+                notifList.innerHTML = `
                 <div class="notification-empty">
                     <i class="fas fa-check-circle"></i><br>
                     <small>No hay notificaciones</small>
                 </div>
             `;
-            return;
-        }
-        
-        notifList.innerHTML = notificaciones.map(notif => {
-            const iconClass = notif.tipo || 'asignado';
-            const icono = getIconoNotificacion(notif.tipo);
-            return `
+                return;
+            }
+
+            notifList.innerHTML = notificaciones.map(notif => {
+                const iconClass = notif.tipo || 'asignado';
+                const icono = getIconoNotificacion(notif.tipo);
+                return `
                 <div class="notification-item ${!notif.leida ? 'unread' : ''}" 
                      onclick="marcarNotificacion(${notif.id})">
                     <div class="notification-icon ${iconClass}">
@@ -555,96 +600,98 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                     </div>
                 </div>
             `;
-        }).join('');
-    }
-
-    function toggleNotifications() {
-        const dropdown = document.getElementById('notificationDropdown');
-        dropdown.classList.toggle('show');
-        document.getElementById('userDropdownMenu').classList.remove('show');
-    }
-
-    function toggleUserMenu() {
-        const menu = document.getElementById('userDropdownMenu');
-        menu.classList.toggle('show');
-        document.getElementById('notificationDropdown').classList.remove('show');
-    }
-
-    function marcarNotificacion(notifId) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        const token = csrfToken ? csrfToken.getAttribute('content') : '';
-        
-        fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': token
-            },
-            body: JSON.stringify({ notif_id: notifId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                cargarNotificaciones();
-            }
-        })
-        .catch(error => console.error('❌ Error:', error));
-    }
-
-    function marcarTodasLeidas(event) {
-        event.stopPropagation();
-        
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        const token = csrfToken ? csrfToken.getAttribute('content') : '';
-        
-        fetch('<?= Url::to(['/tickets/marcar-todas-leidas']) ?>', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-Token': token,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                cargarNotificaciones();
-            }
-        })
-        .catch(error => console.error('❌ Error:', error));
-    }
-
-    function getIconoNotificacion(tipo) {
-        const iconos = {
-            'asignado': 'user-check',
-            'comentario': 'comment',
-            'estado_cambio': 'sync-alt'
-        };
-        return iconos[tipo] || 'bell';
-    }
-
-    document.addEventListener('click', function(e) {
-        const bell = document.querySelector('.notification-bell');
-        const dropdown = document.getElementById('notificationDropdown');
-        const userToggle = document.querySelector('.user-dropdown-toggle');
-        const userMenu = document.getElementById('userDropdownMenu');
-        
-        if (bell && dropdown && !bell.contains(e.target)) {
-            dropdown.classList.remove('show');
+            }).join('');
         }
-        
-        if (userToggle && userMenu && !userToggle.contains(e.target) && !userMenu.contains(e.target)) {
-            userMenu.classList.remove('show');
-        }
-    });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        <?php if (!Yii::$app->user->isGuest): ?>
-            inicializarNotificaciones();
-        <?php endif; ?>
-    });
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+            document.getElementById('userDropdownMenu').classList.remove('show');
+        }
+
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdownMenu');
+            menu.classList.toggle('show');
+            document.getElementById('notificationDropdown').classList.remove('show');
+        }
+
+        function marcarNotificacion(notifId) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            const token = csrfToken ? csrfToken.getAttribute('content') : '';
+
+            fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': token
+                },
+                body: JSON.stringify({ notif_id: notifId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        cargarNotificaciones();
+                    }
+                })
+                .catch(error => console.error('❌ Error:', error));
+        }
+
+        function marcarTodasLeidas(event) {
+            event.stopPropagation();
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            const token = csrfToken ? csrfToken.getAttribute('content') : '';
+
+            fetch('<?= Url::to(['/tickets/marcar-todas-leidas']) ?>', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': token,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        cargarNotificaciones();
+                    }
+                })
+                .catch(error => console.error('❌ Error:', error));
+        }
+
+        function getIconoNotificacion(tipo) {
+            const iconos = {
+                'asignado': 'user-check',
+                'comentario': 'comment',
+                'estado_cambio': 'sync-alt'
+            };
+            return iconos[tipo] || 'bell';
+        }
+
+        document.addEventListener('click', function (e) {
+            const bell = document.querySelector('.notification-bell');
+            const dropdown = document.getElementById('notificationDropdown');
+            const userToggle = document.querySelector('.user-dropdown-toggle');
+            const userMenu = document.getElementById('userDropdownMenu');
+
+            if (bell && dropdown && !bell.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+
+            if (userToggle && userMenu && !userToggle.contains(e.target) && !userMenu.contains(e.target)) {
+                userMenu.classList.remove('show');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            <?php if (!Yii::$app->user->isGuest): ?>
+                inicializarNotificaciones();
+            <?php endif; ?>
+        });
     </script>
 
     <?php $this->endBody() ?>
+
 </body>
+
 </html>
 <?php $this->endPage() ?>

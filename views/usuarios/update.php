@@ -48,15 +48,29 @@ $this->params['breadcrumbs'][] = 'Editar';
 </div>
 
 <?php
-// Si el formulario se envía, guardar y redirigir con parámetros
-if ($model->load(Yii::$app->request->post()) && $model->save()) {
-    return $this->redirect([
-        'index',
-        'updated' => 1,
-        'id' => $model->id,
-        'nombre' => $model->Nombre,
-        'email' => $model->email,
-        'color' => $model->color
-    ]);
-}
+// Script para cerrar el selector de color automáticamente
+$script = <<<JS
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.querySelector('#formEditUsuario input[type="color"]');
+
+    if (colorInput) {
+        // Cerrar al seleccionar color (arrastrando)
+        colorInput.addEventListener('input', function() {
+            this.blur();
+        });
+
+        // Cerrar al soltar el mouse
+        colorInput.addEventListener('mouseup', function() {
+            this.blur();
+        });
+
+        // Cerrar después de un cambio final (también en móviles)
+        colorInput.addEventListener('change', function() {
+            this.blur();
+        });
+    }
+});
+JS;
+
+$this->registerJs($script);
 ?>
