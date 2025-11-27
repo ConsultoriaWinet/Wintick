@@ -504,7 +504,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
     .bg-danger { background: #9f8241;}
     .bg-warning { background: #9f8241; }
-    .bg-info { background: ##9f8241; }
+    .bg-info { background: #9f8241; }
     .bg-primary { background:#9f8241; }
 
     /* Estados clickeables */
