@@ -502,10 +502,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         letter-spacing: 0.5px;
     }
 
-    .bg-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; }
-    .bg-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; }
-    .bg-info { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important; }
-    .bg-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
+    .bg-danger { background: #9f8241;}
+    .bg-warning { background: #9f8241; }
+    .bg-info { background: ##9f8241; }
+    .bg-primary { background:#9f8241; }
 
     /* Estados clickeables */
     .estado-clickeable {
