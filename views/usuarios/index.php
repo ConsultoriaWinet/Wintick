@@ -1,5 +1,4 @@
 <?php
-
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -23,7 +22,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card usuario-card flex-fill shadow-sm" data-nombre="<?= Html::encode($usuario->Nombre) ?>"
                     data-email="<?= Html::encode($usuario->email) ?>" data-color="<?= Html::encode($usuario->color) ?>"
                     data-id="<?= $usuario->id ?>" style="cursor:pointer;">
-
                     <div class="card-body text-center d-flex flex-column align-items-center">
                         <div class="usuario-avatar mb-3" style="background-color: <?= Html::encode($usuario->color) ?>;">
                             <?= strtoupper(substr(Html::encode($usuario->Nombre), 0, 1)) ?>
@@ -40,34 +38,71 @@ $this->params['breadcrumbs'][] = $this->title;
 
 </div>
 
-
 <!-- MODAL -->
 <div class="modal fade" id="usuarioModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content" id="usuarioModalContent">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="usuarioModalLabel"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body">
-                <!-- Aquí se mostrará la info o el formulario AJAX -->
-                <div class="d-flex flex-column align-items-center" id="userStaticInfo">
-                    <div id="usuarioModalAvatar" class="usuario-avatar mb-3"></div>
+            <div class="modal-body text-center" id="usuarioModalBody">
+                <div id="usuarioModalView">
+                    <div id="usuarioModalAvatar" class="usuario-avatar mb-3"
+                        style="margin:auto; width:100px; height:100px; font-size:40px;"></div>
                     <p><strong>Email:</strong> <span id="usuarioModalEmail"></span></p>
                     <p><strong>Color:</strong> <span id="usuarioModalColor"></span></p>
+
+                    <div class="mt-3">
+                        <?= Html::a('Editar', '#', ['class' => 'btn btn-warning', 'id' => 'modalEditBtn']) ?>
+                        <?= Html::a('Eliminar', '#', ['class' => 'btn btn-danger', 'id' => 'modalDeleteBtn']) ?>
+                    </div>
+                </div>
+                <div id="usuarioModalEdit" style="display:none;">
+                    <form id="editUserForm" method="post" action="" class="p-3 rounded-3 bg-light shadow-sm">
+                        <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
+                        <input type="hidden" id="editUserId" name="Usuarios[id]">
+                        <div class="mb-3 text-start">
+                            <label for="editUserNombre" class="form-label fw-semibold">
+                                <i class="bi bi-person"></i> Nombre
+                            </label>
+                            <input type="text" class="form-control form-control-sm rounded-pill" id="editUserNombre"
+                                name="Usuarios[Nombre]" required autocomplete="off">
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label for="editUserEmail" class="form-label fw-semibold">
+                                <i class="bi bi-envelope"></i> Email
+                            </label>
+                            <input type="email" class="form-control form-control-sm rounded-pill" id="editUserEmail"
+                                name="Usuarios[email]" required autocomplete="off">
+                        </div>
+                        <div class="mb-4 text-start">
+                            <label for="editUserColor" class="form-label fw-semibold">
+                                <i class="bi bi-palette"></i> Color
+                            </label>
+                            <input type="color" class="form-control form-control-color ms-2" id="editUserColor"
+                                name="Usuarios[color]" style="width: 3rem; height: 2rem; padding: 0;">
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-success rounded-pill px-4">
+                                <i class="bi bi-check-circle"></i> Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                id="cancelEditBtn">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <a href="#" class="btn btn-warning" id="modalEditBtn">Editar</a>
-                <a href="#" class="btn btn-danger" id="modalDeleteBtn">Eliminar</a>
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
-
 
 <?php
 /* ------------------ CSS ------------------ */
@@ -93,95 +128,96 @@ $this->registerCss("
     justify-content: center;
     align-items: center;
 }
+.usuario-modal-edit .form-label {
+    font-size: 0.95rem;
+    color: #495057;
+}
+.usuario-modal-edit .form-control {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+.usuario-modal-edit .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.1rem rgba(13,110,253,.25);
+}
+.usuario-modal-edit .btn {
+    font-size: 0.95rem;
+}
+.usuario-modal-edit {
+    background: #f6f8fa;
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
 ");
 ?>
 
-
 <?php
-/* ------------------ JAVASCRIPT ------------------ */
-
-$script = <<<JS
-
-// ---------------------
-// ABRIR MODAL CON INFO
-// ---------------------
+$js = <<<JS
+// Abrir modal al hacer clic en tarjeta
 document.querySelectorAll('.usuario-card').forEach(card => {
     card.addEventListener('click', function() {
-
         const id = this.dataset.id;
         const nombre = this.dataset.nombre;
         const email = this.dataset.email;
         const color = this.dataset.color;
 
-        document.getElementById("usuarioModalLabel").textContent = nombre;
-
-        const avatar = document.getElementById("usuarioModalAvatar");
+// Cerrar automáticamente el color picker al seleccionar un color
+        const colorInput = document.getElementById('editUserColor');
+        colorInput.addEventListener('mouseup', function() {
+            this.blur();
+        });
+        
+        document.getElementById('usuarioModalLabel').textContent = nombre;
+        const avatar = document.getElementById('usuarioModalAvatar');
         avatar.textContent = nombre[0].toUpperCase();
         avatar.style.backgroundColor = color;
 
-        document.getElementById("usuarioModalEmail").textContent = email;
-        document.getElementById("usuarioModalColor").textContent = color;
+        document.getElementById('usuarioModalEmail').textContent = email;
+        document.getElementById('usuarioModalColor').textContent = color;
 
-        document.getElementById("modalEditBtn").dataset.id = id;
-        document.getElementById("modalDeleteBtn").href = "delete?id=" + id;
+        document.getElementById('modalEditBtn').dataset.id = id;
+        document.getElementById('modalEditBtn').dataset.nombre = nombre;
+        document.getElementById('modalEditBtn').dataset.email = email;
+        document.getElementById('modalEditBtn').dataset.color = color;
 
-        const modal = new bootstrap.Modal(document.getElementById("usuarioModal"));
+        document.getElementById('modalDeleteBtn').href = 'delete?id=' + id;
+
+        document.getElementById('usuarioModalView').style.display = '';
+        document.getElementById('usuarioModalEdit').style.display = 'none';
+
+        const modal = new bootstrap.Modal(document.getElementById('usuarioModal'));
         modal.show();
     });
 });
 
-
-
-// ------------------------
-// EDITAR VIA AJAX
-// ------------------------
-document.getElementById("modalEditBtn").addEventListener("click", function(e){
+// Mostrar formulario de edición en el modal
+document.getElementById('modalEditBtn').addEventListener('click', function(e) {
     e.preventDefault();
-    const id = this.dataset.id;
+    document.getElementById('usuarioModalView').style.display = 'none';
+    document.getElementById('usuarioModalEdit').style.display = '';
 
-    fetch("update?id=" + id)
-        .then(r => r.text())
-        .then(html => {
-            document.querySelector("#usuarioModal .modal-body").innerHTML = html;
+    // Rellenar el formulario con los datos actuales
+    document.getElementById('editUserId').value = this.dataset.id;
+    document.getElementById('editUserNombre').value = this.dataset.nombre;
+    document.getElementById('editUserEmail').value = this.dataset.email;
+    document.getElementById('editUserColor').value = this.dataset.color;
 
-            const form = document.getElementById("formEditUsuario");
-
-            // Guardar cambios AJAX
-            form.addEventListener("submit", function(ev){
-                ev.preventDefault();
-
-                const formData = new FormData(form);
-
-                fetch(form.action, {
-                    method: "POST",
-                    body: formData
-                })
-                .then(r => r.json())
-                .then(resp => {
-
-                    if(resp.success){
-
-                        // Actualizar tarjeta sin recargar
-                        const card = document.querySelector(".usuario-card[data-id='" + id + "']");
-                        card.dataset.nombre = resp.data.Nombre;
-                        card.dataset.email = resp.data.email;
-                        card.dataset.color = resp.data.color;
-
-                        card.querySelector(".usuario-avatar").style.backgroundColor = resp.data.color;
-                        card.querySelector(".usuario-avatar").textContent = resp.data.Nombre[0].toUpperCase();
-                        card.querySelector(".card-title").textContent = resp.data.Nombre;
-                        card.querySelector(".card-text").innerHTML = "<strong>Email:</strong> " + resp.data.email;
-
-                        // Restaurar vista normal del modal
-                        location.reload(); // opcional, por si quieres refrescar modal
-                    }
-                });
-            });
-
-        });
+    // Cambiar el action para incluir el id en la URL
+    document.getElementById('editUserForm').action = 'update?id=' + this.dataset.id;
 });
 
+// Botón cancelar vuelve a la vista normal
+document.getElementById('cancelEditBtn').addEventListener('click', function() {
+    document.getElementById('usuarioModalView').style.display = '';
+    document.getElementById('usuarioModalEdit').style.display = 'none';
+});
+
+// Puedes manejar el submit del formulario aquí si lo deseas
+document.getElementById('editUserForm').addEventListener('submit', function(e) {
+    // No pongas e.preventDefault(); para que el formulario se envíe normalmente
+    // El formulario se enviará al action del modal (puedes ajustar el action si lo necesitas)
+});
 JS;
 
-$this->registerJs($script);
+$this->registerJs($js);
 ?>

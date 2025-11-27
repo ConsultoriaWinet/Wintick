@@ -75,46 +75,27 @@ class UsuariosController extends Controller
     {
         $model = $this->findModel($id);
 
-        // --- GUARDAR VIA AJAX ---
-        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post())) {
-
-            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-            if ($model->save()) {
-                return [
-                    'success' => true,
-                    'data' => [
-                        'Nombre' => $model->Nombre,
-                        'email' => $model->email,
-                        'color' => $model->color,
-                    ]
-                ];
+        if (Yii::$app->request->isPost) {
+            if ($model->load(Yii::$app->request->post()) && $model->save()) {
+                Yii::$app->session->setFlash('success', 'Usuario actualizado correctamente.');
+            } else {
+                // Mostrar errores de validación
+                $errores = '';
+                foreach ($model->getErrors() as $campo => $mensajes) {
+                    foreach ($mensajes as $mensaje) {
+                        $errores .= "$campo: $mensaje<br>";
+                    }
+                }
+                Yii::$app->session->setFlash('error', 'No se pudo actualizar el usuario.<br>' . $errores);
             }
-
-            return [
-                'success' => false,
-                'errors' => $model->errors
-            ];
+            return $this->redirect(['index']);
         }
 
-        // --- CARGAR FORMULARIO VIA AJAX ---
-        if (Yii::$app->request->isAjax) {
-            return $this->renderPartial('update-ajax', [
-                'model' => $model,
-            ]);
-        }
-
-        // --- COMPORTAMIENTO NORMAL (NO AJAX) ---
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->redirect(['index']);
     }
 
-    /**----------AJAX PARA LAS TARJETAS DE USUARIO FIN----------*/
+
+
 
 
     /**
