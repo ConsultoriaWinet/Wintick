@@ -96,7 +96,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
 
     /* Ajusta el padding del body según la altura de tu navbar */
     body {
-        padding-top: 70px;
+        padding-top: 80px;
     }
 
 
@@ -506,11 +506,11 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
 
     <?php
     $js = <<<JS
-let lastScrollTop = 0;
-const header = document.getElementById('mainHeader');
+        let lastScrollTop = 0;
+        const header = document.getElementById('mainHeader');
 
-window.addEventListener('scroll', function() {
-    let st = window.pageYOffset || document.documentElement.scrollTop;
+        window.addEventListener('scroll', function() {
+            let st = window.pageYOffset || document.documentElement.scrollTop;
 
     if (st > lastScrollTop && st > 100) {
         // Scrolleando hacia abajo, ocultar

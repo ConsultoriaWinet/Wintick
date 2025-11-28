@@ -29,7 +29,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
        ======================================== */
     body {
         margin: 0 !important;
-        padding: 0 !important;
+        padding-top: 80px;
     }
 
     .tickets-index {

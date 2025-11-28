@@ -6,6 +6,12 @@ use yii\helpers\Html;
 
 ?>
 
+<style>
+    body {
+        padding-top: 80px;
+    }
+</style>
+
 <div class="usuarios-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
