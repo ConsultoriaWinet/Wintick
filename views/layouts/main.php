@@ -378,7 +378,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
     }
 
     .notification-empty {
-        padding: 40px 20px;
+        padding: 40px 10px;
         text-align: center;
         color: var(--text-light);
     }
