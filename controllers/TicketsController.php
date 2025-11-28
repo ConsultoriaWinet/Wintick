@@ -560,145 +560,230 @@ class TicketsController extends Controller
         }
     }
 
-          private function enviarCorreoAsignacion($usuario_id, $ticket_id)
-    {
-        try {
-            // Obtener datos del usuario
-            $usuario = Usuarios::findOne($usuario_id);
-            if (!$usuario || !$usuario->email) {
-                \Yii::error("Usuario sin email: $usuario_id");
-                return false;
-            }
+                private function enviarCorreoAsignacion($usuario_id, $ticket_id)
+        {
+            try {
+                $usuario = Usuarios::findOne($usuario_id);
+                if (!$usuario || !$usuario->email) {
+                    \Yii::error("Usuario sin email: $usuario_id");
+                    return false;
+                }
+                
+                $ticket = Tickets::findOne($ticket_id);
+                if (!$ticket) {
+                    \Yii::error("Ticket no encontrado: $ticket_id");
+                    return false;
+                }
+                
+                $asignador = \Yii::$app->user->identity->email;
+                $clienteNombre = $ticket->cliente ? $ticket->cliente->Nombre : 'N/A';
+                $sistemaNombre = $ticket->sistema ? $ticket->sistema->Nombre : 'N/A';
+                $servicioNombre = $ticket->servicio ? $ticket->servicio->Nombre : 'N/A';
+                $prioridadColor = $this->getPrioridadColor($ticket->Prioridad);
+                $ticketUrl = \yii\helpers\Url::to(['tickets/view', 'id' => $ticket->id], true);
+                $fechaFormateada = date('d M, Y · H:i', strtotime($ticket->HoraInicio));
+
+                $htmlBody = <<<HTML
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #fafafa; font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;">
             
-            // Obtener datos del ticket
-            $ticket = Tickets::findOne($ticket_id);
-            if (!$ticket) {
-                \Yii::error("Ticket no encontrado: $ticket_id");
-                return false;
-            }
-            
-            // Usuario que asignó
-            $asignador = \Yii::$app->user->identity->email;
-            
-            // Cliente, Sistema, Servicio
-            $clienteNombre = $ticket->cliente ? $ticket->cliente->Nombre : 'N/A';
-            $sistemaNombre = $ticket->sistema ? $ticket->sistema->Nombre : 'N/A';
-            $servicioNombre = $ticket->servicio ? $ticket->servicio->Nombre : 'N/A';
-            
-            // Enviar correo
-            \Yii::$app->mailer->compose()
-                ->setFrom(['arturo.villa.rey@gmail.com' => 'Sistema Wicontrol'])
-                ->setTo($usuario->email)
-                ->setSubject('🎫 Nuevo Ticket Asignado - Folio: ' . $ticket->Folio)
-                ->setHtmlBody('
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-                        <!-- Header -->
-                        <div style="background: linear-gradient(135deg, #8BA590 0%, #6b8a70 100%); color: white; padding: 30px 20px; border-radius: 0; text-align: center;">
-                            <h1 style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;">🎫 Nuevo Ticket Asignado</h1>
-                        </div>
-                        
-                        <!-- Body -->
-                        <div style="background: #f9fafb; padding: 30px 20px;">
-                            <p style="margin: 0 0 20px; font-size: 16px; color: #000000; line-height: 1.6;">
-                                Hola <strong style="color: #8BA590;">' . htmlspecialchars($usuario->email) . '</strong>,
-                            </p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fafafa; padding: 60px 20px;">
+                <tr>
+                    <td align="center">
+                        <table role="presentation" width="520" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 40px rgba(139, 165, 144, 0.08);">
                             
-                            <p style="margin: 0 0 25px; color: #6b7280; font-size: 15px; line-height: 1.6;">
-                                <strong style="color: #000000;">' . htmlspecialchars($asignador) . '</strong> te ha asignado un nuevo ticket que requiere tu atención.
-                            </p>
-                            
-                            <!-- Ticket Details Card -->
-                            <div style="background: #ffffff; padding: 20px; border-radius: 8px; margin: 25px 0; border: 2px solid #8BA590; box-shadow: 0 2px 8px rgba(139, 165, 144, 0.1);">
-                                <table style="width: 100%; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000; width: 35%; border-bottom: 1px solid #e5e7eb;">📋 Folio:</td>
-                                        <td style="padding: 12px 0; color: #8BA590; border-bottom: 1px solid #e5e7eb;">
-                                            <strong style="font-size: 18px; font-weight: 700;">' . htmlspecialchars($ticket->Folio) . '</strong>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000; border-bottom: 1px solid #e5e7eb;">👤 Cliente:</td>
-                                        <td style="padding: 12px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">' . htmlspecialchars($clienteNombre) . '</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000; border-bottom: 1px solid #e5e7eb;">🖥️ Sistema:</td>
-                                        <td style="padding: 12px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">' . htmlspecialchars($sistemaNombre) . '</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000; border-bottom: 1px solid #e5e7eb;">🔧 Servicio:</td>
-                                        <td style="padding: 12px 0; color: #6b7280; border-bottom: 1px solid #e5e7eb;">' . htmlspecialchars($servicioNombre) . '</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000; border-bottom: 1px solid #e5e7eb;">⚠️ Prioridad:</td>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
-                                            <span style="background: ' . $this->getPrioridadColor($ticket->Prioridad) . '; color: white; padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 600; text-transform: uppercase;">' . htmlspecialchars($ticket->Prioridad) . '</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000; vertical-align: top; border-bottom: 1px solid #e5e7eb;">📝 Descripción:</td>
-                                        <td style="padding: 12px 0; color: #6b7280; line-height: 1.6; border-bottom: 1px solid #e5e7eb;">' . nl2br(htmlspecialchars($ticket->Descripcion)) . '</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-weight: 600; color: #000000;">📅 Fecha:</td>
-                                        <td style="padding: 12px 0; color: #6b7280;">' . date('d/m/Y H:i', strtotime($ticket->Fecha_creacion)) . '</td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
+                            <!-- Accent Line -->
+                            <tr>
+                                <td style="height: 4px; background: linear-gradient(90deg, #8BA590 0%, #a8c4ad 50%, #8BA590 100%);"></td>
+                            </tr>
+
+                            <!-- Header Minimal -->
+                            <tr>
+                                <td style="padding: 48px 48px 0 48px;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td>
+                                                <div style="display: inline-block; background: rgba(139, 165, 144, 0.1); border-radius: 12px; padding: 10px 16px;">
+                                                    <span style="font-size: 11px; font-weight: 600; color: #8BA590; text-transform: uppercase; letter-spacing: 1.5px;">Nuevo Ticket</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 20px;">
+                                                <h1 style="margin: 0; font-size: 32px; font-weight: 300; color: #1a1a1a; letter-spacing: -1px; line-height: 1.2;">
+                                                    Ticket <span style="font-weight: 600; color: #8BA590;">#{$ticket->Folio}</span>
+                                                </h1>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 12px;">
+                                                <p style="margin: 0; font-size: 15px; color: #8c8c8c; line-height: 1.6;">
+                                                    Asignado por <span style="color: #5a5a5a; font-weight: 500;">{$asignador}</span>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Divider -->
+                            <tr>
+                                <td style="padding: 32px 48px;">
+                                    <div style="height: 1px; background: linear-gradient(90deg, transparent 0%, #e8e8e8 20%, #e8e8e8 80%, transparent 100%);"></div>
+                                </td>
+                            </tr>
+
+                            <!-- Content Cards -->
+                            <tr>
+                                <td style="padding: 0 48px;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                        
+                                        <!-- Priority Badge + Service -->
+                                        <tr>
+                                            <td style="padding-bottom: 24px;">
+                                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                                    <tr>
+                                                        <td width="50%" style="vertical-align: top;">
+                                                            <span style="font-size: 11px; font-weight: 500; color: #b0b0b0; text-transform: uppercase; letter-spacing: 0.8px;">Prioridad</span>
+                                                            <div style="margin-top: 8px;">
+                                                                <span style="display: inline-block; background: {$prioridadColor}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px;">{$ticket->Prioridad}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td width="50%" style="vertical-align: top;">
+                                                            <span style="font-size: 11px; font-weight: 500; color: #b0b0b0; text-transform: uppercase; letter-spacing: 0.8px;">Servicio</span>
+                                                            <div style="margin-top: 8px; font-size: 15px; color: #3a3a3a; font-weight: 500;">{$servicioNombre}</div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Info Grid -->
+                                        <tr>
+                                            <td style="background: #f8f9f8; border-radius: 16px; padding: 24px;">
+                                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                                    <tr>
+                                                        <td style="padding-bottom: 20px; border-bottom: 1px solid rgba(139, 165, 144, 0.15);">
+                                                            <span style="font-size: 11px; font-weight: 500; color: #8BA590; text-transform: uppercase; letter-spacing: 0.8px;">Cliente</span>
+                                                            <div style="margin-top: 6px; font-size: 16px; color: #2a2a2a; font-weight: 500;">{$clienteNombre}</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding: 20px 0; border-bottom: 1px solid rgba(139, 165, 144, 0.15);">
+                                                            <span style="font-size: 11px; font-weight: 500; color: #8BA590; text-transform: uppercase; letter-spacing: 0.8px;">Sistema</span>
+                                                            <div style="margin-top: 6px; font-size: 16px; color: #2a2a2a; font-weight: 500;">{$sistemaNombre}</div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="padding-top: 20px;">
+                                                            <span style="font-size: 11px; font-weight: 500; color: #8BA590; text-transform: uppercase; letter-spacing: 0.8px;">Hora de inicio</span>
+                                                            <div style="margin-top: 6px; font-size: 15px; color: #5a5a5a;">{$fechaFormateada}</div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Description -->
+                                        <tr>
+                                            <td style="padding-top: 24px;">
+                                                <span style="font-size: 11px; font-weight: 500; color: #b0b0b0; text-transform: uppercase; letter-spacing: 0.8px;">Descripción</span>
+                                                <div style="margin-top: 10px; font-size: 14px; color: #5a5a5a; line-height: 1.7; padding: 16px; background: #fefefe; border-left: 3px solid #8BA590; border-radius: 0 8px 8px 0;">{$ticket->Descripcion}</div>
+                                            </td>
+                                        </tr>
+
+                                    </table>
+                                </td>
+                            </tr>
+
                             <!-- CTA Button -->
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="' . \yii\helpers\Url::to(['tickets/view', 'id' => $ticket->id], true) . '" 
-                                style="background: linear-gradient(135deg, #8BA590 0%, #6b8a70 100%); 
-                                        color: white; 
-                                        padding: 14px 40px; 
-                                        text-decoration: none; 
-                                        border-radius: 8px; 
-                                        font-weight: 600; 
-                                        font-size: 15px;
-                                        display: inline-block;
-                                        box-shadow: 0 4px 12px rgba(139, 165, 144, 0.3);
-                                        transition: all 0.3s ease;">
-                                    👀 Ver Ticket Completo
-                                </a>
-                            </div>
-                            
-                            <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-                            
+                            <tr>
+                                <td style="padding: 40px 48px;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td align="center">
+                                                <a href="{$ticketUrl}" style="display: inline-block; background: #8BA590; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; letter-spacing: 0.3px; box-shadow: 0 2px 8px rgba(139, 165, 144, 0.3), 0 4px 20px rgba(139, 165, 144, 0.15);">
+                                                    Ver detalles del ticket
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
                             <!-- Footer -->
-                            <div style="text-align: center; padding: 20px 0;">
-                                <p style="margin: 0 0 5px; font-size: 13px; color: #6b7280;">
-                                    Este es un mensaje automático del <strong style="color: #8BA590;">Sistema Wicontrol</strong>
-                                </p>
-                                <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                                    Por favor, no respondas a este correo
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                ')
-                ->send();
+                            <tr>
+                                <td style="background: #f8f9f8; padding: 32px 48px; border-top: 1px solid #f0f0f0;">
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td align="center">
+                                                <p style="margin: 0; font-size: 13px; color: #a0a0a0; font-weight: 400;">
+                                                    Wicontrol
+                                                </p>
+                                                <p style="margin: 8px 0 0; font-size: 11px; color: #c0c0c0;">
+                                                    Este mensaje fue generado automáticamente
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
 
-\Yii::error("✅ Correo enviado a: " . $usuario->email . " para ticket: " . $ticket->Folio);
-return true;
-        } catch (\Exception $e) {
-            \Yii::error("❌ Error enviando correo: " . $e->getMessage());
-            return false;
-        }
-    }
-    private function getPrioridadColor($prioridad)
-    {
-        switch (strtoupper($prioridad)) {
-            case 'ALTA':
-                return '#e74c3c'; // Rojo
-            case 'MEDIA':
-                return '#f39c12'; // Naranja
-            case 'BAJA':
-                return '#27ae60'; // Verde
-            default:
-                return '#7f8c8d'; // Gris
-        }
-    }
+                        </table>
 
+                        <!-- Subtle branding -->
+                        <table role="presentation" width="520" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
+                            <tr>
+                                <td align="center">
+                                    <p style="margin: 0; font-size: 11px; color: #c8c8c8;">
+                                        winetpc.com
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+            </table>
+
+        </body>
+        </html>
+        HTML;
+
+                \Yii::$app->mailer->compose()
+                    ->setFrom(['consultoria@winetpc.com' => 'Wicontrol'])
+                    ->setTo($usuario->email)
+                    ->setSubject('Ticket #' . $ticket->Folio . ' · ' . $servicioNombre)
+                    ->setHtmlBody($htmlBody)
+                    ->send();
+
+                \Yii::info("Correo enviado a: " . $usuario->email . " para ticket: " . $ticket->Folio);
+                return true;
+
+            } catch (\Exception $e) {
+                \Yii::error("Error enviando correo: " . $e->getMessage());
+                return false;
+            }
+        }
+
+        private function getPrioridadColor($prioridad)
+        {
+            switch (strtoupper($prioridad)) {
+                case 'ALTA':
+                    return '#c9756b';  // Rojo suave
+                case 'MEDIA':
+                    return '#d4a574';  // Ámbar suave  
+                case 'BAJA':
+                    return '#8BA590';  // Verde sage
+                default:
+                    return '#a0a0a0';  // Gris neutro
+            }
+        }
     public function actionTestNotificacion()
     {
         $userId = \Yii::$app->user->id;
