@@ -97,7 +97,7 @@ class UsuariosController extends Controller
         return $this->render('create', ['model' => $model]);
     }
 
-    // ❌ Eliminar usuario
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

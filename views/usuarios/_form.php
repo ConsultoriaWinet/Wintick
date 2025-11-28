@@ -30,8 +30,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'color')->input('color', ['value' => $model->color ?: '#3788d8']) ?>
 
-    <div class="form-group">
-        <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+    <div class="form-group text-center">
+        <?= Html::submitButton('Guardar Usuario', ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Cancelar', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

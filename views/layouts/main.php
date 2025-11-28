@@ -91,6 +91,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         width: 100%;
         z-index: 1030;
         transition: top 0.3s, background-color 0.3s;
+
     }
 
     /* Ajusta el padding del body según la altura de tu navbar */
@@ -413,7 +414,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                 'brandLabel' => Yii::$app->name,
                 'brandUrl' => Yii::$app->homeUrl,
                 'options' => [
-                    'class' => 'navbar navbar-expand-lg navbar-light bg-light shadow-sm',
+                    'class' => 'navbar navbar-expand-lg navbar-light shadow-sm elpepe',
                 ],
             ]);
 
@@ -494,7 +495,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
         </div>
     </main>
 
-    <footer id="footer" class="mt-auto py-3 elpepe">
+    <footer id="footer" class="mt-auto py-3">
         <div class="container">
             <div class="row text-white">
                 <div class="col-md-6 text-center text-md-start">&copy; My Company <?= date('Y') ?></div>
