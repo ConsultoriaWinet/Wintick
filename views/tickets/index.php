@@ -29,7 +29,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
        ======================================== */
     body {
         margin: 0 !important;
-        padding-top: 80px;
+        padding: 0 !important;
     }
 
     .tickets-index {
@@ -857,7 +857,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </div>
                         <div class="compact-filter-group">
                             <label>Mes</label>
-                            <input type="month" name="mes" value="<?= $_GET['mes'] ?? date('Y-m') ?>">
+                            <input type="month" name="mes" value="<?= $_GET['mes'] ?? '' ?>" placeholder="Seleccionar mes (opcional)">
                         </div>
 
                         <!-- Sección: Identidad -->
@@ -958,10 +958,17 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     </div>
 
     <!-- Mes Actual Badge -->
+    <?php if (!empty($_GET['mes'])): ?>
     <div class="mes-actual">
         <i class="fas fa-calendar-alt"></i>
-        <strong><?= Html::encode(strftime('%B de %Y', strtotime($mesActual . '-01'))) ?></strong>
+        <strong><?= Html::encode(strftime('%B de %Y', strtotime($_GET['mes'] . '-01'))) ?></strong>
     </div>
+    <?php else: ?>
+    <div class="mes-actual" style="background: #10b981;">
+        <i class="fas fa-calendar-alt"></i>
+        <strong>Todos los tickets</strong>
+    </div>
+    <?php endif; ?>
 
     <!-- Stats Bar -->
     <div class="stats-bar">
@@ -991,94 +998,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- ✅ FILA DE CREACIÓN ARRIBA -->
-                <tr class="data-row new-row" style="position: sticky; top: 0; z-index: 10;">
-                    <td>
-                        <input type="text" 
-                               class="form-control form-control-sm folio" 
-                               placeholder="Auto..." 
-                               readonly 
-                               style="background: #e9ecef; font-weight: bold; color: #10b981;">
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm cliente" onchange="loadClienteData(this)">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($clientes as $cliente): ?>
-                                <option value="<?= $cliente['id'] ?>" data-prioridad="<?= Html::encode($cliente['Prioridad']) ?>">
-                                    <?= Html::encode($cliente['Nombre']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm sistema">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($sistemas as $sistema): ?>
-                                <option value="<?= $sistema['id'] ?>"><?= Html::encode($sistema['Nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm servicio">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($servicios as $servicio): ?>
-                                <option value="<?= $servicio['id'] ?>"><?= Html::encode($servicio['Nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm usuario-reporta" placeholder="Quién reporta">
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm asignado-a">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($Usuarios as $usuario): ?>
-                                <option value="<?= $usuario['id'] ?>"><?= Html::encode($usuario['email']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td>
-                        <div class="datetime-wrapper">
-                            <input type="text" class="form-control form-control-sm hora-programada flatpickr-datetime" placeholder="Seleccionar fecha">
-                        </div>
-                    </td>
-                    <td>
-                        <div class="datetime-wrapper">
-                            <input type="text" class="form-control form-control-sm hora-inicio flatpickr-datetime" placeholder="Seleccionar fecha">
-                        </div>
-                    </td>
-                    <td><textarea class="form-control form-control-sm descripcion" rows="1" placeholder="Descripción" style="font-size: 12px;"></textarea></td>
-                    <td>
-                        <select class="form-select form-select-sm prioridad">
-                            <option value="">Seleccionar</option>
-                            <option value="BAJA">Baja</option>
-                            <option value="MEDIA">Media</option>
-                            <option value="ALTA">Alta</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm estado">
-                            <option value="ABIERTO" selected>Abierto</option>
-                            <option value="EN PROCESO">En Proceso</option>
-                            <option value="CERRADO">Cerrado</option>
-                        </select>
-                    </td>
-                    <td style="white-space: nowrap;">
-                        <button type="button" class="btn btn-sm btn-outline-success saveRow" title="Guardar">
-                            <i class="fas fa-save"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary deleteRow" title="Limpiar">
-                            <i class="fas fa-eraser"></i>
-                        </button>
-                    </td>
-                </tr>
-
-                <!-- Separador visual -->
-                <tr style="background: #f8f9fa; height: 5px;">
-                    <td colspan="12" style="border-bottom: 2px solid #10b981; padding: 0;"></td>
-                </tr>
-
-                <!-- ✅ TICKETS EXISTENTES -->
+                <!-- Filas existentes de BD -->
                 <?php 
                 $tickets = $dataProvider->getModels();
                 foreach ($tickets as $ticket): 
@@ -1168,42 +1088,95 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <small>Intenta con otros términos de búsqueda</small>
                     </td>
                 </tr>
+
+                <!-- Fila para crear nuevo (FOLIO AUTOMÁTICO) -->
+                <tr class="data-row new-row">
+                    <td>
+                        <input type="text" 
+                               class="form-control form-control-sm folio" 
+                               placeholder="Auto..." 
+                               readonly 
+                               style="background: #e9ecef; font-weight: bold; color: #10b981;">
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm cliente" onchange="loadClienteData(this)">
+                            <option value="">Seleccionar</option>
+                            <?php foreach ($clientes as $cliente): ?>
+                                <option value="<?= $cliente['id'] ?>" data-prioridad="<?= $cliente['Prioridad'] ?>" data-tipo="<?= $cliente['Tipo_servicio'] ?>">
+                                    <?= Html::encode($cliente['Nombre']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm sistema">
+                            <option value="">Seleccionar</option>
+                            <?php foreach ($sistemas as $sistema): ?>
+                                <option value="<?= $sistema['id'] ?>"><?= Html::encode($sistema['Nombre']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm servicio">
+                            <option value="">Seleccionar</option>
+                            <?php foreach ($servicios as $servicio): ?>
+                                <option value="<?= $servicio['id'] ?>"><?= Html::encode($servicio['Nombre']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm usuario-reporta" placeholder="Quién reporta">
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm asignado-a">
+                            <option value="">Seleccionar</option>
+                            <?php foreach ($Usuarios as $usuario): ?>
+                                <option value="<?= $usuario['id'] ?>"><?= Html::encode($usuario['email']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                    <td>
+                        <div class="datetime-wrapper">
+                            <input type="text" class="form-control form-control-sm hora-programada flatpickr-datetime" placeholder="Seleccionar fecha">
+                        </div>
+                    </td>
+                    <td>
+                        <div class="datetime-wrapper">
+                            <input type="text" class="form-control form-control-sm hora-inicio flatpickr-datetime" placeholder="Seleccionar fecha">
+                        </div>
+                    </td>
+                    <td><textarea class="form-control form-control-sm descripcion" rows="1" placeholder="Descripción" style="font-size: 12px;"></textarea></td>
+                    <td>
+                        <select class="form-select form-select-sm prioridad">
+                            <option value="">Seleccionar</option>
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="ALTA">Alta</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm estado">
+                            <option value="ABIERTO" selected>Abierto</option>
+                            <option value="EN PROCESO">En Proceso</option>
+                            <option value="CERRADO">Cerrado</option>
+                        </select>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <button type="button" class="btn btn-sm btn-outline-success saveRow" title="Guardar">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary deleteRow" title="Cancelar">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- ✅ PAGINACIÓN -->
-    <div class="pagination-wrapper" style="margin: 20px 50px;">
-        <?= \yii\widgets\LinkPager::widget([
-            'pagination' => $dataProvider->pagination,
-            'options' => ['class' => 'pagination justify-content-center'],
-            'linkOptions' => ['class' => 'page-link'],
-            'activePageCssClass' => 'active',
-            'disabledPageCssClass' => 'disabled',
-            'prevPageLabel' => '<i class="fas fa-chevron-left"></i> Anterior',
-            'nextPageLabel' => 'Siguiente <i class="fas fa-chevron-right"></i>',
-        ]) ?>
-    </div>
-
-    <!-- ✅ INFORMACIÓN DE PAGINACIÓN -->
-    <div class="pagination-info" style="text-align: center; margin: 20px; color: #6b7280; font-size: 14px;">
-        <?php
-        $pagination = $dataProvider->pagination;
-        $page = $pagination ? $pagination->page : 0;
-        $pageSize = $pagination ? $pagination->pageSize : count($dataProvider->models);
-        $totalCount = $dataProvider->totalCount;
-        $count = count($dataProvider->models);
-        
-        $start = $page * $pageSize + 1;
-        $end = $page * $pageSize + $count;
-        ?>
-        
-        Mostrando <?= $start ?> - <?= $end ?> de <?= $totalCount ?> tickets
-        
-        <?php if ($pagination && $pagination->pageCount > 1): ?>
-            • Página <?= $page + 1 ?> de <?= $pagination->pageCount ?>
-        <?php endif; ?>
-    </div>
+    <button type="button" class="mt-3 m-3" id="addMoreRows">
+        <i class="fas fa-plus"></i> Agregar más filas
+    </button>
 </div>
 
 <!-- Modal para Solución -->

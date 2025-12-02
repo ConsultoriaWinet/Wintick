@@ -65,10 +65,7 @@ class TicketsController extends Controller
      public function actionIndex()
     {
         $searchModel = new TicketsSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
         
-
         $clientes = Clientes::find()->asArray()->all();
         $sistemas = Sistemas::find()->asArray()->all();
         $servicios = Servicios::find()->asArray()->all();
@@ -78,18 +75,15 @@ class TicketsController extends Controller
 
         // Filtro automático para Consultores
         $currentUser = Yii::$app->user->identity;
-        if ($currentUser && $currentUser->rol=== 'Consultor') {
+        if ($currentUser && $currentUser->rol === 'Consultor') {
             if (empty($_GET['asignado_a']) && empty($_GET['folio']) && empty($_GET['cliente_id']) && 
                 empty($_GET['sistema_id']) && empty($_GET['servicio_id']) && empty($_GET['prioridad']) && 
                 empty($_GET['estado']) && empty($_GET['mes'])) {
                 $query->andWhere(['Asignado_a' => $currentUser->id]);
-                // Mostrar solo del mes actual
-                $mesActual = date('Y-m');
-                $query->andWhere(['>=', 'Fecha_creacion', $mesActual . '-01 00:00:00']);
-                $query->andWhere(['<', 'Fecha_creacion', date('Y-m-01 00:00:00', strtotime('+1 month'))]);
             }
         }
 
+        // Aplicar filtros
         if (!empty($_GET['folio'])) {
             $query->andWhere(['like', 'Folio', $_GET['folio']]);
         }
@@ -112,26 +106,21 @@ class TicketsController extends Controller
             $query->andWhere(['Estado' => $_GET['estado']]);
         }
 
-        
-        // Filtro por mes
+        // ✅ SOLO FILTRAR POR MES SI SE ESPECIFICA
         if (!empty($_GET['mes'])) {
             $mes = $_GET['mes'];
             $primerDia = $mes . '-01 00:00:00';
             $ultimoDia = date('Y-m-t 23:59:59', strtotime($mes . '-01'));
             $query->andWhere(['>=', 'Fecha_creacion', $primerDia]);
             $query->andWhere(['<=', 'Fecha_creacion', $ultimoDia]);
-        } else {
-            // Si no hay filtro de mes, mostrar mes actual por defecto
-            $mesActual = date('Y-m');
-            $primerDia = $mesActual . '-01 00:00:00';
-            $ultimoDia = date('Y-m-t 23:59:59');
-            $query->andWhere(['>=', 'Fecha_creacion', $primerDia]);
-            $query->andWhere(['<=', 'Fecha_creacion', $ultimoDia]);
         }
+        // ✅ REMOVER EL ELSE QUE FORZABA MES ACTUAL
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query->orderBy(['id' => SORT_DESC]),
-            'pagination' => ['pageSize' => 20],
+            'pagination' => [
+                'pageSize' => 50,
+            ],
         ]);
 
         return $this->render('index', [
@@ -221,12 +210,22 @@ class TicketsController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+        // ✅ OBTENER TODAS LAS VARIABLES NECESARIAS PARA LA VISTA
+        $clientes = Clientes::find()->asArray()->all();
+        $sistemas = Sistemas::find()->asArray()->all(); 
+        $servicios = Servicios::find()->asArray()->all();
+        $usuarios = Usuarios::find()->asArray()->all();
+
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
         return $this->render('update', [
             'model' => $model,
+            'clientes' => $clientes,
+            'sistemas' => $sistemas,
+            'servicios' => $servicios,
+            'usuarios' => $usuarios, // ✅ Agregar esta línea
         ]);
     }
 
