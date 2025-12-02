@@ -951,7 +951,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         </div>
 
         <div class="tickets-header-actions">
-            <a href="<?= Url::to(['tickets/exportar'] + $_GET) ?>" class="btn btn-outline-success">
+            <a href="<?= Url::to(array_merge(['tickets/exportar'], $_GET)) ?>" 
+            class="btn btn-outline-success">
                 <i class="fas fa-file-csv"></i> Exportar CSV
             </a>
         </div>
