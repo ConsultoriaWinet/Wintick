@@ -1366,26 +1366,52 @@ function confirmarEliminar(ticketId, folio) {
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
-            // Crear formulario para enviar DELETE
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '<?= Url::to(['index']) ?>/' ;
-            
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '<?= Yii::$app->request->csrfParam ?>';
-            csrfInput.value = '<?= Yii::$app->request->getCsrfToken() ?>';
-            
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'DELETE';
-            
-            form.appendChild(csrfInput);
-            form.appendChild(methodInput);
-            document.body.appendChild(form);
-            
-            form.submit();
+            Swal.fire({
+                title: 'Eliminando...',
+                text: 'Por favor espera',
+                icon: 'info',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // ✅ CORREGIR LA URL PARA INCLUIR EL ID
+            fetch('<?= Url::to(['delete']) ?>?id=' + ticketId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+                },
+                body: '<?= Yii::$app->request->csrfParam ?>=<?= Yii::$app->request->getCsrfToken() ?>'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (response.ok || response.status === 302) {  // 302 = redirect después de eliminar
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Eliminado!',
+                        text: `Ticket ${folio} eliminado correctamente`,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error('Error del servidor: ' + response.status);
+                }
+            })
+            .catch(error => {
+                console.error('Error completo:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo eliminar el ticket: ' + error.message,
+                    confirmButtonColor: '#ef4444'
+                });
+            });
         }
     });
 }

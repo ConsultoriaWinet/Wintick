@@ -238,9 +238,36 @@ class TicketsController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
-
-        return $this->redirect(['index']);
+        try {
+            $model = $this->findModel($id);
+            $folio = $model->Folio; // Guardar el folio antes de eliminar
+            
+            if ($model->delete()) {
+                if (Yii::$app->request->isAjax) {
+                    Yii::$app->response->format = Response::FORMAT_JSON;
+                    return ['success' => true, 'message' => "Ticket {$folio} eliminado correctamente"];
+                }
+                
+                Yii::$app->session->setFlash('success', "Ticket {$folio} eliminado correctamente");
+                return $this->redirect(['index']);
+            } else {
+                if (Yii::$app->request->isAjax) {
+                    Yii::$app->response->format = Response::FORMAT_JSON;
+                    return ['success' => false, 'message' => 'No se pudo eliminar el ticket'];
+                }
+                
+                Yii::$app->session->setFlash('error', 'No se pudo eliminar el ticket');
+                return $this->redirect(['index']);
+            }
+        } catch (\Exception $e) {
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = Response::FORMAT_JSON;
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
+            
+            Yii::$app->session->setFlash('error', 'Error: ' . $e->getMessage());
+            return $this->redirect(['index']);
+        }
     }
 
     /**
