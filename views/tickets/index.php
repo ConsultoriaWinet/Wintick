@@ -998,98 +998,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- Filas existentes de BD -->
-                <?php 
-                $tickets = $dataProvider->getModels();
-                foreach ($tickets as $ticket): 
-                ?>
-                <tr class="data-row existing-row" data-ticket-id="<?= $ticket->id ?>">
-                    <td><strong><?= Html::encode($ticket->Folio) ?></strong></td>
-                    <td><?= $ticket->cliente ? Html::encode($ticket->cliente->Nombre) : '-' ?></td>
-                    <td><?= $ticket->sistema ? Html::encode($ticket->sistema->Nombre) : '-' ?></td>
-                    <td><?= $ticket->servicio ? Html::encode($ticket->servicio->Nombre) : '-' ?></td>
-                    <td><?= Html::encode($ticket->Usuario_reporta) ?></td>
-                    <td><?= $ticket->usuarioAsignado ? Html::encode($ticket->usuarioAsignado->email) : '-' ?></td>
-                    <td style="font-size: 12px; white-space: nowrap;">
-                        <?= $ticket->HoraProgramada ? Html::encode(date('d/m H:i', strtotime($ticket->HoraProgramada))) : '-' ?>
-                    </td>
-                    <td style="font-size: 12px; white-space: nowrap;">
-                        <?= $ticket->HoraInicio ? Html::encode(date('d/m H:i', strtotime($ticket->HoraInicio))) : '-' ?>
-                    </td>
-                    <td class="descripcion-cell" 
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="top" 
-                        data-bs-html="true"
-                        title="<?= Html::encode($ticket->Descripcion) ?>"
-                        data-full-text="<?= Html::encode($ticket->Descripcion) ?>"
-                        style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <?= Html::encode(substr($ticket->Descripcion, 0, 30)) ?><?= strlen($ticket->Descripcion) > 30 ? '...' : '' ?>
-                        <?php if (strlen($ticket->Descripcion) > 30): ?>
-                            <i class="fas fa-eye text-muted ms-1" style="font-size: 11px;"></i>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php
-                        $badgeClass = match($ticket->Prioridad) {
-                            'ALTA' => 'badge bg-danger',
-                            'MEDIA' => 'badge bg-warning text-dark',
-                            'BAJA' => 'badge bg-info',
-                            default => 'badge bg-secondary'
-                        };
-                        ?>
-                        <span class="<?= $badgeClass ?>"><?= Html::encode($ticket->Prioridad) ?></span>
-                    </td>
-                    <td>
-                        <?php
-                        $estadoClass = match($ticket->Estado) {
-                            'ABIERTO' => 'bg-primary text-white',
-                            'EN PROCESO' => 'bg-info text-dark',
-                            'CERRADO' => 'bg-danger text-white',
-                            default => 'bg-secondary'
-                        };
-                        $estadoIcon = match($ticket->Estado) {
-                            'ABIERTO' => 'fa-circle-notch',
-                            'EN PROCESO' => 'fa-spinner',
-                            'CERRADO' => 'fa-check-circle',
-                            default => 'fa-question-circle'
-                        };
-                        ?>
-                        <div class="estado-clickeable <?= $estadoClass ?>" onclick="toggleEstadoSelect(this, <?= $ticket->id ?>)">
-                            <i class="fas <?= $estadoIcon ?>"></i> <?= Html::encode($ticket->Estado) ?>
-                        </div>
-                        <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display: none; font-size: 12px; margin-top: 5px;">
-                            <option value="ABIERTO" <?= $ticket->Estado == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
-                            <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
-                            <option value="CERRADO" <?= $ticket->Estado == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
-                        </select>
-                    </td>
-                    <td style="white-space: nowrap;">
-                        <button class="btn btn-sm btn-outline-info" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                            <i class="fas fa-comments"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary" title="Agregar solución" onclick="openSolutionModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                            <i class="fas fa-lightbulb"></i>
-                        </button>
-                        <?= Html::a('<i class="fas fa-edit"></i>', ['update', 'id' => $ticket->id], ['class' => 'btn btn-sm btn-outline-secondary', 'title' => 'Editar']) ?>
-                        <?= Html::a('<i class="fas fa-trash"></i>', ['delete', 'id' => $ticket->id], [
-                            'class' => 'btn btn-sm btn-outline-danger',
-                            'title' => 'Eliminar',
-                            'data' => ['confirm' => '¿Estás seguro?', 'method' => 'post'],
-                        ]) ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-
-                <!-- Fila "Sin resultados" -->
-                <tr class="no-results-row" id="noResultsRow">
-                    <td colspan="12">
-                        <i class="fas fa-search" style="font-size: 40px; opacity: 0.3; margin-bottom: 10px;"></i>
-                        <div><strong>No se encontraron resultados</strong></div>
-                        <small>Intenta con otros términos de búsqueda</small>
-                    </td>
-                </tr>
-
-                <!-- Fila para crear nuevo (FOLIO AUTOMÁTICO) -->
+                <!-- Fila para crear nuevo (FOLIO AUTOMÁTICO) MOVIDA ARRIBA -->
                 <tr class="data-row new-row">
                     <td>
                         <input type="text" 
@@ -1168,6 +1077,97 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <button type="button" class="btn btn-sm btn-outline-secondary deleteRow" title="Cancelar">
                             <i class="fas fa-times"></i>
                         </button>
+                    </td>
+                </tr>
+
+                <!-- Filas existentes de BD -->
+                <?php 
+                $tickets = $dataProvider->getModels();
+                foreach ($tickets as $ticket): 
+                ?>
+                <tr class="data-row existing-row" data-ticket-id="<?= $ticket->id ?>">
+                    <td><strong><?= Html::encode($ticket->Folio) ?></strong></td>
+                    <td><?= $ticket->cliente ? Html::encode($ticket->cliente->Nombre) : '-' ?></td>
+                    <td><?= $ticket->sistema ? Html::encode($ticket->sistema->Nombre) : '-' ?></td>
+                    <td><?= $ticket->servicio ? Html::encode($ticket->servicio->Nombre) : '-' ?></td>
+                    <td><?= Html::encode($ticket->Usuario_reporta) ?></td>
+                    <td><?= $ticket->usuarioAsignado ? Html::encode($ticket->usuarioAsignado->email) : '-' ?></td>
+                    <td style="font-size: 12px; white-space: nowrap;">
+                        <?= $ticket->HoraProgramada ? Html::encode(date('d/m H:i', strtotime($ticket->HoraProgramada))) : '-' ?>
+                    </td>
+                    <td style="font-size: 12px; white-space: nowrap;">
+                        <?= $ticket->HoraInicio ? Html::encode(date('d/m H:i', strtotime($ticket->HoraInicio))) : '-' ?>
+                    </td>
+                    <td class="descripcion-cell" 
+                        data-bs-toggle="tooltip" 
+                        data-bs-placement="top" 
+                        data-bs-html="true"
+                        title="<?= Html::encode($ticket->Descripcion) ?>"
+                        data-full-text="<?= Html::encode($ticket->Descripcion) ?>"
+                        style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <?= Html::encode(substr($ticket->Descripcion, 0, 30)) ?><?= strlen($ticket->Descripcion) > 30 ? '...' : '' ?>
+                        <?php if (strlen($ticket->Descripcion) > 30): ?>
+                            <i class="fas fa-eye text-muted ms-1" style="font-size: 11px;"></i>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php
+                        $badgeClass = match($ticket->Prioridad) {
+                            'ALTA' => 'badge bg-danger',
+                            'MEDIA' => 'badge bg-warning text-dark',
+                            'BAJA' => 'badge bg-info',
+                            default => 'badge bg-secondary'
+                        };
+                        ?>
+                        <span class="<?= $badgeClass ?>"><?= Html::encode($ticket->Prioridad) ?></span>
+                    </td>
+                    <td>
+                        <?php
+                        $estadoClass = match($ticket->Estado) {
+                            'ABIERTO' => 'bg-primary text-white',
+                            'EN PROCESO' => 'bg-info text-dark',
+                            'CERRADO' => 'bg-danger text-white',
+                            default => 'bg-secondary'
+                        };
+                        $estadoIcon = match($ticket->Estado) {
+                            'ABIERTO' => 'fa-circle-notch',
+                            'EN PROCESO' => 'fa-spinner',
+                            'CERRADO' => 'fa-check-circle',
+                            default => 'fa-question-circle'
+                        };
+                        ?>
+                        <div class="estado-clickeable <?= $estadoClass ?>" onclick="toggleEstadoSelect(this, <?= $ticket->id ?>)">
+                            <i class="fas <?= $estadoIcon ?>"></i> <?= Html::encode($ticket->Estado) ?>
+                        </div>
+                        <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display: none; font-size: 12px; margin-top: 5px;">
+                            <option value="ABIERTO" <?= $ticket->Estado == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
+                            <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
+                            <option value="CERRADO" <?= $ticket->Estado == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
+                        </select>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <button class="btn btn-sm btn-outline-info" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
+                            <i class="fas fa-comments"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" title="Agregar solución" onclick="openSolutionModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
+                            <i class="fas fa-lightbulb"></i>
+                        </button>
+                        <?= Html::a('<i class="fas fa-edit"></i>', ['update', 'id' => $ticket->id], ['class' => 'btn btn-sm btn-outline-secondary', 'title' => 'Editar']) ?>
+                        <?= Html::a('<i class="fas fa-trash"></i>', '#', [
+                            'class' => 'btn btn-sm btn-outline-danger',
+                            'title' => 'Eliminar',
+                            'onclick' => "confirmarEliminar({$ticket->id}, '{$ticket->Folio}')",
+                        ]) ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+
+                <!-- Fila "Sin resultados" -->
+                <tr class="no-results-row" id="noResultsRow">
+                    <td colspan="12">
+                        <i class="fas fa-search" style="font-size: 40px; opacity: 0.3; margin-bottom: 10px;"></i>
+                        <div><strong>No se encontraron resultados</strong></div>
+                        <small>Intenta con otros términos de búsqueda</small>
                     </td>
                 </tr>
             </tbody>
@@ -1353,6 +1353,42 @@ function buildRowsCache() {
         });
     });
 }
+function confirmarEliminar(ticketId, folio) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: `Se eliminará el ticket ${folio} permanentemente`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '<i class="fas fa-trash"></i> Sí, eliminar',
+        cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Crear formulario para enviar DELETE
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '<?= Url::to(['index']) ?>/' ;
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '<?= Yii::$app->request->csrfParam ?>';
+            csrfInput.value = '<?= Yii::$app->request->getCsrfToken() ?>';
+            
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            
+            form.appendChild(csrfInput);
+            form.appendChild(methodInput);
+            document.body.appendChild(form);
+            
+            form.submit();
+        }
+    });
+}
 
 function performSearch(query) {
     const normalizedQuery = normalizeText(query);
@@ -1486,18 +1522,40 @@ function saveTicket(row) {
         console.log('📦 Datos:', data);
         
         if (data.success) {
-            alert('✅ Ticket guardado: ' + ticket.Folio);
-            location.reload();
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: 'Ticket guardado: ' + ticket.Folio,
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                toast: true,
+                position: 'top-end'
+            }).then(() => {
+                location.reload();
+            });
         } else {
             console.error('❌ Error:', data);
-            alert('❌ Error: ' + (data.message || JSON.stringify(data.errors || 'Desconocido')));
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al guardar',
+                text: data.message || JSON.stringify(data.errors || 'Error desconocido'),
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#ef4444'
+            });
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalHtml;
         }
     })
     .catch(error => {
         console.error('💥 Error:', error);
-        alert('❌ Error: ' + error.message);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '❌ Error: ' + error.message,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#ef4444'
+        });
         saveBtn.disabled = false;
         saveBtn.innerHTML = originalHtml;
     });
