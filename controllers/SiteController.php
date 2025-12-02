@@ -153,65 +153,51 @@ class SiteController extends Controller
      * Get tickets for calendar (filtrados por consultor)
      */
     public function actionGetTickets($consultorId = null)
-    {
-        try {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            
-            $query = Tickets::find();
-            
-            // Filtrar por consultor si se proporciona
-            if ($consultorId) {
-                $query->where(['Asignado_a' => $consultorId]);
-            }
-            
-            $tickets = $query->all();
-            $events = [];
-            
-            foreach ($tickets as $ticket) {
-                // Obtener el color del consultor asignado
-                $consultor = null;
-                if (isset($ticket->Asignado_a) && $ticket->Asignado_a) {
-                    $consultor = Usuarios::findOne($ticket->Asignado_a);
-                }
-                
-                $color = '#6c757d'; // Color por defecto
-                $nombreConsultor = 'Sin asignar';
-                
-                if ($consultor) {
-                    if (isset($consultor->color)) {
-                        $color = $consultor->color;
-                    }
-                    // Cambia 'Nombre' por el nombre real de tu columna
-                    $nombreConsultor = $consultor->Nombre ?? $consultor->email ?? 'Consultor #' . $consultor->id;
-                }
-                
-                $events[] = [
-                    'id' => $ticket->id,
-                    'title' => 'Ticket #' . ($ticket->Folio ?? $ticket->id),
-                    'start' => $ticket->Fecha_creacion,
-                    'end' => $ticket->Fecha_actualizacion,
-                    'description' => $ticket->Descripcion ?? 'Sin descripción',
-                    'consultorNombre' => $nombreConsultor,
-                    'estado' => $ticket->Estado ?? 'Sin estado',
-                    'backgroundColor' => $color,
-                    'borderColor' => $color,
-                ];
-            }
-            
-            return $events;
-            
-        } catch (\Exception $e) {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            Yii::$app->response->statusCode = 500;
-            return [
-                'error' => true,
-                'message' => $e->getMessage(),
-                'trace' => YII_DEBUG ? $e->getTraceAsString() : null
+{
+    Yii::$app->response->format = Response::FORMAT_JSON;
+
+    $query = Tickets::find()->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado']);
+    
+    // Filtrar por consultor si se especifica
+    if ($consultorId) {
+        $query->andWhere(['Asignado_a' => $consultorId]);
+    }
+    
+    // ✅ SOLO MOSTRAR TICKETS QUE TENGAN HORA DE INICIO
+    $query->andWhere(['IS NOT', 'HoraInicio', null]);
+    $query->andWhere(['!=', 'HoraInicio', '']);
+
+    $tickets = $query->all();
+    $events = [];
+
+    foreach ($tickets as $ticket) {
+        // ✅ USAR HoraInicio EN LUGAR DE Fecha_creacion
+        if (!empty($ticket->HoraInicio)) {
+            $consultorNombre = $ticket->usuarioAsignado ? $ticket->usuarioAsignado->Nombre ?? $ticket->usuarioAsignado->email : 'Sin asignar';
+            $consultorColor = $ticket->usuarioAsignado ? $ticket->usuarioAsignado->color ?? '#6c757d' : '#6c757d';
+
+            $events[] = [
+                'id' => $ticket->id,
+                'title' => $ticket->Folio . ' - ' . ($ticket->cliente ? $ticket->cliente->Nombre : 'Sin cliente'),
+                'start' => $ticket->HoraInicio, // ✅ CAMBIO PRINCIPAL: usar HoraInicio
+                'backgroundColor' => $consultorColor, // ✅ SOLO COLOR DEL CONSULTOR
+                'borderColor' => $consultorColor,     // ✅ SOLO COLOR DEL CONSULTOR
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'description' => $ticket->Descripcion,
+                    'consultorNombre' => $consultorNombre,
+                    'prioridad' => $ticket->Prioridad,
+                    'estado' => $ticket->Estado,
+                    'cliente' => $ticket->cliente ? $ticket->cliente->Nombre : 'Sin cliente',
+                    'sistema' => $ticket->sistema ? $ticket->sistema->Nombre : 'Sin sistema',
+                    'servicio' => $ticket->servicio ? $ticket->servicio->Nombre : 'Sin servicio',
+                ]
             ];
         }
-
-
     }
+
+    return $events;
+}
         /**
      * Request password reset
      */

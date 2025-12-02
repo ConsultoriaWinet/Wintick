@@ -182,18 +182,75 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Click en evento
         eventClick: function(info) {
+            const props = info.event.extendedProps;
+            const fechaInicio = info.event.start ? info.event.start.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : 'No definida';
+
+            // ✅ COLOR PARA EL BADGE DE PRIORIDAD
+            const prioridadColor = props.prioridad === 'ALTA' ? '#dc3545' : 
+                                 props.prioridad === 'MEDIA' ? '#ffc107' : 
+                                 props.prioridad === 'BAJA' ? '#28a745' : '#6c757d';
+
             Swal.fire({
-                title: info.event.title,
+                title: `Ticket ${info.event.title}`,
                 html: `
-                    <p><strong>Consultor:</strong> ${info.event.extendedProps.consultorNombre}</p>
-                    <p><strong>Descripción:</strong> ${info.event.extendedProps.description}</p>
+                    <div style="text-align: left; padding: 20px;">
+                        <div style="margin-bottom: 15px;">
+                            <strong>📅 Hora de Inicio:</strong><br>
+                            <span style="color: #666; font-size: 14px;">${fechaInicio}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>👤 Consultor:</strong><br>
+                            <span style="color: #666; font-size: 14px;">${props.consultorNombre}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>🏢 Cliente:</strong><br>
+                            <span style="color: #666; font-size: 14px;">${props.cliente}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>⚡ Prioridad:</strong><br>
+                            <span class="badge" style="background: ${prioridadColor}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px;">${props.prioridad}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>📋 Estado:</strong><br>
+                            <span style="color: #666; font-size: 14px;">${props.estado}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>🔧 Sistema:</strong><br>
+                            <span style="color: #666; font-size: 14px;">${props.sistema}</span>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <strong>🛠️ Servicio:</strong><br>
+                            <span style="color: #666; font-size: 14px;">${props.servicio}</span>
+                        </div>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <strong>📝 Descripción:</strong><br>
+                            <span style="color: #666; font-size: 14px; line-height: 1.4;">${props.description}</span>
+                        </div>
+                    </div>
                 `,
                 icon: 'info',
                 showCancelButton: true,
-                confirmButtonColor: info.event.backgroundColor,
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ver detalles',
-                cancelButtonText: 'Cerrar'
+                confirmButtonColor: info.event.backgroundColor, // ✅ USAR COLOR DEL CONSULTOR
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-eye"></i> Ver detalles',
+                cancelButtonText: 'Cerrar',
+                width: '500px',
+                customClass: {
+                    popup: 'ticket-popup'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = '<?= Url::to(['tickets/view']) ?>?id=' + info.event.id;

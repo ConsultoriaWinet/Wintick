@@ -154,49 +154,55 @@ class TicketsController extends Controller
     public function actionCreate()
     {
         $model = new Tickets();
-        $model->Folio = str_pad(Tickets::find()->max('id') + 1, 4, '0', STR_PAD_LEFT);
+    
+    // ✅ GENERAR FOLIO CORRECTAMENTE
+    $ultimoId = Tickets::find()->max('id') ?? 0;
+    $model->Folio = str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT);
+    
+    // ✅ OBTENER FECHA DEL POST SI EXISTE (viene del calendario)
+    $fechaSeleccionada = Yii::$app->request->post('fecha_seleccionada');
+    if ($fechaSeleccionada) {
+        // Convertir fecha del calendario (YYYY-MM-DD) a formato datetime
+        $model->HoraProgramada = $fechaSeleccionada . ' 09:00:00';
+        $model->HoraInicio = $fechaSeleccionada . ' 09:00:00';
         
-        // CORRECCIÓN: Seleccionar 'id' y 'email', y mapear id => email
-        $consultores = \app\models\Usuarios::find()
-            ->select(['id', 'email']) // Necesitamos el ID para guardarlo
-            ->where(['rol' => 'consultor'])
-            ->asArray()
-            ->all();
-            
-        // El primer parámetro es la clave (lo que se guarda: id), el segundo es el valor (lo que se ve: email)
-        $consultoresList = \yii\helpers\ArrayHelper::map($consultores, 'id', 'email');
-        $model->consultoresList = $consultoresList;
+        // Guardar en sesión para mostrar mensaje
+        Yii::$app->session->setFlash('fechaDesdeCalendario', $fechaSeleccionada);
+    }
+    
+    // ✅ ESTABLECER VALORES POR DEFECTO
+    $model->Estado = 'ABIERTO';
+    $model->Fecha_creacion = date('Y-m-d H:i:s');
+    $model->Fecha_actualizacion = date('Y-m-d H:i:s');
+    $model->Creado_por = Yii::$app->user->id;
+    
+    if ($this->request->isPost && $model->load($this->request->post())) {
+        // ✅ ACTUALIZAR FECHA DE ACTUALIZACIÓN ANTES DE GUARDAR
+        $model->Fecha_actualizacion = date('Y-m-d H:i:s');
         
-        // Obtener fecha del POST si existe (viene del calendario)
-        $fechaSeleccionada = Yii::$app->request->post('fecha_seleccionada');
-        if ($fechaSeleccionada) {
-            // Convertir fecha del calendario (YYYY-MM-DD) a formato datetime
-            $model->Fecha_creacion = $fechaSeleccionada . ' ' . date('H:i:s');
-            $model->Fecha_actualizacion = $fechaSeleccionada . ' ' . date('H:i:s');
-            
-            // Guardar en sesión para mostrar mensaje
-            Yii::$app->session->setFlash('fechaDesdeCalendario', $fechaSeleccionada);
-        } else {
-            // Si no hay fecha en POST, usar fecha actual
-            $model->Fecha_creacion = date('Y-m-d H:i:s');
-            $model->Fecha_actualizacion = date('Y-m-d H:i:s');
-        }
-        
-        $model->Estado = 'Abierto';
-        
-        if ($this->request->isPost && $model->load($this->request->post())) {
-            if ($model->save()) {
-                Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
-                return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->save()) {
+            // ✅ CREAR NOTIFICACIÓN SI SE ASIGNA A ALGUIEN
+            if ($model->Asignado_a) {
+                $usuarioActual = Yii::$app->user->identity->email;
+                $this->crearNotificacion(
+                    $model->Asignado_a,
+                    'asignado',
+                    'Nuevo ticket asignado: ' . $model->Folio,
+                    $usuarioActual . ' te asignó un nuevo ticket',
+                    $model->id
+                );
             }
-        } else {
-            $model->loadDefaultValues();
+            
+            Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
+            return $this->redirect(['view', 'id' => $model->id]);
         }
+    } else {
+        $model->loadDefaultValues();
+    }
 
-        return $this->render('create', [
-            'model' => $model,
-            'consultoresList'=> $consultoresList,
-        ]);
+    return $this->render('create', [
+        'model' => $model,
+    ]);
     }
 
     /**
