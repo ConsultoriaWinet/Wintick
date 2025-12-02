@@ -26,6 +26,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \
 $this->registerJsFile('https://npmcdn.com/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/sweetalert2@11', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+$this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css');
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -393,13 +394,44 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
     #footer {
         background-color: var(--primary-color) !important;
     }
+    .welcome-popup {
+        border-radius: 24px !important;
+        border: none !important;
+        box-shadow: 0 20px 60px rgba(139, 165, 144, 0.2) !important;
+    }
+    
+    .welcome-title {
+        font-size: 28px !important;
+        font-weight: 600 !important;
+        color: #1a1a1a !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .welcome-btn {
+        border-radius: 12px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        letter-spacing: 0.3px !important;
+        box-shadow: 0 4px 16px rgba(139, 165, 144, 0.3) !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .welcome-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(139, 165, 144, 0.4) !important;
+    }
+    
+    .swal2-timer-progress-bar {
+        background: rgba(139, 165, 144, 0.3) !important;
+    }
 </style>
 
 <head>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
 </head>
-
 <body class="d-flex flex-column h-100">
     <?php $this->beginBody() ?>
 
@@ -696,3 +728,77 @@ JS;
 
 </html>
 <?php $this->endPage() ?>
+
+<!-- ✅ MOVER EL BLOQUE DE BIENVENIDA AQUÍ AL FINAL -->
+<?php if (Yii::$app->session->hasFlash('welcome')): ?>
+    <?php 
+    $welcomeData = Yii::$app->session->getFlash('welcome');
+    $nombre = $welcomeData['nombre'];
+    $rol = $welcomeData['rol'];
+    $email = $welcomeData['email'];
+    
+    // Determinar saludo según la hora
+    $hora = date('H');
+    $saludo = 'Buenas noches';
+    if ($hora >= 6 && $hora < 12) {
+        $saludo = 'Buenos días';
+    } elseif ($hora >= 12 && $hora < 18) {
+        $saludo = 'Buenas tardes';
+    }
+    
+    // Determinar icono según el rol
+    $iconoRol = match($rol) {
+        'Admin', 'admin' => '👑',
+        'Consultor', 'consultor' => '💼',
+        'Cliente', 'cliente' => '👤',
+        default => '🎯'
+    };
+    ?>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pequeño delay para que se cargue completamente la página
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'success',
+                title: '<?= $saludo ?>, <?= Html::encode($nombre) ?>! <?= $iconoRol ?>',
+                html: `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="background: linear-gradient(135deg, #8BA590 0%, #7a9582 100%); color: white; padding: 20px; border-radius: 16px; margin: 20px 0; box-shadow: 0 8px 32px rgba(139, 165, 144, 0.3);">
+                            <div style="font-size: 24px; margin-bottom: 8px;">¡Bienvenido de vuelta!</div>
+                            <div style="font-size: 14px; opacity: 0.9;">
+                                <strong><?= Html::encode($rol) ?></strong> • <?= Html::encode($email) ?>
+                            </div>
+                        </div>
+                        <div style="color: #666; font-size: 14px; line-height: 1.6;">
+                            <i class="fas fa-clock" style="color: #8BA590; margin-right: 6px;"></i>
+                            Conectado el <?= date('d/m/Y') ?> a las <?= date('H:i') ?>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: true,
+                confirmButtonText: '<i class="fas fa-rocket"></i> ¡Empecemos!',
+                confirmButtonColor: '#8BA590',
+                timer: 8000,
+                timerProgressBar: true,
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp animate__faster'
+                },
+                backdrop: `
+                    rgba(139, 165, 144, 0.1)
+                    left top
+                    no-repeat
+                `,
+                customClass: {
+                    popup: 'welcome-popup',
+                    title: 'welcome-title',
+                    confirmButton: 'welcome-btn'
+                }
+            });
+        }, 500);
+    });
+    </script>
+<?php endif; ?>

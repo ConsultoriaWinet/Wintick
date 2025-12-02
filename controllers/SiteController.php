@@ -90,6 +90,16 @@ class SiteController extends Controller
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+            // ✅ AGREGAR MENSAJE DE BIENVENIDA DESPUÉS DEL LOGIN EXITOSO
+            $usuario = Yii::$app->user->identity;
+            $nombre = $usuario->Nombre ?? $usuario->email;
+            
+            Yii::$app->session->setFlash('welcome', [
+                'nombre' => $nombre,
+                'rol' => $usuario->rol ?? 'Usuario',
+                'email' => $usuario->email
+            ]);
+            
             return $this->goBack();
         }
 
