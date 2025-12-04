@@ -24,6 +24,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
 ?>
 
+
 <style>
 .ticket-create {
     width: 90%;
