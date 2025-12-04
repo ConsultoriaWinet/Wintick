@@ -26,198 +26,200 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 
 
 <style>
-.ticket-create {
-    width: 90%;
-    margin: 30px auto;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-.create-header {
-    background: #A0BAA5;
-    color: white;
-    padding: 30px 40px;
-    position: relative;
-}
-
-.create-title {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.create-subtitle {
-    font-size: 16px;
-    opacity: 0.95;
-    margin: 0;
-    font-weight: 400;
-}
-
-.create-content {
-    padding: 35px;
-}
-
-.form-section {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 25px;
-    border-left: 4px solid #A0BAA5;
-}
-
-.form-section h3 {
-    margin: 0 0 20px 0;
-    font-size: 18px;
-    color: #2d3748;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.form-group {
-    margin-bottom: 0;
-}
-
-.form-group.full-width {
-    grid-column: 1 / -1;
-}
-
-.form-label {
-    font-weight: 600;
-    color: #64748b;
-    font-size: 14px;
-    margin-bottom: 8px;
-    display: block;
-}
-
-.form-control, .form-select {
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    width: 100%;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #A0BAA5;
-    box-shadow: 0 0 0 3px rgba(160, 186, 165, 0.1);
-    outline: none;
-}
-
-.form-control[readonly] {
-    background: #f3f4f6;
-    font-weight: bold;
-    color: #A0BAA5;
-}
-
-textarea.form-control {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.section-divider {
-    height: 1px;
-    background: #e2e8f0;
-    margin: 25px 0;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 30px;
-    padding-top: 25px;
-    border-top: 2px solid #e2e8f0;
-    justify-content: center;
-}
-
-.btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
-}
-
-.btn-primary {
-    background: #A0BAA5;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #8fa994;
-    transform: translateY(-1px);
-}
-
-.btn-secondary {
-    background: #64748b;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #475569;
-    transform: translateY(-1px);
-}
-
-.alert-info {
-    background: #f0fdf4;
-    color: #059669;
-    border-left: 4px solid #A0BAA5;
-    border-radius: 8px;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.empty-field {
-    color: #94a3b8;
-    font-style: italic;
-}
-
-@media (max-width: 768px) {
     .ticket-create {
-        width: 95%;
-        margin: 20px auto;
+        width: 90%;
+        margin: 30px auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
     }
-    
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .create-content {
-        padding: 25px;
-    }
-    
+
     .create-header {
-        padding: 25px;
+        background: #A0BAA5;
+        color: white;
+        padding: 30px 40px;
+        position: relative;
     }
-}
+
+    .create-title {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .create-subtitle {
+        font-size: 16px;
+        opacity: 0.95;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .create-content {
+        padding: 35px;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border-left: 4px solid #A0BAA5;
+    }
+
+    .form-section h3 {
+        margin: 0 0 20px 0;
+        font-size: 18px;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #A0BAA5;
+        box-shadow: 0 0 0 3px rgba(160, 186, 165, 0.1);
+        outline: none;
+    }
+
+    .form-control[readonly] {
+        background: #f3f4f6;
+        font-weight: bold;
+        color: #A0BAA5;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .section-divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 25px 0;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 2px solid #e2e8f0;
+        justify-content: center;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: #A0BAA5;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #8fa994;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #475569;
+        transform: translateY(-1px);
+    }
+
+    .alert-info {
+        background: #f0fdf4;
+        color: #059669;
+        border-left: 4px solid #A0BAA5;
+        border-radius: 8px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .empty-field {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .ticket-create {
+            width: 95%;
+            margin: 20px auto;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .create-content {
+            padding: 25px;
+        }
+
+        .create-header {
+            padding: 25px;
+        }
+    }
 </style>
 
 <div class="ticket-create">
@@ -236,7 +238,7 @@ textarea.form-control {
             <div class="alert-info">
                 <i class="fas fa-calendar-check"></i>
                 <div>
-                    <strong>Fecha seleccionada desde el calendario:</strong> 
+                    <strong>Fecha seleccionada desde el calendario:</strong>
                     <?= Yii::$app->session->getFlash('fechaDesdeCalendario') ?>
                 </div>
             </div>
@@ -249,7 +251,7 @@ textarea.form-control {
         <!-- Información General -->
         <div class="form-section">
             <h3><i class="fas fa-info-circle" style="color: #A0BAA5;"></i> Información General</h3>
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <?= $form->field($model, 'Folio')->textInput([
@@ -288,7 +290,7 @@ textarea.form-control {
                 <div class="form-group">
                     <?= $form->field($model, 'Prioridad')->dropDownList([
                         'BAJA' => 'Baja',
-                        'MEDIA' => 'Media', 
+                        'MEDIA' => 'Media',
                         'ALTA' => 'Alta'
                     ], [
                         'prompt' => 'Seleccionar Prioridad',
@@ -303,7 +305,7 @@ textarea.form-control {
         <!-- Información del Servicio -->
         <div class="form-section">
             <h3><i class="fas fa-cogs" style="color: #A0BAA5;"></i> Información del Servicio</h3>
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <?= $form->field($model, 'Cliente_id')->dropDownList(
@@ -342,7 +344,7 @@ textarea.form-control {
         <!-- Fechas y Tiempos -->
         <div class="form-section">
             <h3><i class="fas fa-clock" style="color: #A0BAA5;"></i> Fechas y Tiempos</h3>
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <?= $form->field($model, 'HoraProgramada')->textInput([
@@ -372,7 +374,7 @@ textarea.form-control {
         <!-- Descripción y Solución -->
         <div class="form-section">
             <h3><i class="fas fa-file-alt" style="color: #A0BAA5;"></i> Descripción del Problema</h3>
-            
+
             <div class="form-grid">
                 <div class="form-group full-width">
                     <?= $form->field($model, 'Descripcion')->textarea([
@@ -397,7 +399,7 @@ textarea.form-control {
             <?= Html::submitButton('<i class="fas fa-save"></i> Crear Ticket', [
                 'class' => 'btn btn-primary'
             ]) ?>
-            
+
             <?= Html::a('<i class="fas fa-arrow-left"></i> Volver a Tickets', ['index'], [
                 'class' => 'btn btn-secondary'
             ]) ?>
@@ -408,34 +410,34 @@ textarea.form-control {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar Flatpickr para campos de fecha/hora
-    document.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        flatpickr(element, {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i:s",
-            time_24hr: true,
-            locale: "es",
-            minuteIncrement: 15,
-            allowInput: true,
-            clickOpens: true
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar Flatpickr para campos de fecha/hora
+        document.querySelectorAll('.flatpickr-datetime').forEach(function (element) {
+            flatpickr(element, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i:s",
+                time_24hr: true,
+                locale: "es",
+                minuteIncrement: 15,
+                allowInput: true,
+                clickOpens: true
+            });
         });
-    });
 
-    // Auto-cargar prioridad cuando se selecciona cliente
-    const clienteSelect = document.querySelector('#tickets-cliente_id');
-    if (clienteSelect) {
-        clienteSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const prioridad = selectedOption.getAttribute('data-prioridad');
-            
-            if (prioridad) {
-                const prioridadSelect = document.querySelector('#tickets-prioridad');
-                if (prioridadSelect) {
-                    prioridadSelect.value = prioridad.toUpperCase();
+        // Auto-cargar prioridad cuando se selecciona cliente
+        const clienteSelect = document.querySelector('#tickets-cliente_id');
+        if (clienteSelect) {
+            clienteSelect.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const prioridad = selectedOption.getAttribute('data-prioridad');
+
+                if (prioridad) {
+                    const prioridadSelect = document.querySelector('#tickets-prioridad');
+                    if (prioridadSelect) {
+                        prioridadSelect.value = prioridad.toUpperCase();
+                    }
                 }
-            }
-        });
-    }
-});
+            });
+        }
+    });
 </script>
