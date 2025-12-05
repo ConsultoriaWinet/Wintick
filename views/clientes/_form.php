@@ -15,7 +15,7 @@ $form = ActiveForm::begin([
 
 <div class="card shadow-sm border-0 rounded">
     <div class="card-header bg-primary text-white py-2">
-        <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Editar Cliente</h5>
+        <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Datos del Cliente</h5>
     </div>
 
     <div class="card-body py-2">
