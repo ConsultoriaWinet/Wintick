@@ -58,11 +58,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
        CONTENEDOR PRINCIPAL
        ======================================== */
     .tickets-index {
-        
         min-height: 100vh;
         padding: 30px 20px;
-        
-        
     }
 
     /* ========================================
@@ -354,7 +351,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         border-radius: 12px;
         margin-bottom: 20px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        margin: 0 50px 20px 50px; 
+        margin: 0 50px 20px 50px;
     }
 
     .tickets-count {
@@ -423,7 +420,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        margin: 15px; 
+        margin: 15px;
     }
 
     .table {
@@ -738,6 +735,38 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         font-size: 60px;
         margin-bottom: 20px;
         opacity: 0.3;
+    }
+
+    /* ========================================
+       SOLUCION
+       ======================================== */
+    .solution-modal {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    #solutionModal .modal-header {
+        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        color: #f9fafb;
+        align-items: center;
+    }
+
+    #solutionModal .modal-body {
+        background: #f9fafb;
+    }
+
+    .solution-summary-card {
+        background: #ffffff;
+        border-radius: 12px;
+    }
+
+    #solutionModal .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    #solutionModal textarea {
+        resize: vertical;
     }
 
     /* ========================================
@@ -1182,40 +1211,116 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
 <!-- Modal para Solución -->
 <div class="modal fade" id="solutionModal" tabindex="-1" aria-labelledby="solutionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content solution-modal">
             <div class="modal-header">
-                <h5 class="modal-title" id="solutionModalLabel">
-                    <i class="fas fa-wrench"></i> Solución del Ticket
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div>
+                    <h5 class="modal-title" id="solutionModalLabel">
+                        <i class="fas fa-wrench"></i> Cierre de ticket
+                    </h5>
+                    <small class="text-light-50 d-block mt-1">
+                        <i class="fas fa-info-circle"></i>
+                        Registra la solución y el tiempo real invertido.
+                    </small>
+                </div>
+                <div class="ms-3">
+                    <span id="solutionTicketFolio" class="badge bg-light text-dark" style="font-size: 0.8rem;">
+                        <!-- Se llena por JS -->
+                    </span>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal()"></button>
             </div>
+
             <div class="modal-body">
+                <!-- Hidden fields -->
                 <input type="hidden" id="ticketId" value="">
-                <div class="mb-3">
-                    <label class="form-label"><i class="fas fa-clock"></i> Hora Finalización</label>
-                    <input type="datetime-local" id="horaFinalizo" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label"><i class="fas fa-align-left"></i> Solución</label>
-                    <textarea id="solucion" class="form-control" rows="5" placeholder="Describe la solución aplicada..."></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label"><i class="fas fa-hourglass-end"></i> Tiempo efectivo invertido</label>
-                    <input type="text" id="tiempoEfectivo" class="form-control" placeholder="Ejemplo: 2 horas, 30 minutos">
+                <input type="hidden" id="horaInicioTicket" value="">
+
+                <div class="row g-3">
+                    <!-- Columna izquierda: resumen de tiempo -->
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm border-0 solution-summary-card">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted mb-2">
+                                    <i class="fas fa-stopwatch"></i> Resumen de tiempo
+                                </h6>
+
+                                <div class="mb-2 small">
+                                    <div class="text-muted">Hora de inicio</div>
+                                    <div id="labelHoraInicio" class="fw-semibold">
+                                        -
+                                    </div>
+                                </div>
+
+                                <div class="mb-2 small">
+                                    <div class="text-muted">Hora de finalización</div>
+                                    <div id="labelHoraFinalizo" class="fw-semibold">
+                                        -
+                                    </div>
+                                </div>
+
+                                <hr class="my-2">
+
+                                <div class="small text-muted mb-1">
+                                    Tiempo efectivo calculado
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success-emphasis" id="badgeTiempoEfectivo" style="font-size: 0.8rem;">
+                                        Sin calcular
+                                    </span>
+                                </div>
+
+                                <small class="text-muted d-block mt-2">
+                                    Se calcula automáticamente al elegir la hora de finalización.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha: formulario -->
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-clock"></i> Hora de finalización
+                            </label>
+                            <input type="datetime-local" id="horaFinalizo" class="form-control">
+                            <small class="text-muted">
+                                Selecciona la fecha y hora en que se terminó realmente la atención.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-align-left"></i> Solución aplicada
+                            </label>
+                            <textarea id="solucion" class="form-control" rows="4"
+                                      placeholder="Describe brevemente la causa del problema y lo que hiciste para resolverlo..."></textarea>
+                        </div>
+
+                        <div class="mb-1">
+                            <label class="form-label">
+                                <i class="fas fa-hourglass-end"></i> Tiempo efectivo invertido
+                            </label>
+                            <input type="text" id="tiempoEfectivo" class="form-control" 
+                                   placeholder="Se calculará automáticamente a partir de la hora de inicio y finalización">
+                           
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">
+
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="closeModal()">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
                 <button type="button" class="btn btn-primary" onclick="saveSolution()">
-                    <i class="fas fa-save"></i> Guardar Solución
+                    <i class="fas fa-save"></i> Guardar solución
                 </button>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- Modal para Comentarios -->
 <div class="modal fade" id="comentariosModal" tabindex="-1" aria-labelledby="comentariosModalLabel" aria-hidden="true">
@@ -1274,6 +1379,9 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 // ========================================
 let rowsCache = [];
 const totalTicketsOriginal = <?= $dataProvider->getTotalCount() ?>;
+let tieneTiempoGuardado = false;
+let tiempoEditadoManualmente = false;   
+
 
 // ========================================
 // FOLIO AUTOINCREMENTAL
@@ -1354,6 +1462,7 @@ function buildRowsCache() {
         });
     });
 }
+
 function confirmarEliminar(ticketId, folio) {
     Swal.fire({
         title: '¿Estás seguro?',
@@ -1378,7 +1487,6 @@ function confirmarEliminar(ticketId, folio) {
                 }
             });
 
-            // ✅ CORREGIR LA URL PARA INCLUIR EL ID
             fetch('<?= Url::to(['delete']) ?>?id=' + ticketId, {
                 method: 'POST',
                 headers: {
@@ -1389,7 +1497,7 @@ function confirmarEliminar(ticketId, folio) {
             })
             .then(response => {
                 console.log('Response status:', response.status);
-                if (response.ok || response.status === 302) {  // 302 = redirect después de eliminar
+                if (response.ok || response.status === 302) {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Eliminado!',
@@ -1619,7 +1727,7 @@ function updateEstado(selectElement, ticketId) {
 
 function toggleEstadoSelect(element, ticketId) {
     const select = document.querySelector('.estado-' + ticketId);
-    if (select.style.display === 'none') {
+    if (select.style.display === 'none' || select.style.display === '') {
         element.style.display = 'none';
         select.style.display = 'block';
         select.focus();
@@ -1648,19 +1756,125 @@ function getEstadoIcon(estado) {
 }
 
 // ========================================
-// MODALES
+// FORMATEAR Y CALCULAR TIEMPO EFECTIVO
+// ========================================
+function formatearFechaBonita(fechaStr) {
+    const d = new Date(fechaStr);
+    if (isNaN(d.getTime())) return fechaStr || '-';
+
+    const opciones = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    return d.toLocaleString('es-MX', opciones);
+}
+
+function calcularTiempoEfectivo() {
+    // Si el usuario ya escribió algo manualmente, no pisar su valor
+    if (tiempoEditadoManualmente) {
+        return;
+    }
+
+    const inicioStr   = document.getElementById('horaInicioTicket').value; // hidden
+    const finInput    = document.getElementById('horaFinalizo');
+    const finStr      = finInput.value;
+    const salidaInput = document.getElementById('tiempoEfectivo');
+    const badge       = document.getElementById('badgeTiempoEfectivo');
+    const labelFin    = document.getElementById('labelHoraFinalizo');
+
+    if (!inicioStr || !finStr) {
+        salidaInput.value = '';
+        badge.textContent = 'Sin calcular';
+        labelFin.textContent = '-';
+        return;
+    }
+
+    const inicio = new Date(inicioStr);
+    const fin    = new Date(finStr);
+
+    if (isNaN(inicio.getTime()) || isNaN(fin.getTime()) || fin < inicio) {
+        salidaInput.value = '';
+        badge.textContent = 'Revisa las fechas';
+        labelFin.textContent = formatearFechaBonita(finStr);
+        return;
+    }
+
+    const diffMs = fin - inicio;
+    let totalMin = Math.floor(diffMs / 60000); // minutos totales
+
+    if (totalMin <= 0) {
+        salidaInput.value = '';
+        badge.textContent = 'Menos de 1 minuto';
+        labelFin.textContent = formatearFechaBonita(finStr);
+        return;
+    }
+
+    // Pasar a horas + redondeo según tus reglas:
+    // 1–29 min -> 0.5 h
+    // 30–59 min -> 1 h
+    let horasEnteras = Math.floor(totalMin / 60);
+    let mins         = totalMin % 60;
+    let horasDecimales = horasEnteras;
+
+    if (mins > 0 && mins < 30) {
+        horasDecimales += 0.5;
+    } else if (mins >= 30) {
+        horasDecimales += 1;
+    }
+
+    // Formato bonito: si es entero, sin decimales; si no, 1 decimal
+    let textoHoras;
+    if (Number.isInteger(horasDecimales)) {
+        textoHoras = horasDecimales.toString();      // "1", "2", etc.
+    } else {
+        textoHoras = horasDecimales.toFixed(1);      // "1.5", "2.5"
+    }
+
+    salidaInput.value = textoHoras;
+    badge.textContent = textoHoras + ' h';
+    labelFin.textContent = formatearFechaBonita(finStr);
+}
+
+// ========================================
+// MODAL DE SOLUCIÓN
 // ========================================
 function openSolutionModal(ticketId, folio) {
     const selectElement = document.querySelector('.estado-' + ticketId);
     const estado = selectElement.value;
-    
+
     if (estado !== 'CERRADO') {
-        alert('⚠️ El ticket debe estar CERRADO');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: '⚠️ Solo puedes agregar una solución a un ticket que esté en estado CERRADO. Cambia el estado e inténtalo de nuevo.',
+            confirmButtonColor: '#f59e0b'
+        }); 
         return;
     }
-    
+
+    // Setear IDs & folio
     document.getElementById('ticketId').value = ticketId;
-    
+    const folioBadge = document.getElementById('solutionTicketFolio');
+    if (folioBadge) {
+        folioBadge.textContent = 'Ticket ' + folio;
+    }
+
+    // Limpiar campos visuales
+    document.getElementById('horaFinalizo').value = '';
+    document.getElementById('solucion').value = '';
+    document.getElementById('tiempoEfectivo').value = '';
+    document.getElementById('horaInicioTicket').value = '';
+    document.getElementById('labelHoraInicio').textContent = '-';
+    document.getElementById('labelHoraFinalizo').textContent = '-';
+    document.getElementById('badgeTiempoEfectivo').textContent = 'Sin calcular';
+
+    tieneTiempoGuardado = false;
+    tiempoEditadoManualmente = false;
+
+    // Obtener datos del ticket
     fetch('<?= Url::to(['get-ticket-data']) ?>', {
         method: 'POST',
         headers: {
@@ -1671,27 +1885,54 @@ function openSolutionModal(ticketId, folio) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            document.getElementById('horaFinalizo').value = data.ticket.HoraFinalizo || '';
-            document.getElementById('solucion').value = data.ticket.Solucion || '';
-            document.getElementById('tiempoEfectivo').value = data.ticket.TiempoEfectivo || '';
+        if (data.success && data.ticket) {
+            const t = data.ticket;
+
+            if (t.HoraInicio) {
+                document.getElementById('horaInicioTicket').value = t.HoraInicio;
+                document.getElementById('labelHoraInicio').textContent = formatearFechaBonita(t.HoraInicio);
+            }
+
+            if (t.HoraFinalizo) {
+                document.getElementById('horaFinalizo').value = t.HoraFinalizo;
+                document.getElementById('labelHoraFinalizo').textContent = formatearFechaBonita(t.HoraFinalizo);
+            }
+
+            if (t.Solucion) {
+                document.getElementById('solucion').value = t.Solucion;
+            }
+
+            if (t.TiempoEfectivo) {
+                tieneTiempoGuardado = true;
+                document.getElementById('tiempoEfectivo').value = t.TiempoEfectivo;
+                document.getElementById('badgeTiempoEfectivo').textContent = t.TiempoEfectivo;
+                tieneTiempoGuardado = true;
+            } else {
+                tieneTiempoGuardado = false;
+                if (t.HoraInicio && t.HoraFinalizo) {
+                    calcularTiempoEfectivo();
+                }
+            }
         }
     });
-    
+
+    // Mostrar modal
     const modal = document.getElementById('solutionModal');
     modal.classList.add('show');
     modal.style.display = 'block';
     document.body.classList.add('modal-open');
-    
+
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop fade show';
+    backdrop.id = 'solutionBackdrop';   // 👈 IMPORTANTE
     document.body.appendChild(backdrop);
 }
 
+
 function saveSolution() {
-    const ticketId = document.getElementById('ticketId').value;
-    const solucion = document.getElementById('solucion').value;
-    const horaFinalizo = document.getElementById('horaFinalizo').value;
+    const ticketId      = document.getElementById('ticketId').value;
+    const solucion      = document.getElementById('solucion').value;
+    const horaFinalizo  = document.getElementById('horaFinalizo').value;
     const tiempoEfectivo = document.getElementById('tiempoEfectivo').value;
     
     if (!solucion || !horaFinalizo || !tiempoEfectivo) {
@@ -1714,23 +1955,36 @@ function saveSolution() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('🔍 Respuesta save-solution:', data);
+
         if (data.success) {
             alert('✅ Solución guardada');
             closeModal();
             location.reload();
         } else {
-            alert('Error: ' + (data.message || 'Desconocido'));
+            // Mostrar mensaje amigable y, si hay, los errores del modelo
+            let msg = data.message || 'Error desconocido';
+
+            if (data.errors) {
+                msg += '\n\nDetalles:\n' + JSON.stringify(data.errors, null, 2);
+            }
+
+            alert(msg);
         }
+    })
+    .catch(error => {
+        console.error('💥 Error en fetch save-solution:', error);
+        alert('Error de comunicación con el servidor: ' + error.message);
     });
 }
 
 function closeModal() {
-    const modal = document.getElementById('solutionModal');
+     const modal = document.getElementById('solutionModal');
     modal.classList.remove('show');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
     
-    const backdrop = document.querySelector('.modal-backdrop');
+    const backdrop = document.getElementById('solutionBackdrop');
     if (backdrop) backdrop.remove();
     
     document.getElementById('horaFinalizo').value = '';
@@ -1738,6 +1992,9 @@ function closeModal() {
     document.getElementById('tiempoEfectivo').value = '';
 }
 
+// ========================================
+// MODAL DE COMENTARIOS
+// ========================================
 function openComentariosModal(ticketId, folio) {
     document.getElementById('ticketIdComentarios').value = ticketId;
     document.getElementById('ticketFolioComentarios').textContent = folio;
@@ -1868,9 +2125,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearButton = document.getElementById('clearSearch');
     const filterBtn = document.getElementById('compactFilterBtn');
     const filterMenu = document.getElementById('compactFilterMenu');
-    
+    const horaFinalizoInput = document.getElementById('horaFinalizo');
+    const addRowsBtn = document.getElementById('addMoreRows');
+
     buildRowsCache();
-    
     document.querySelectorAll('.flatpickr-datetime').forEach(initializeFlatpickr);
     
     const initialSaveBtn = document.querySelector('.new-row .saveRow');
@@ -1893,32 +2151,89 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        clearButton.classList.toggle('active', query);
-        debouncedSearch(query);
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            clearButton.classList.toggle('active', !!query);
+            debouncedSearch(query);
+        });
+    }
     
-    clearButton.addEventListener('click', function() {
-        searchInput.value = '';
-        clearButton.classList.remove('active');
-        performSearch('');
-        searchInput.focus();
-    });
+    if (clearButton) {
+        clearButton.addEventListener('click', function() {
+            searchInput.value = '';
+            clearButton.classList.remove('active');
+            performSearch('');
+            searchInput.focus();
+        });
+    }
     
-    filterBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        filterMenu.classList.toggle('show');
-        filterBtn.classList.toggle('active');
-    });
-    
-    document.addEventListener('click', function(e) {
-        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
-            filterMenu.classList.remove('show');
-            filterBtn.classList.remove('active');
-        }
-    });
-    
+    if (filterBtn && filterMenu) {
+        filterBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            filterMenu.classList.toggle('show');
+            filterBtn.classList.toggle('active');
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+                filterMenu.classList.remove('show');
+                filterBtn.classList.remove('active');
+            }
+        });
+    }
+
+    if (horaFinalizoInput) {
+        horaFinalizoInput.addEventListener('change', calcularTiempoEfectivo);
+        horaFinalizoInput.addEventListener('input', calcularTiempoEfectivo);
+    }
+
+    if (addRowsBtn) {
+        addRowsBtn.addEventListener('click', function() {
+            const tableBody = document.getElementById('tableBody');
+            const templateRow = document.querySelector('.new-row');
+            const newRow = templateRow.cloneNode(true);
+            
+            newRow.querySelectorAll('input, textarea, select').forEach(field => {
+                if (!field.classList.contains('folio')) {
+                    field.value = '';
+                }
+                if (field.tagName === 'SELECT' && !field.classList.contains('estado')) {
+                    field.selectedIndex = 0;
+                }
+            });
+            
+            loadNextFolio(newRow.querySelector('.folio'));
+            
+            newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
+                if (element._flatpickr) {
+                    element._flatpickr.destroy();
+                }
+                initializeFlatpickr(element);
+            });
+            
+            const saveBtn = newRow.querySelector('.saveRow');
+            const deleteBtn = newRow.querySelector('.deleteRow');
+            const clienteSelect = newRow.querySelector('.cliente');
+            
+            saveBtn.addEventListener('click', function() {
+                saveTicket(newRow);
+            });
+            
+            deleteBtn.addEventListener('click', function() {
+                if (confirm('¿Eliminar fila?')) {
+                    newRow.remove();
+                }
+            });
+            
+            clienteSelect.addEventListener('change', function() {
+                loadClienteData(this);
+            });
+            
+            tableBody.appendChild(newRow);
+        });
+    }
+
     loadNextFolio(document.querySelector('.new-row .folio'));
     
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -1926,56 +2241,5 @@ document.addEventListener('DOMContentLoaded', function() {
         trigger: 'hover',
         delay: { show: 300, hide: 100 }
     }));
-});
-
-// ========================================
-// AGREGAR FILAS
-// ========================================
-document.getElementById('addMoreRows').addEventListener('click', function() {
-    const tableBody = document.getElementById('tableBody');
-    const templateRow = document.querySelector('.new-row');
-    const newRow = templateRow.cloneNode(true);
-    
-    newRow.querySelectorAll('input, textarea, select').forEach(field => {
-        if (!field.classList.contains('folio')) {
-            field.value = '';
-        }
-        if (field.tagName === 'SELECT' && !field.classList.contains('estado')) {
-            field.selectedIndex = 0;
-        }
-    });
-    
-    loadNextFolio(newRow.querySelector('.folio'));
-    
-    newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        if (element._flatpickr) {
-            element._flatpickr.destroy();
-        }
-        initializeFlatpickr(element);
-    });
-    
-    const saveBtn = newRow.querySelector('.saveRow');
-    const deleteBtn = newRow.querySelector('.deleteRow');
-    const clienteSelect = newRow.querySelector('.cliente');
-    
-    saveBtn.removeAttribute('onclick');
-    deleteBtn.removeAttribute('onclick');
-    clienteSelect.removeAttribute('onchange');
-    
-    saveBtn.addEventListener('click', function() {
-        saveTicket(newRow);
-    });
-    
-    deleteBtn.addEventListener('click', function() {
-        if (confirm('¿Eliminar fila?')) {
-            newRow.remove();
-        }
-    });
-    
-    clienteSelect.addEventListener('change', function() {
-        loadClienteData(this);
-    });
-    
-    tableBody.appendChild(newRow);
 });
 </script>

@@ -13,7 +13,7 @@ use Yii;
  * @property string|null $RFC
  * @property string $Correo
  * @property string $Contacto_nombre
- * @property int $Tiempo
+ * @property string $Tiempo
  * @property int $Whatsapp_contacto
  * @property int $Telefono
  * @property string $Prioridad
@@ -42,7 +42,7 @@ class Clientes extends \yii\db\ActiveRecord
             [['RFC'], 'default', 'value' => null],
             [['Estado'], 'default', 'value' => 1],
             [['Nombre', 'Razon_social', 'Correo', 'Contacto_nombre', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Prioridad', 'created_at', 'updated_at'], 'required'],
-            [['Tiempo', 'Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
+            [['Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
             [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre', 'Prioridad'], 'string', 'max' => 255],
             [['RFC'], 'unique'],
         ];

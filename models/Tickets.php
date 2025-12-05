@@ -58,7 +58,7 @@ class Tickets extends \yii\db\ActiveRecord
             [['Asignado_a', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
             [['Descripcion', 'Solucion'], 'string'],
             [['HoraProgramada', 'HoraInicio', 'HoraFinalizo', 'Fecha_creacion', 'Fecha_actualizacion'], 'safe'],
-            [['TiempoRestante', 'TiempoEfectivo'], 'number'],
+           
             [['Folio', 'Usuario_reporta', 'Estado'], 'string', 'max' => 255],
             [['Folio'], 'unique'],
         ];

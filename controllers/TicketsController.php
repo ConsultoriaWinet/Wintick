@@ -386,76 +386,221 @@ class TicketsController extends Controller
         return ['success' => false];
     }
 
-    public function actionGetTicketData()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+  public function actionGetTicketData()
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        try {
-            $input = \Yii::$app->request->getRawBody();
-            $data = json_decode($input, true);
+    try {
+        $input = \Yii::$app->request->getRawBody();
+        $data = json_decode($input, true);
 
-            $ticket = Tickets::findOne($data['id'] ?? null);
-            if (!$ticket) {
-                return ['success' => false, 'message' => 'Ticket no encontrado'];
+        $ticket = Tickets::findOne($data['id'] ?? null);
+        if (!$ticket) {
+            return ['success' => false, 'message' => 'Ticket no encontrado'];
+        }
+
+        // HoraInicio → datetime-local
+        $horaInicio = '';
+        if (!empty($ticket->HoraInicio)) {
+            $horaInicio = date('Y-m-d\TH:i', strtotime($ticket->HoraInicio));
+        }
+
+        // HoraFinalizo → datetime-local
+        $horaFinalizo = '';
+        if (!empty($ticket->HoraFinalizo)) {
+            if (is_numeric($ticket->HoraFinalizo)) {
+                $horaFinalizo = date('Y-m-d\TH:i', (int)$ticket->HoraFinalizo);
+            } else {
+                $horaFinalizo = date('Y-m-d\TH:i', strtotime($ticket->HoraFinalizo));
+            }
+        }
+
+        return [
+            'success' => true,
+            'ticket' => [
+                'HoraInicio'      => $horaInicio,
+                'HoraFinalizo'    => $horaFinalizo,
+                'Solucion'        => $ticket->Solucion ?? '',
+                'TiempoEfectivo'  => $ticket->TiempoEfectivo ?? '',
+            ]
+        ];
+    } catch (\Exception $e) {
+        return ['success' => false, 'error' => $e->getMessage()];
+    }
+}
+
+
+public function actionSaveSolution()
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+    try {
+        $input = \Yii::$app->request->getRawBody();
+        $data  = json_decode($input, true);
+
+        if (empty($data['id'])) {
+            return ['success' => false, 'message' => 'ID de ticket no recibido'];
+        }
+
+        /** @var Tickets $ticket */
+        $ticket = Tickets::findOne($data['id']);
+        if (!$ticket) {
+            return ['success' => false, 'message' => 'Ticket no encontrado'];
+        }
+
+        // ======================================================
+        // 1) LEER TIEMPO EFECTIVO VIEJO DEL TICKET (HORAS)
+        // ======================================================
+        $tiempoEfectivoViejoRaw = $ticket->TiempoEfectivo;  // lo que ya había guardado
+        $tiempoEfectivoViejoNum = $this->parseHoras($tiempoEfectivoViejoRaw); // float
+
+        // ======================================================
+        // 2) LEER TIEMPO EFECTIVO NUEVO QUE VIENE DEL FRONT
+        // ======================================================
+        $tiempoEfectivoNuevoRaw = $data['tiempoEfectivo'] ?? '';
+        $tiempoEfectivoNuevoNum = $this->parseHoras($tiempoEfectivoNuevoRaw);
+
+        // ======================================================
+        // 3) SETEAR CAMPOS DEL TICKET
+        // ======================================================
+        // Guardamos el texto tal cual lo escribió el usuario
+        $ticket->Solucion       = $data['solucion'] ?? null;
+        $ticket->TiempoEfectivo = $tiempoEfectivoNuevoRaw;
+
+        // HoraFinalizo (string tipo "2025-12-05T14:30")
+        if (!empty($data['horaFinalizo'])) {
+            $timestamp = strtotime($data['horaFinalizo']);
+
+            if ($timestamp === false) {
+                return ['success' => false, 'message' => 'Formato de fecha inválido para horaFinalizo'];
             }
 
-            // Si HoraFinalizo es integer (timestamp)
-            $horaFinalizo = '';
-            if ($ticket->HoraFinalizo) {
-                if (is_numeric($ticket->HoraFinalizo)) {
-                    $horaFinalizo = date('Y-m-d\TH:i', (int) $ticket->HoraFinalizo);
-                } else {
-                    $horaFinalizo = date('Y-m-d\TH:i', strtotime($ticket->HoraFinalizo));
+            $ticket->HoraFinalizo = date('Y-m-d H:i:s', $timestamp);
+        }
+
+        // ======================================================
+        // 4) GUARDAR TICKET PRIMERO
+        // ======================================================
+        if (!$ticket->save()) {
+            $errores = [];
+            foreach ($ticket->errors as $campo => $msgs) {
+                foreach ($msgs as $msg) {
+                    $errores[] = "$campo: $msg";
                 }
             }
 
             return [
-                'success' => true,
-                'ticket' => [
-                    'HoraFinalizo' => $horaFinalizo,
-                    'Solucion' => $ticket->Solucion ?? '',
-                    'TiempoEfectivo' => $ticket->TiempoEfectivo ?? '',
-                ]
+                'success' => false,
+                'message' => 'Error al guardar ticket: ' . implode(' | ', $errores),
+                'errors'  => $ticket->errors,
             ];
-        } catch (\Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
         }
-    }
 
-    public function actionSaveSolution()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        // ======================================================
+        // 5) CALCULAR DELTA DE HORAS (NUEVO - VIEJO)
+        // ======================================================
+        $deltaHoras = $tiempoEfectivoNuevoNum - $tiempoEfectivoViejoNum;
 
-        try {
-            $input = \Yii::$app->request->getRawBody();
-            $data = json_decode($input, true);
+        // Si delta es 0, no movemos nada del cliente
+        if (abs($deltaHoras) < 0.0001) {
+            return [
+                'success'               => true,
+                'message'               => 'Solución guardada (sin cambios en horas del cliente)',
+                'horaFinalizo_guardada' => $ticket->HoraFinalizo,
+                'tiempo_viejo_ticket'   => $tiempoEfectivoViejoRaw,
+                'tiempo_nuevo_ticket'   => $tiempoEfectivoNuevoRaw,
+                'delta_horas'           => $deltaHoras,
+            ];
+        }
 
-            $ticket = Tickets::findOne($data['id'] ?? null);
-            if (!$ticket) {
-                return ['success' => false, 'message' => 'Ticket no encontrado'];
-            }
+        // ======================================================
+        // 6) ACTUALIZAR TIEMPO DEL CLIENTE (SI HAY Cliente_id)
+        // ======================================================
+        $tiempoClienteAntes  = null;
+        $tiempoClienteDespues = null;
+        $clienteGuardadoOk   = null;
+        $clienteErrores      = null;
 
-            $ticket->Solucion = $data['solucion'] ?? null;
-            $ticket->TiempoEfectivo = $data['tiempoEfectivo'] ?? null;
+        if (!empty($ticket->Cliente_id)) {
+            /** @var Clientes $cliente */
+            $cliente = Clientes::findOne($ticket->Cliente_id);
+            if ($cliente) {
+                // Tiempo actual del cliente (string -> float)
+                $tiempoClienteAntes = $this->parseHoras($cliente->Tiempo);
 
-            // Convertir fecha HTML a timestamp
-            if (!empty($data['horaFinalizo'])) {
-                $timestamp = strtotime($data['horaFinalizo']);
-                if ($timestamp === false) {
-                    return ['success' => false, 'message' => 'Formato de fecha inválido'];
+                // restar el delta
+                $tiempoClienteDespues = $tiempoClienteAntes - $deltaHoras;
+
+                // No permitir negativo
+                if ($tiempoClienteDespues < 0) {
+                    $tiempoClienteDespues = 0;
                 }
-                $ticket->HoraFinalizo = $timestamp;
-            }
 
-            if ($ticket->save()) {
-                return ['success' => true, 'message' => 'Solución guardada correctamente'];
-            }
+                // Guardar como string con 2 decimales (ej: "10.50")
+                $cliente->Tiempo = number_format($tiempoClienteDespues, 2, '.', '');
 
-            return ['success' => false, 'errors' => $ticket->errors];
-        } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+                // Si quieres evitar validaciones, usa save(false)
+                if (!$cliente->save()) {
+                    $clienteGuardadoOk = false;
+                    $clienteErrores    = $cliente->errors;
+                } else {
+                    $clienteGuardadoOk = true;
+                }
+            }
         }
+
+        // ======================================================
+        // 7) RESPUESTA FINAL
+        // ======================================================
+        return [
+            'success'                 => true,
+            'message'                 => 'Solución guardada y tiempo del cliente ajustado',
+            'horaFinalizo_guardada'   => $ticket->HoraFinalizo,
+            'tiempo_viejo_ticket'     => $tiempoEfectivoViejoRaw,
+            'tiempo_nuevo_ticket'     => $tiempoEfectivoNuevoRaw,
+            'tiempo_viejo_ticket_num' => $tiempoEfectivoViejoNum,
+            'tiempo_nuevo_ticket_num' => $tiempoEfectivoNuevoNum,
+            'delta_horas'             => $deltaHoras,
+            'cliente_tiempo_antes'    => $tiempoClienteAntes,
+            'cliente_tiempo_despues'  => $tiempoClienteDespues,
+            'cliente_guardado_ok'     => $clienteGuardadoOk,
+            'cliente_errores'         => $clienteErrores,
+        ];
+
+    } catch (\Exception $e) {
+        return ['success' => false, 'message' => 'Error en servidor: ' . $e->getMessage()];
     }
+}
+
+/**
+ * Convierte textos como:
+ *  "1.5", "1,5", "2", "3 horas", "1 hora 30 minutos"
+ * a un número en horas (float).
+ *
+ * Por ahora: agarra SOLO el primer número.
+ */
+protected function parseHoras($valor)
+{
+    if ($valor === null) {
+        return 0.0;
+    }
+
+    // Asegurarnos que es string
+    if (!is_string($valor)) {
+        $valor = (string) $valor;
+    }
+
+    // Buscar el primer número (con punto o coma)
+    if (preg_match('/-?\d+([.,]\d+)?/', $valor, $m)) {
+        $num = str_replace(',', '.', $m[0]);
+        return (float)$num;
+    }
+
+    return 0.0;
+}
+
+
+
 
     /**
      * Obtener notificaciones del usuario actual
