@@ -38,6 +38,8 @@ $this->params['breadcrumbs'][] = $this->title;
             'Tiempo',
             'Whatsapp_contacto',
             'Telefono',
+            'Prioridad',
+            'Tipo_servicio',
             'Estado',
             'created_at',
             'updated_at',

@@ -18,7 +18,7 @@ class ClientesSearch extends Clientes
     {
         return [
             [['id', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
-            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre'], 'safe'],
+            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre', 'Prioridad', 'Tipo_servicio'], 'safe'],
         ];
     }
 
@@ -72,7 +72,9 @@ class ClientesSearch extends Clientes
             ->andFilterWhere(['like', 'Razon_social', $this->Razon_social])
             ->andFilterWhere(['like', 'RFC', $this->RFC])
             ->andFilterWhere(['like', 'Correo', $this->Correo])
-            ->andFilterWhere(['like', 'Contacto_nombre', $this->Contacto_nombre]);
+            ->andFilterWhere(['like', 'Contacto_nombre', $this->Contacto_nombre])
+            ->andFilterWhere(['like', 'Prioridad', $this->Prioridad])
+            ->andFilterWhere(['like', 'Tipo_servicio', $this->Tipo_servicio]);
 
         return $dataProvider;
     }

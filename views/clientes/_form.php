@@ -28,6 +28,8 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'Telefono')->textInput() ?>
 
+    <?= $form->field($model, 'Prioridad')->textInput(['maxlength' => true]) ?>
+
     <?= $form->field($model, 'Estado')->textInput() ?>
 
     <?= $form->field($model, 'created_at')->textInput() ?>
