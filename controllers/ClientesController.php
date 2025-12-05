@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use Yii;
 use app\models\Clientes;
 use app\models\ClientesSearch;
 use yii\web\Controller;
@@ -55,10 +56,19 @@ class ClientesController extends Controller
      */
     public function actionView($id)
     {
+        $model = $this->findModel($id);
+
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->session->setFlash('success', 'Cliente actualizado correctamente');
+            return $this->refresh();
+        }
+
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
         ]);
     }
+
 
     /**
      * Creates a new Clientes model.
@@ -93,14 +103,22 @@ class ClientesController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            // Puedes redirigir o hacer algo después de guardar
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        return $this->render('update', [
+        return $this->renderAjax('_form', [
             'model' => $model,
         ]);
     }
+
+
+
+
+
+
+
 
     /**
      * Deletes an existing Clientes model.

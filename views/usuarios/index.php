@@ -8,7 +8,7 @@ use yii\helpers\Html;
 
 <style>
     body {
-        padding-top: 80px;
+        padding-top: 0px;
     }
 </style>
 
