@@ -154,7 +154,20 @@ $this->registerCss($css);
 
 
 <?php
+
 $this->registerJs("
+    const copyToast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    });
+
     // Función para abrir modal
     window.openModal = function(id) {
         $.get('" . Url::to(['clientes/update']) . "', {id: id}, function(data) {
@@ -165,13 +178,14 @@ $this->registerJs("
 
     // Copiar correo y mostrar toast
     window.copyToClipboard = function(event, text) {
-        event.stopPropagation(); // Evita abrir el modal
+        event.stopPropagation();
         navigator.clipboard.writeText(text).then(function() {
-            var toastEl = document.getElementById('email-toast');
-            toastEl.querySelector('.toast-body').innerText = 'Correo copiado: ' + text;
-            var toast = new bootstrap.Toast(toastEl);
-            toast.show();
+            copyToast.fire({
+                icon: 'success',
+                title: 'Correo copiado',
+                text: text
+            });
         });
     };
-");
+", \yii\web\View::POS_END);
 ?>
