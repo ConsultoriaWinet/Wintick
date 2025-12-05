@@ -994,10 +994,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         <strong><?= Html::encode(strftime('%B de %Y', strtotime($_GET['mes'] . '-01'))) ?></strong>
     </div>
     <?php else: ?>
-    <div class="mes-actual" style="background: #10b981;">
-        <i class="fas fa-calendar-alt"></i>
-        <strong>Todos los tickets</strong>
-    </div>
+   
     <?php endif; ?>
 
     <!-- Stats Bar -->
@@ -1204,9 +1201,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         </table>
     </div>
 
-    <button type="button" class="mt-3 m-3" id="addMoreRows">
-        <i class="fas fa-plus"></i> Agregar más filas
-    </button>
+    
 </div>
 
 <!-- Modal para Solución -->
