@@ -86,6 +86,11 @@ $this->registerCss($css);
                             'label' => 'Razón social',
                             'contentOptions' => ['style' => 'max-width:150px; white-space:normal;'],
                         ],
+
+                        [
+                            'attribute' => 'Tiempo',
+                            'label' => 'Tiempo Efectivo',
+                        ],
                         'RFC',
                         [
                             'attribute' => 'Correo',

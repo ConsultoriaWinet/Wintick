@@ -105,7 +105,7 @@ class ClientesController extends Controller
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             // Puedes redirigir o hacer algo después de guardar
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(['index']);
         }
 
         return $this->renderAjax('_form', [
