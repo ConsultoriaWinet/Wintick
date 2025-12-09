@@ -89,25 +89,50 @@ class SiteController extends Controller
         }
 
         $model = new LoginForm();
+
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            // ✅ AGREGAR MENSAJE DE BIENVENIDA DESPUÉS DEL LOGIN EXITOSO
+
+            // Usuario autenticado
             $usuario = Yii::$app->user->identity;
+
+            // ===============================================================
+            // 🔵 1. Sincronizar el rol de la base de datos con RBAC
+            // ===============================================================
+            $auth = Yii::$app->authManager;
+
+            // Remove any existing assignments
+            $auth->revokeAll($usuario->id);
+
+            // Get the role from the DB
+            $rolBD = $usuario->rol;
+
+            // Assign the role from BD if it exists in RBAC
+            $rolRBAC = $auth->getRole($rolBD);
+            if ($rolRBAC) {
+                $auth->assign($rolRBAC, $usuario->id);
+            }
+
+            // ===============================================================
+            // 🟢 2. Mensaje de bienvenida
+            // ===============================================================
             $nombre = $usuario->Nombre ?? $usuario->email;
 
             Yii::$app->session->setFlash('welcome', [
                 'nombre' => $nombre,
-                'rol' => $usuario->rol ?? 'Usuario',
-                'email' => $usuario->email
+                'rol' => $rolBD,
+                'email' => $usuario->email,
             ]);
 
             return $this->goBack();
         }
 
+        // Limpia password del formulario
         $model->password = '';
         return $this->render('login', [
             'model' => $model,
         ]);
     }
+
 
     /**
      * Logout action.

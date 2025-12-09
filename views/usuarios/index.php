@@ -25,7 +25,7 @@ use yii\helpers\Html;
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
                 <div class="card usuario-card flex-fill shadow-sm" data-nombre="<?= Html::encode($usuario->Nombre) ?>"
                     data-email="<?= Html::encode($usuario->email) ?>" data-color="<?= Html::encode($usuario->color) ?>"
-                    data-id="<?= $usuario->id ?>" style="cursor:pointer;">
+                    data-rol="<?= Html::encode($usuario->rol) ?>" data-id="<?= $usuario->id ?>" style="cursor:pointer;">
                     <div class="card-body text-center d-flex flex-column align-items-center">
                         <div class="usuario-avatar mb-3" style="background-color: <?= Html::encode($usuario->color) ?>;">
                             <?= strtoupper(substr(Html::encode($usuario->Nombre), 0, 1)) ?>
@@ -80,6 +80,13 @@ use yii\helpers\Html;
                             </label>
                             <input type="email" class="form-control form-control-sm rounded-pill" id="editUserEmail"
                                 name="Usuarios[email]" required autocomplete="off">
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label for="editUserRol" class="form-label fw-semibold">
+                                <i class="bi bi-envelope"></i> Rol
+                            </label>
+                            <input type="rol" class="form-control form-control-sm rounded-pill" id="editUserRol"
+                                name="Usuarios[rol]" required autocomplete="off">
                         </div>
                         <div class="mb-4 text-start">
                             <label for="editUserColor" class="form-label fw-semibold">
@@ -208,6 +215,7 @@ document.querySelectorAll('.usuario-card').forEach(card => {
         const id = this.dataset.id;
         const nombre = this.dataset.nombre;
         const email = this.dataset.email;
+        const rol = this.dataset.rol;
         const color = this.dataset.color;
 
         document.getElementById('usuarioModalLabel').textContent = nombre;
@@ -221,6 +229,7 @@ document.querySelectorAll('.usuario-card').forEach(card => {
         document.getElementById('modalEditBtn').dataset.id = id;
         document.getElementById('modalEditBtn').dataset.nombre = nombre;
         document.getElementById('modalEditBtn').dataset.email = email;
+        document.getElementById('modalEditBtn').dataset.rol = rol;
         document.getElementById('modalEditBtn').dataset.color = color;
 
         document.getElementById('modalDeleteBtn').dataset.id = id;
@@ -243,6 +252,7 @@ document.getElementById('modalEditBtn').addEventListener('click', function(e) {
     document.getElementById('editUserId').value = this.dataset.id;
     document.getElementById('editUserNombre').value = this.dataset.nombre;
     document.getElementById('editUserEmail').value = this.dataset.email;
+    document.getElementById('editUserRol').value = this.dataset.rol;
     document.getElementById('editUserColor').value = this.dataset.color;
 
     document.getElementById('editUserForm').action = 'update?id=' + this.dataset.id;

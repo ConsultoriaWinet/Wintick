@@ -30,6 +30,13 @@ $this->params['breadcrumbs'][] = 'Editar';
             'placeholder' => 'Correo electrónico'
         ]) ?>
 
+        <?= $form->field($model, 'Rol')->textInput([
+            'maxlength' => true,
+            'class' => 'form-control form-control-lg',
+            'placeholder' => 'Correo electrónico'
+        ]) ?>
+
+
         <?= $form->field($model, 'color')->input('color', [
             'class' => 'form-control form-control-color',
             'style' => 'width:80px; height:45px; padding:4px;'

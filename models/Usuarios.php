@@ -65,7 +65,7 @@ class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterfac
             'rol' => 'Rol',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
-            'color'=> 'Color',
+            'color' => 'Color',
         ];
     }
 
@@ -204,6 +204,28 @@ class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterfac
     public function getNotificaciones()
     {
         return $this->hasMany(Notificaciones::class, ['usuario_id' => 'id']);
+    }
+
+    //////////////Asignacion de ROLES (RBACController)//////////////
+    public function getRole()
+    {
+        return $this->rol;
+    }
+    /**
+     * Sincroniza el rol guardado en la BD con RBAC al hacer login.
+     */
+    public function afterLogin()
+    {
+        $auth = Yii::$app->authManager;
+
+        // Limpiar asignaciones previas
+        $auth->revokeAll($this->id);
+
+        // Asignar el rol guardado en la BD
+        $role = $auth->getRole($this->rol);
+        if ($role !== null) {
+            $auth->assign($role, $this->id);
+        }
     }
 
 }
