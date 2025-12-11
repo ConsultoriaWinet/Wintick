@@ -67,9 +67,8 @@ class SiteController extends Controller
     public function actionIndex()
     {
 
-        // Obtener todos los consultores (rol = 'consultor')
         $consultores = Usuarios::find()
-            ->where(['rol' => 'consultor'])
+            ->where(['id' => Tickets::find()->select('Asignado_a')->distinct()])
             ->all();
 
         return $this->render('index', [
