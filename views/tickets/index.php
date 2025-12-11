@@ -14,7 +14,7 @@ $this->title = 'Tickets';
 //Estilos generales de aqui para todos los tickets
 $this->registerCssFile('@web/views/tickets/styles.css');
 // Scripts generales de aqui para todos los tickets 
-$this->registerJsFile('@web/views/tickets/scripts.js', ['position' => \yii\web\View::POS_END]);
+
 
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 // Estilos de Flatpickr (Tema Airbnb)
@@ -242,14 +242,21 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <td>
                         <input type="text" class="form-control form-control-sm usuario-reporta" placeholder="Quién reporta">
                     </td>
-                    <td>
-                        <select class="form-select form-select-sm asignado-a">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($Usuarios as $usuario): ?>
-                                <option value="<?= $usuario['id'] ?>"><?= Html::encode($usuario['email']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
+               <td>
+    <select class="form-select form-select-sm asignado-a">
+        <option value="">Seleccionar</option>
+
+        <?php foreach ($Usuarios as $usuario): ?>
+            <option
+                value="<?= $usuario['id'] ?>"
+                data-email="<?= Html::encode($usuario['email']) ?>"
+            >
+                <?= Html::encode($usuario['Nombre']) ?>
+            </option>
+        <?php endforeach; ?>
+
+    </select>
+</td>
                     <td>
                         <div class="datetime-wrapper">
                             <input type="text" class="form-control form-control-sm hora-programada flatpickr-datetime" placeholder="Seleccionar fecha">
@@ -311,7 +318,13 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <td><?= $ticket->sistema ? Html::encode($ticket->sistema->Nombre) : '-' ?></td>
                     <td><?= $ticket->servicio ? Html::encode($ticket->servicio->Nombre) : '-' ?></td>
                     <td><?= Html::encode($ticket->Usuario_reporta) ?></td>
-                    <td><?= $ticket->usuarioAsignado ? Html::encode($ticket->usuarioAsignado->email) : '-' ?></td>
+                    <td> <?php if ($ticket->usuarioAsignado): ?>
+        <span title="<?= Html::encode($ticket->usuarioAsignado->email) ?>">  <!-- 👈 correo en tooltip -->
+            <?= Html::encode($ticket->usuarioAsignado->Nombre) ?>            <!-- 👈 nombre visible -->
+        </span>
+    <?php else: ?>
+        -
+    <?php endif; ?></td>
                     <td style="font-size: 12px; white-space: nowrap;">
                         <?= $ticket->HoraProgramada ? Html::encode(date('d/m H:i', strtotime($ticket->HoraProgramada))) : '-' ?>
                     </td>
@@ -369,9 +382,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <button class="btn btn-sm btn-outline-info" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
                             <i class="fas fa-comments"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-primary" title="Agregar solución" onclick="openSolutionModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                            <i class="fas fa-lightbulb"></i>
-                        </button>
+                                <button class="btn btn-sm btn-outline-primary" title="Agregar solución"
+                                    onclick="openSolutionModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
+                                <i class="fas fa-lightbulb"></i>
+                            </button>
                         <?= Html::a('<i class="fas fa-edit"></i>', ['update', 'id' => $ticket->id], ['class' => 'btn btn-sm btn-outline-secondary', 'title' => 'Editar']) ?>
                         <?= Html::a('<i class="fas fa-trash"></i>', '#', [
                             'class' => 'btn btn-sm btn-outline-danger',
@@ -569,6 +583,8 @@ let rowsCache = [];
 const totalTicketsOriginal = <?= $dataProvider->getTotalCount() ?>;
 let tieneTiempoGuardado = false;
 let tiempoEditadoManualmente = false;   
+let solutionOpenedFromEstadoChange = false;  // 👈 se abrió modal al cambiar a CERRADO
+let lastTicketIdSolution = null;  
 
 
 // ========================================
@@ -812,12 +828,24 @@ function saveTicket(row) {
     console.log('📋 Datos del ticket:', ticket);
 
     if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
-        alert('⚠️ Por favor completa los campos requeridos');
+        swal.fire({
+            icon: 'warning',
+            title: 'Faltan datos',
+            text: '⚠️ Por favor completa todos los campos obligatorios',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#f59e0b'
+        });
         return;
     }
 
     if (!ticket.Descripcion || ticket.Descripcion.trim() === '') {
-        alert('⚠️ Por favor escribe una descripción');
+        swal.fire({
+            icon: 'warning',
+            title: 'Descripción vacía',
+            text: '⚠️ La descripción no puede estar vacía',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#f59e0b'
+        });
         return;
     }
 
@@ -891,11 +919,13 @@ function updateEstado(selectElement, ticketId) {
     const estado = selectElement.value;
     const div = selectElement.previousElementSibling;
     
+    // actualizar visualmente
     div.className = 'estado-clickeable ' + getEstadoClass(estado);
     div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
     div.style.display = 'inline-flex';
     selectElement.style.display = 'none';
     
+    // guardar en BD
     fetch('<?= Url::to(['update-estado']) ?>', {
         method: 'POST',
         headers: {
@@ -908,13 +938,28 @@ function updateEstado(selectElement, ticketId) {
     .then(data => {
         if (data.success) {
             buildRowsCache();
+
+            // 🔥 Si se puso en CERRADO, abrimos modal de solución
+            if (estado === 'CERRADO') {
+                const row   = selectElement.closest('tr');
+                const folio = row.dataset.folio || '';
+
+                solutionOpenedFromEstadoChange = true;
+                lastTicketIdSolution          = ticketId;
+
+                // tercer parámetro = true → viene de cambio de estado
+                openSolutionModal(ticketId, folio, true);
+            }
         }
     })
     .catch(error => console.error('Error:', error));
 }
 
+// mostrar el <select> para cambiar estado
 function toggleEstadoSelect(element, ticketId) {
     const select = document.querySelector('.estado-' + ticketId);
+    if (!select) return;
+
     if (select.style.display === 'none' || select.style.display === '') {
         element.style.display = 'none';
         select.style.display = 'block';
@@ -942,7 +987,6 @@ function getEstadoIcon(estado) {
     };
     return icons[estado] || 'fa-question-circle';
 }
-
 // ========================================
 // FORMATEAR Y CALCULAR TIEMPO EFECTIVO
 // ========================================
@@ -1029,9 +1073,18 @@ function calcularTiempoEfectivo() {
 // ========================================
 // MODAL DE SOLUCIÓN
 // ========================================
-function openSolutionModal(ticketId, folio) {
+function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
     const selectElement = document.querySelector('.estado-' + ticketId);
+    if (!selectElement) {
+        console.error('No se encontró el select de estado para el ticket', ticketId);
+        return;
+    }
+
     const estado = selectElement.value;
+
+    // guardamos de dónde vino
+    solutionOpenedFromEstadoChange = openedFromEstadoChange;
+    lastTicketIdSolution          = ticketId;
 
     if (estado !== 'CERRADO') {
         Swal.fire({
@@ -1146,17 +1199,18 @@ function saveSolution() {
         console.log('🔍 Respuesta save-solution:', data);
 
         if (data.success) {
+            // 👇 Aquí decimos: ya no revertir estado
+            solutionOpenedFromEstadoChange = false;
+            lastTicketIdSolution = null;
+
             alert('✅ Solución guardada');
             closeModal();
             location.reload();
         } else {
-            // Mostrar mensaje amigable y, si hay, los errores del modelo
             let msg = data.message || 'Error desconocido';
-
             if (data.errors) {
                 msg += '\n\nDetalles:\n' + JSON.stringify(data.errors, null, 2);
             }
-
             alert(msg);
         }
     })
@@ -1167,7 +1221,7 @@ function saveSolution() {
 }
 
 function closeModal() {
-     const modal = document.getElementById('solutionModal');
+    const modal = document.getElementById('solutionModal');
     modal.classList.remove('show');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
@@ -1178,6 +1232,44 @@ function closeModal() {
     document.getElementById('horaFinalizo').value = '';
     document.getElementById('solucion').value = '';
     document.getElementById('tiempoEfectivo').value = '';
+
+    // 👇 SI EL MODAL SE ABRIÓ POR CAMBIO A CERRADO Y NO SE GUARDÓ SOLUCIÓN
+    if (solutionOpenedFromEstadoChange && lastTicketIdSolution) {
+        const select = document.querySelector('.estado-' + lastTicketIdSolution);
+        if (select) {
+            const nuevoEstado = 'ABIERTO';
+            select.value = nuevoEstado;
+
+            const div = select.previousElementSibling;
+            if (div) {
+                div.className = 'estado-clickeable ' + getEstadoClass(nuevoEstado);
+                div.innerHTML = '<i class="fas ' + getEstadoIcon(nuevoEstado) + '"></i> ' + nuevoEstado;
+                div.style.display = 'inline-flex';
+                select.style.display = 'none';
+            }
+
+            // Actualizar en BD
+            fetch('<?= Url::to(['update-estado']) ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+                },
+                body: JSON.stringify({ id: lastTicketIdSolution, estado: nuevoEstado })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    buildRowsCache();
+                }
+            })
+            .catch(err => console.error('Error al revertir estado:', err));
+        }
+    }
+
+    // limpiar banderas
+    solutionOpenedFromEstadoChange = false;
+    lastTicketIdSolution = null;
 }
 
 // ========================================

@@ -566,7 +566,7 @@
        MODAL STYLES
        ======================================== */
     .modal-header {
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+       background: #A0BAA5;
         color: white;
         border-bottom: none;
         padding: 20px 25px;
@@ -720,7 +720,7 @@
     }
 
     #solutionModal .modal-header {
-        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        background: #A0BAA5;
         color: #f9fafb;
         align-items: center;
     }
@@ -830,11 +830,8 @@
        ======================================== */
        /* Quitar la "card" por defecto de SweetAlert */
 .swal2-popup {
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
+    
 }
-
 /* Quitar margen interno que mete SweetAlert al html */
 .swal2-html-container {
     margin: 0 !important;
