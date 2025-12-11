@@ -16,85 +16,93 @@ $this->title = 'Dashboard - Tickets por Consultor';
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.19/index.global.min.js'></script>
 
 <style>
-    .container-fluid {
+    .dashboard-container {
         display: flex;
-        gap: 20px;
+        gap: 24px;
         margin-top: 20px;
+        flex-wrap: wrap;
     }
 
+    /* SIDEBAR MINIMALISTA */
     .consultores-sidebar {
-        width: 250px;
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        height: fit-content;
-        position: sticky;
-        top: 80px;
+        width: 240px;
+        min-width: 220px;
+        padding: 10px 0;
+        border-right: 1px solid #e5e5e5;
+    }
+
+    .consultores-sidebar h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 12px;
+        padding-left: 4px;
     }
 
     .consultor-item {
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
+        padding: 8px 12px;
+        margin-bottom: 4px;
+        border-radius: 6px;
         cursor: pointer;
-        transition: all 0.3s;
         display: flex;
         align-items: center;
         gap: 10px;
+        color: #333;
+        font-size: 14px;
+        transition: all 0.2s ease;
     }
 
     .consultor-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        background-color: #f5f5f5;
     }
 
     .consultor-item.active {
-        font-weight: bold;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        background-color: #e8eefc;
+        font-weight: 500;
     }
 
     .color-badge {
-        width: 20px;
-        height: 20px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        border: 2px solid #fff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
-    #calendar {
+    /* CONTENEDOR DEL CALENDARIO */
+    #calendar-container {
         flex: 1;
-        max-width: 1100px;
-        padding: 0 10px;
+        min-width: 300px;
+        padding: 10px;
     }
 
-    .fc-event {
-        cursor: pointer;
-        border-radius: 4px;
-    }
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+        .dashboard-container {
+            flex-direction: column;
+        }
 
-    .fc-event-title {
-        font-weight: bold;
-    }
-
-    h3 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        color: #333;
+        .consultores-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: 12px;
+        }
     }
 </style>
 
+
+
 <div class="site-index">
     <div class="body-content">
-        <h1 class="text-center">Calendario de Tickets</h1>
+        <h1 class="text-center mb-4">Calendario de Tickets</h1>
 
-        <div class="container-fluid">
-            <!-- Sidebar de consultores -->
+        <div class="dashboard-container">
+
+            <!-- Sidebar Moderno -->
             <div class="consultores-sidebar">
                 <h3>Consultores</h3>
 
-                <!-- Opción para ver todos -->
-                <div class="consultor-item active" onclick="filtrarPorConsultor(null)" id="consultor-todos"
-                    style="background-color: #e9ecef;">
+                <!-- Ver todos -->
+                <div class="consultor-item active" onclick="filtrarPorConsultor(null)" id="consultor-todos">
                     <span class="color-badge" style="background: gray;"></span>
                     <span>Todos los consultores</span>
                 </div>
@@ -102,19 +110,25 @@ $this->title = 'Dashboard - Tickets por Consultor';
                 <!-- Lista de consultores -->
                 <?php foreach ($consultores as $consultor): ?>
                     <div class="consultor-item" onclick="filtrarPorConsultor(<?= $consultor->id ?>)"
-                        id="consultor-<?= $consultor->id ?>"
-                        style="background-color: <?= $consultor->color ?? '#6c757d' ?>20;">
-                        <span class="color-badge" style="background-color: <?= $consultor->color ?? '#6c757d' ?>;"></span>
-                        <span><?= Html::encode($consultor->Nombre ?? $consultor->email ?? 'Consultor #' . $consultor->id) ?></span>
+                        id="consultor-<?= $consultor->id ?>">
+                        <span class="color-badge" style="background-color: <?= $consultor->color ?? '#6c757d' ?>"></span>
+
+                        <span>
+                            <?= Html::encode($consultor->Nombre ?? $consultor->email) ?>
+                        </span>
                     </div>
                 <?php endforeach; ?>
             </div>
 
-            <!-- Calendario -->
-            <div id='calendar'></div>
+            <!-- Calendario Moderno -->
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
+
         </div>
     </div>
 </div>
+
 
 <script>
     let calendar;
@@ -322,4 +336,12 @@ $this->title = 'Dashboard - Tickets por Consultor';
         // Recargar eventos del calendario
         calendar.refetchEvents();
     }
+
+    window.addEventListener('resize', function () {
+        if (calendar) {
+            setTimeout(() => {
+                calendar.updateSize();
+            }, 150);
+        }
+    });
 </script>
