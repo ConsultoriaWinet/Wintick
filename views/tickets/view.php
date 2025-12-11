@@ -441,7 +441,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                 'onclick' => "confirmarEliminar({$model->id}, '{$model->Folio}')"
             ]) ?>
 
-            <?= Html::a('<i class="fas fa-arrow-left"></i> Volver a Tickets', ['index'], ['class' => 'btn btn-secondary']) ?>
+            <?= Html::a('<i class="fas fa-arrow-left"></i> Volver a Tickets', ['../web/'], ['class' => 'btn btn-secondary']) ?>
         </div>
     </div>
 </div>
