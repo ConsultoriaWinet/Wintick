@@ -35,12 +35,16 @@ class UsuariosController extends Controller
     // 📌 Listado principal
     public function actionIndex()
     {
+        $model = new Usuarios();
+      
         $searchModel = new UsuariosSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'model' => $model,
+            
         ]);
     }
 
