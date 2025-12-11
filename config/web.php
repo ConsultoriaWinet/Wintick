@@ -14,6 +14,9 @@ $config = [
     'language' => 'es-MX',
     'timeZone' => 'America/Mexico_City',
     'components' => [
+        'authManager' => [
+            'class' => 'yii\rbac\DbManager',
+        ],
         'request' => [
             'cookieValidationKey' => 'fk3TG_tHdrVbcTFW13tFkkK5RmwTCPbe',
             'enableCsrfValidation' => false,
@@ -38,10 +41,10 @@ $config = [
             'transport' => [
                 'class' => 'Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport',
                 'scheme' => 'smtps', // SSL
-                'host' => 'smtppro.zoho.com', 
-                'username' => 'consultoria@winetpc.com', 
-                'password' => 'H8EXh51ffYqq', 
-                'port' => 465, 
+                'host' => 'smtppro.zoho.com',
+                'username' => 'consultoria@winetpc.com',
+                'password' => 'H8EXh51ffYqq',
+                'port' => 465,
                 'streamOptions' => [
                     'ssl' => [
                         'allow_self_signed' => true,
@@ -49,8 +52,14 @@ $config = [
                         'verify_peer_name' => false,
                     ],
                 ],
+
+
+                'db' => require __DIR__ . '/db.php',
             ],
         ],
+
+        //Autenticacion Usuarios
+
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [

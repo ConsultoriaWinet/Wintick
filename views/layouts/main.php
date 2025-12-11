@@ -450,14 +450,37 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1
                 ],
             ]);
 
-            echo Nav::widget([
-                'options' => ['class' => 'navbar-nav'],
-                'items' => [
-                    ['label' => 'Clientes', 'url' => ['/clientes/index']],
-                    ['label' => 'Tickets', 'url' => ['/tickets/index']],
-                    ['label' => 'Usuarios', 'url' => ['/usuarios/index']],
-                ]
-            ]);
+echo Nav::widget([
+    'options' => ['class' => 'navbar-nav'],
+    'items' => array_filter([
+        
+        // -------------------------
+        // MENÚ: TICKETS
+        // -------------------------
+        Yii::$app->user->can('verTickets') ? [
+            'label' => 'Tickets',
+            'url' => ['/tickets/index']
+        ] : null,
+
+        // -------------------------
+        // MENÚ: CLIENTES
+        // -------------------------
+        Yii::$app->user->can('verClientes') ? [
+            'label' => 'Clientes',
+            'url' => ['/clientes/index']
+        ] : null,
+
+        // -------------------------
+        // MENÚ: USUARIOS
+        // -------------------------
+        Yii::$app->user->can('administrarUsuarios') ? [
+            'label' => 'Usuarios',
+            'url' => ['/usuarios/index']
+        ] : null,
+
+    ])
+]);
+
             ?>
 
             <!-- Notificaciones y Usuario -->
