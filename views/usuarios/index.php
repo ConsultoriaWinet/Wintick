@@ -4,6 +4,14 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
+$roles = [
+    'Administracion' => 'Administracion',
+    'Administradores'=> 'Administradores',
+    'Consultores'=> 'Consultores',
+    'Desarrolladores'=> 'Desarrolladores',
+    'Supervisores'=> 'Supervisores',
+    
+];
 ?>
 
 <style>
@@ -85,9 +93,16 @@ use yii\helpers\Html;
                             <label for="editUserRol" class="form-label fw-semibold">
                                 <i class="bi bi-envelope"></i> Rol
                             </label>
-                            <input type="rol" class="form-control form-control-sm rounded-pill" id="editUserRol"
-                                name="Usuarios[rol]" required autocomplete="off">
-                        </div>
+                           <?= Html::dropDownList(
+                            'Usuarios[rol]',
+                            null,
+                            $roles,
+                            [
+                                'class' => 'form-select form-select-sm rounded-pill',
+                                'id' => 'editUserRol',
+                                'required' => true
+                            ]
+                        ) ?>
                         <div class="mb-4 text-start">
                             <label for="editUserColor" class="form-label fw-semibold">
                                 <i class="bi bi-palette"></i> Color
