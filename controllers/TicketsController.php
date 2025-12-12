@@ -62,79 +62,74 @@ class TicketsController extends Controller
      *
      * @return string
      */
-    public function actionIndex()
-    {
-        $searchModel = new TicketsSearch();
+   public function actionIndex()
+{
+    $searchModel  = new TicketsSearch();
+    $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
-        $clientes = Clientes::find()->asArray()->all();
-        $sistemas = Sistemas::find()->asArray()->all();
-        $servicios = Servicios::find()->asArray()->all();
-        $Usuarios = Usuarios::find()->asArray()->all();
+    // 👇 obtenemos el query del dataProvider
+    $query   = $dataProvider->query;
+    $request = Yii::$app->request;
 
-        $query = Tickets::find();
+    // lo que venga por GET en el filtro
+    $asignadoParam = $request->get('asignado_a', null);
+    $asignadoFiltro = null;
 
-        // Filtro automático para Consultores
-        $currentUser = Yii::$app->user->identity;
-        if ($currentUser && $currentUser->rol === 'Consultor') {
-            if (
-                empty($_GET['asignado_a']) && empty($_GET['folio']) && empty($_GET['cliente_id']) &&
-                empty($_GET['sistema_id']) && empty($_GET['servicio_id']) && empty($_GET['prioridad']) &&
-                empty($_GET['estado']) && empty($_GET['mes'])
-            ) {
-                $query->andWhere(['Asignado_a' => $currentUser->id]);
-            }
-        }
+    if (!Yii::$app->user->isGuest) {
+        $usuarioActualId = Yii::$app->user->id;
 
-        // Aplicar filtros
-        if (!empty($_GET['folio'])) {
-            $query->andWhere(['like', 'Folio', $_GET['folio']]);
+        if ($asignadoParam === null) {
+            // 👉 NO viene en la URL → por defecto: solo tickets del usuario logeado
+            $query->andWhere(['Asignado_a' => $usuarioActualId]);
+            $asignadoFiltro = $usuarioActualId;
+        } elseif ($asignadoParam === '') {
+            // 👉 viene "Todos" (value="") → NO filtramos por Asignado_a
+            $asignadoFiltro = '';
+        } else {
+            // 👉 viene un id específico
+            $query->andWhere(['Asignado_a' => $asignadoParam]);
+            $asignadoFiltro = $asignadoParam;
         }
-        if (!empty($_GET['cliente_id'])) {
-            $query->andWhere(['Cliente_id' => $_GET['cliente_id']]);
-        }
-        if (!empty($_GET['sistema_id'])) {
-            $query->andWhere(['Sistema_id' => $_GET['sistema_id']]);
-        }
-        if (!empty($_GET['servicio_id'])) {
-            $query->andWhere(['Servicio_id' => $_GET['servicio_id']]);
-        }
-        if (!empty($_GET['asignado_a'])) {
-            $query->andWhere(['Asignado_a' => $_GET['asignado_a']]);
-        }
-        if (!empty($_GET['prioridad'])) {
-            $query->andWhere(['Prioridad' => $_GET['prioridad']]);
-        }
-        if (!empty($_GET['estado'])) {
-            $query->andWhere(['Estado' => $_GET['estado']]);
-        }
-
-        // ✅ SOLO FILTRAR POR MES SI SE ESPECIFICA
-        if (!empty($_GET['mes'])) {
-            $mes = $_GET['mes'];
-            $primerDia = $mes . '-01 00:00:00';
-            $ultimoDia = date('Y-m-t 23:59:59', strtotime($mes . '-01'));
-            $query->andWhere(['>=', 'Fecha_creacion', $primerDia]);
-            $query->andWhere(['<=', 'Fecha_creacion', $ultimoDia]);
-        }
-        // ✅ REMOVER EL ELSE QUE FORZABA MES ACTUAL
-
-        $dataProvider = new ActiveDataProvider([
-            'query' => $query->orderBy(['id' => SORT_DESC]),
-            'pagination' => [
-                'pageSize' => 50,
-            ],
-        ]);
-
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-            'clientes' => $clientes,
-            'sistemas' => $sistemas,
-            'servicios' => $servicios,
-            'Usuarios' => $Usuarios,
-        ]);
     }
 
+    // ====== AQUÍ VA LO QUE YA TENÍAS ======
+    // Ejemplo (ajusta a tu código real):
+
+    $clientes  = Clientes::find()
+        ->select(['id', 'Nombre', 'Prioridad', 'Tipo_servicio'])
+        ->orderBy(['Nombre' => SORT_ASC])
+        ->asArray()
+        ->all();
+
+    $sistemas = Sistemas::find()
+        ->select(['id', 'Nombre'])
+        ->orderBy(['Nombre' => SORT_ASC])
+        ->asArray()
+        ->all();
+
+    $servicios = Servicios::find()
+        ->select(['id', 'Nombre'])
+        ->orderBy(['Nombre' => SORT_ASC])
+        ->asArray()
+        ->all();
+
+    $Usuarios = Usuarios::find()
+        ->select(['id', 'Nombre', 'email'])
+        ->orderBy(['Nombre' => SORT_ASC])
+        ->asArray()
+        ->all();
+
+    // ====== RENDER ======
+    return $this->render('index', [
+        'searchModel'     => $searchModel,
+        'dataProvider'    => $dataProvider,
+        'clientes'        => $clientes,
+        'sistemas'        => $sistemas,
+        'servicios'       => $servicios,
+        'Usuarios'        => $Usuarios,
+        'asignadoFiltro'  => $asignadoFiltro, 
+    ]);
+}
     /**
      * Displays a single Tickets model.
      * @param int $id ID

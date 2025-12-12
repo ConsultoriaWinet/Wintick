@@ -134,6 +134,11 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
                         <div class="compact-filter-group">
                             <label>Asignado A</label>
+                            <?php
+$asignadoFiltroView = $asignadoFiltro
+    ?? ($_GET['asignado_a'] ?? (Yii::$app->user->id ?? ''));
+?>
+
                             <select name="asignado_a">
                                 <option value="">Todos</option>
                                 <?php foreach ($Usuarios as $usuario): ?>
