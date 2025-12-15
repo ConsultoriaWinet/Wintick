@@ -174,6 +174,8 @@ class TicketsController extends Controller
             ->asArray()
             ->all();
 
+
+
         // El primer parámetro es la clave (lo que se guarda: id), el segundo es el valor (lo que se ve: email)
         $consultoresList = \yii\helpers\ArrayHelper::map($consultores, 'id', 'email');
         $model->consultoresList = $consultoresList;
@@ -197,6 +199,19 @@ class TicketsController extends Controller
 
         if ($this->request->isPost && $model->load($this->request->post())) {
             if ($model->save()) {
+                $auth = Yii::$app->authManager;
+
+                // Borra asignaciones previas por seguridad
+                $auth->revokeAll($model->id);
+
+                // OJO: aquí $model->rol debe ser EXACTO: Consultores, Administracion, Supervisores...
+                $role = $auth->getRole($model->rol);
+
+                if ($role) {
+                    $auth->assign($role, $model->id);
+                } else {
+                    Yii::error("ROL RBAC NO EXISTE: ".$model->rol);
+                }
                 Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
