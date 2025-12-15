@@ -25,6 +25,7 @@ use yii\web\Response;
 
 
 
+
 /**
  * TicketsController implements the CRUD actions for Tickets model.
  */
@@ -34,28 +35,41 @@ class TicketsController extends Controller
      * @inheritDoc
      */
     public function behaviors()
-    {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'access' => [
-                    'class' => AccessControl::class,
-                    'rules' => [
-                        [
-                            'allow' => true,
-                            'roles' => ['@'],
-                        ],
-                    ],
+{
+    return array_merge(parent::behaviors(), [
+        'access' => [
+            'class' => AccessControl::class,
+            'only' => ['index','view','create','update','delete'], // pon las que existan
+            'rules' => [
+               
+                [
+                    'allow' => true,
+                    'actions' => ['index'],
+                    'roles' => ['verTickets'],
                 ],
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
+                // ✅ Consultores: crear
+                [
+                    'allow' => true,
+                    'actions' => ['create'],
+                    'roles' => ['crearTicket'],
                 ],
-            ]
-        );
-    }
+                // ✅ Consultores: actualizar
+                [
+                    'allow' => true,
+                    'actions' => ['update'],
+                    'roles' => ['actualizarTicket'],
+                ],
+
+                // (opcional) view solo si quieres
+                [
+                    'allow' => true,
+                    'actions' => ['view'],
+                    'roles' => ['verTickets'],
+                ],
+            ],
+        ],
+    ]);
+}
 
     /**
      * Lists all Tickets models.

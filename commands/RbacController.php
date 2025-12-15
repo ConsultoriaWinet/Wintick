@@ -12,11 +12,11 @@ class RbacController extends Controller
     {
         $auth = Yii::$app->authManager;
 
-        // Elimina roles, permisos y asignaciones previas
+        // Limpia todo
         $auth->removeAll();
 
         /* =========================================================
-         *                     CREACIÓN DE PERMISOS
+         *                     PERMISOS
          * ========================================================= */
 
         // Tickets
@@ -51,18 +51,22 @@ class RbacController extends Controller
         $auth->add($verReportes);
 
         // Usuarios
+        $verUsuarios = $auth->createPermission('verUsuarios');
+        $verUsuarios->description = 'Ver módulo/listado de usuarios';
+        $auth->add($verUsuarios);
+
         $administrarUsuarios = $auth->createPermission('administrarUsuarios');
-        $administrarUsuarios->description = 'Administrar usuarios, roles y permisos';
+        $administrarUsuarios->description = 'Administrar usuarios, roles y permisos (CRUD completo)';
         $auth->add($administrarUsuarios);
 
 
         /* =========================================================
-         *                     CREACIÓN DE ROLES
+         *                     ROLES
          * ========================================================= */
 
-        $consultores = $auth->createRole('Consultores');
-        $administracion = $auth->createRole('Administracion');
-        $supervisores = $auth->createRole('Supervisores');
+        $consultores     = $auth->createRole('Consultores');
+        $administracion  = $auth->createRole('Administracion');
+        $supervisores    = $auth->createRole('Supervisores');
         $administradores = $auth->createRole('Administradores');
         $desarrolladores = $auth->createRole('Desarrolladores');
 
@@ -74,7 +78,7 @@ class RbacController extends Controller
 
 
         /* =========================================================
-         *            ASIGNAR PERMISOS A CADA ROL
+         *            PERMISOS POR ROL (JERARQUÍA)
          * ========================================================= */
 
         // Consultores (nivel 1)
@@ -83,24 +87,26 @@ class RbacController extends Controller
         $auth->addChild($consultores, $actualizarTicket);
 
         // Administración (nivel 2)
-        $auth->addChild($administracion, $consultores);
+        $auth->addChild($administracion, $consultores); // hereda tickets
         $auth->addChild($administracion, $verClientes);
         $auth->addChild($administracion, $verReportes);
+        $auth->addChild($administracion, $verUsuarios);
 
         // Supervisores (nivel 3)
-        $auth->addChild($supervisores, $administracion);
+        $auth->addChild($supervisores, $administracion); // hereda lo anterior
         $auth->addChild($supervisores, $asignarTicket);
         $auth->addChild($supervisores, $administrarClientes);
+        $auth->addChild($supervisores, $verUsuarios);
 
         // Administradores (nivel 4)
-        $auth->addChild($administradores, $supervisores);
+        $auth->addChild($administradores, $supervisores); // hereda todo lo anterior
         $auth->addChild($administradores, $administrarUsuarios);
 
-        // Desarrolladores (nivel 5 — acceso total)
+        // Desarrolladores (nivel 5)
         $auth->addChild($desarrolladores, $administradores);
 
 
-        echo "✔ RBAC inicializado correctamente con 5 roles, permisos y jerarquías.\n";
+        echo "✔ RBAC inicializado correctamente con permisos, 5 roles y jerarquías.\n";
 
         return ExitCode::OK;
     }

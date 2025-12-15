@@ -8,9 +8,41 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use Yii;
+use yii\filters\AccessControl;
+
 
 class UsuariosController extends Controller
 {
+    public function behaviors()
+{
+    return array_merge(parent::behaviors(), [
+        'access' => [
+            'class' => AccessControl::class,
+            'only' => ['index','view','create','update','delete'],
+            'rules' => [
+                // ✅ Ver usuarios (Administración, Supervisores, Administradores)
+                [
+                    'allow' => true,
+                    'actions' => ['index','view'],
+                    'roles' => ['verUsuarios'],
+                ],
+
+                // ✅ Administrar usuarios (solo Administradores y arriba)
+                [
+                    'allow' => true,
+                    'actions' => ['create','update','delete'],
+                    'roles' => ['administrarUsuarios'],
+                ],
+            ],
+        ],
+        'verbs' => [
+            'class' => VerbFilter::class,
+            'actions' => [
+                'delete' => ['POST'],
+            ],
+        ],
+    ]);
+}
     public function beforeAction($action)
     {
         if (Yii::$app->request->isAjax) {
