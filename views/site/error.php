@@ -34,6 +34,7 @@ $this->registerJsFile('https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anim
 
     .error-wrapper{ width:100%; max-width:520px; }
 
+    
     .error-card{
         background: var(--card);
         border-radius:20px;
