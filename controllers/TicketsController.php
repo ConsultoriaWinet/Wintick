@@ -657,7 +657,8 @@ protected function parseHoras($valor)
                     'titulo' => $notif->titulo,
                     'mensaje' => $notif->mensaje,
                     'leida' => (bool) $notif->leida,
-                    'fecha' => date('d/m H:i', strtotime($notif->fecha_creacion))
+                    'fecha' => date('d/m H:i', strtotime($notif->fecha_creacion)),
+                    'ticket_id' => $notif->ticket_id,
                 ];
             }
 

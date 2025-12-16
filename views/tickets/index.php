@@ -142,7 +142,7 @@ $asignadoFiltroView = $asignadoFiltro
                             <select name="asignado_a">
                                 <option value="">Todos</option>
                                 <?php foreach ($Usuarios as $usuario): ?>
-                                    <option value="<?= $usuario['id'] ?>" <?= ($_GET['asignado_a'] ?? '') == $usuario['id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $usuario['id'] ?>" <?= ($asignadoFiltroView == $usuario['id']) ? 'selected' : '' ?>>
                                         <?= Html::encode($usuario['email']) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -537,7 +537,7 @@ $asignadoFiltroView = $asignadoFiltro
                 <h5 class="modal-title" id="comentariosModalLabel">
                     <i class="fas fa-comments"></i> Comentarios del Ticket <span id="ticketFolioComentarios"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="closeComentariosModal()"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="ticketIdComentarios" value="">
@@ -833,7 +833,7 @@ function saveTicket(row) {
     console.log('📋 Datos del ticket:', ticket);
 
     if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
-        swal.fire({
+        Swal.fire({
             icon: 'warning',
             title: 'Faltan datos',
             text: '⚠️ Por favor completa todos los campos obligatorios',

@@ -27,6 +27,10 @@ $this->registerJsFile('https://npmcdn.com/flatpickr/dist/l10n/es.js', ['position
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/sweetalert2@11', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css');
+$this->registerJsFile('https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/TextPlugin.min.js', ['position' => \yii\web\View::POS_HEAD]);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -427,7 +431,9 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1
         background: rgba(139, 165, 144, 0.3) !important;
     }
 </style>
-
+<script>
+    const TICKET_VIEW_URL = <?= json_encode(Url::to(['/tickets/view'])) ?>;
+</script>
 <head>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
@@ -644,10 +650,10 @@ JS;
                 const icono = getIconoNotificacion(notif.tipo);
                 return `
                 <div class="notification-item ${!notif.leida ? 'unread' : ''}" 
-                     onclick="marcarNotificacion(${notif.id})">
+                     onclick="abrirNotificacion(event, ${notif.id}, ${notif.ticket_id || 'null'})">
                     <div class="notification-icon ${iconClass}">
                         <i class="fas fa-${icono}"></i>
-                    </div>
+                    </div>                                          
                     <div class="notification-content">
                         <div class="notification-title">${notif.titulo}</div>
                         <div class="notification-message">${notif.mensaje}</div>
@@ -657,6 +663,32 @@ JS;
             `;
             }).join('');
         }
+
+                    function abrirNotificacion(event, notifId, ticketId) {
+                event.stopPropagation();
+
+                // Si no hay ticket relacionado
+                if (!ticketId) {
+                    marcarNotificacion(notifId);
+                    return;
+                }
+
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+                fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': token
+                    },
+                    body: JSON.stringify({ notif_id: notifId })
+                })
+                .catch(() => {}) // aunque falle, entra al ticket
+                .finally(() => {
+                    window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
+                });
+            }
+
 
         function toggleNotifications() {
             const dropdown = document.getElementById('notificationDropdown');
@@ -770,9 +802,9 @@ JS;
     
     // Determinar icono según el rol
     $iconoRol = match($rol) {
-        'Admin', 'admin' => '👑',
-        'Consultor', 'consultor' => '💼',
-        'Cliente', 'cliente' => '👤',
+        'Administracion', 'Administracion' => '👑',
+        'Consultores', 'Consultores' => '💼',
+        'Cliente', 'Cliente' => '👤',
         default => '🎯'
     };
     ?>

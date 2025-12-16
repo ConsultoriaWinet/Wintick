@@ -24,8 +24,6 @@ $this->registerJsFile('https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anim
     }
 
     .wintick-error-page{
-        
-        min-height: calc(100vh - 160px); /* deja espacio al header/footer del layout */
         display:flex;
         align-items:center;
         justify-content:center;

@@ -270,13 +270,13 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
     }
 </style>
 
-<div class="ticket-view">
+<div class="ticket-view animation-text">
     <div class="ticket-header">
         <div class="ticket-title">
             <i class="fas fa-ticket-alt"></i>
             <?= Html::encode($this->title) ?>
         </div>
-        <p class="ticket-subtitle">
+        <p class="ticket-subtitle animated-text" id="animated-text">
             Cliente: <?= $model->cliente ? Html::encode($model->cliente->Nombre) : 'No asignado' ?>
         </p>
     </div>
@@ -328,7 +328,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                 <h3><i class="fas fa-cogs" style="color: #A0BAA5;"></i> Información del Servicio</h3>
 
                 <div class="info-item">
-                    <span class="info-label">Cliente</span>
+                    <span class="info-label animated-text" id="animated-text" >Cliente</span>
                     <span class="info-value">
                         <?= $model->cliente ? Html::encode($model->cliente->Nombre) : '<span class="empty-field">No asignado</span>' ?>
                     </span>
@@ -465,5 +465,27 @@ function confirmarEliminar(ticketId, folio) {
         }
     });
 }
+
+
 ", \yii\web\View::POS_END);
 ?>
+
+
+<script>
+  if (typeof gsap !== "undefined" && typeof SplitText !== "undefined") {
+    gsap.registerPlugin(SplitText);
+
+    const target = document.querySelector(".animated-text");
+    if (target) {
+        const split = new SplitText(target, { type: "chars" });
+
+        gsap.from(split.chars, {
+            y: 20,
+            opacity: 0,
+            duration: 0.6,
+            ease: "power3.out",
+            stagger: 0.04
+        });
+    }
+}
+</script>
