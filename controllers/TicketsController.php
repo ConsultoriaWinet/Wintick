@@ -34,42 +34,39 @@ class TicketsController extends Controller
     /**
      * @inheritDoc
      */
-    public function behaviors()
-{
-    return array_merge(parent::behaviors(), [
-        'access' => [
-            'class' => AccessControl::class,
-            'only' => ['index','view','create','update','delete'], // pon las que existan
-            'rules' => [
-               
-                [
-                    'allow' => true,
-                    'actions' => ['index'],
-                    'roles' => ['verTickets'],
+        public function behaviors()
+        {
+            return array_merge(parent::behaviors(), [
+                'access' => [
+                    'class' => AccessControl::class,
+                    'only' => ['index','get-tickets','login','logout','error'],
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'actions' => ['login','error'],
+                            'roles' => ['?','@'],
+                        ],
+                        [
+                            'allow' => true,
+                            'actions' => ['logout'],
+                            'roles' => ['@'],
+                        ],
+                        // ✅ Consultores y superiores: pueden ver dashboard y pedir tickets
+                        [
+                            'allow' => true,
+                            'actions' => ['index','get-tickets'],
+                            'roles' => ['verTickets'],
+                        ],
+                    ],
                 ],
-                // ✅ Consultores: crear
-                [
-                    'allow' => true,
-                    'actions' => ['create'],
-                    'roles' => ['crearTicket'],
+                'verbs' => [
+                    'class' => VerbFilter::class,
+                    'actions' => [
+                        'get-tickets' => ['GET'],
+                    ],
                 ],
-                // ✅ Consultores: actualizar
-                [
-                    'allow' => true,
-                    'actions' => ['update'],
-                    'roles' => ['actualizarTicket'],
-                ],
-
-                // (opcional) view solo si quieres
-                [
-                    'allow' => true,
-                    'actions' => ['view'],
-                    'roles' => ['verTickets'],
-                ],
-            ],
-        ],
-    ]);
-}
+            ]);
+        }
 
     /**
      * Lists all Tickets models.
@@ -167,17 +164,18 @@ class TicketsController extends Controller
         $model = new Tickets();
         $model->Folio = str_pad(Tickets::find()->max('id') + 1, 4, '0', STR_PAD_LEFT);
 
-        // CORRECCIÓN: Seleccionar 'id' y 'email', y mapear id => email
+        // CORRECCIÓN: Seleccionar 'id' y 'Nombre', y mapear id => Nombre
         $consultores = \app\models\Usuarios::find()
-            ->select(['id', 'email']) // Necesitamos el ID para guardarlo
-            ->where(['rol' => 'consultor'])
+            ->select(['id', 'Nombre']) 
+            ->where(['rol' => 'Consultores'])
+            ->orderBy(['Nombre' => SORT_ASC])
             ->asArray()
             ->all();
 
 
 
-        // El primer parámetro es la clave (lo que se guarda: id), el segundo es el valor (lo que se ve: email)
-        $consultoresList = \yii\helpers\ArrayHelper::map($consultores, 'id', 'email');
+        // El primer parámetro es la clave (lo que se guarda: id), el segundo es el valor (lo que se ve: Nombre)
+        $consultoresList = \yii\helpers\ArrayHelper::map($consultores, 'id', 'Nombre');
         $model->consultoresList = $consultoresList;
 
         // Obtener fecha del POST si existe (viene del calendario)
@@ -222,6 +220,7 @@ class TicketsController extends Controller
         return $this->render('create', [
             'model' => $model,
             'consultoresList' => $consultoresList,
+
         ]);
     }
 

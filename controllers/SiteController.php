@@ -176,52 +176,60 @@ class SiteController extends Controller
     /**
      * Get tickets for calendar (filtrados por consultor)
      */
-    public function actionGetTickets($consultorId = null)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
+   public function actionGetTickets($consultorId = null)
+{
+    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $query = Tickets::find()->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado']);
+    $userId = Yii::$app->user->id;
 
-        // Filtrar por consultor si se especifica
-        if ($consultorId) {
-            $query->andWhere(['Asignado_a' => $consultorId]);
-        }
-
-        // ✅ SOLO MOSTRAR TICKETS QUE TENGAN HORA DE INICIO
-        $query->andWhere(['IS NOT', 'HoraInicio', null]);
-        $query->andWhere(['!=', 'HoraInicio', '']);
-
-        $tickets = $query->all();
-        $events = [];
-
-        foreach ($tickets as $ticket) {
-            // ✅ USAR HoraInicio EN LUGAR DE Fecha_creacion
-            if (!empty($ticket->HoraInicio)) {
-                $consultorNombre = $ticket->usuarioAsignado ? $ticket->usuarioAsignado->Nombre ?? $ticket->usuarioAsignado->email : 'Sin asignar';
-                $consultorColor = $ticket->usuarioAsignado ? $ticket->usuarioAsignado->color ?? '#6c757d' : '#6c757d';
-
-                $events[] = [
-                    'id' => $ticket->id,
-                    'title' => $ticket->Folio . ' - ' . ($ticket->cliente ? $ticket->cliente->Nombre : 'Sin cliente'),
-                    'start' => $ticket->HoraInicio, // ✅ CAMBIO PRINCIPAL: usar HoraInicio
-                    'backgroundColor' => $consultorColor, // ✅ SOLO COLOR DEL CONSULTOR
-                    'borderColor' => $consultorColor,     // ✅ SOLO COLOR DEL CONSULTOR
-                    'textColor' => '#ffffff',
-                    'extendedProps' => [
-                        'description' => $ticket->Descripcion,
-                        'consultorNombre' => $consultorNombre,
-                        'prioridad' => $ticket->Prioridad,
-                        'estado' => $ticket->Estado,
-                        'cliente' => $ticket->cliente ? $ticket->cliente->Nombre : 'Sin cliente',
-                        'sistema' => $ticket->sistema ? $ticket->sistema->Nombre : 'Sin sistema',
-                        'servicio' => $ticket->servicio ? $ticket->servicio->Nombre : 'Sin servicio',
-                    ]
-                ];
-            }
-        }
-
-        return $events;
+    // ✅ Si es consultor (no puede asignar tickets), forzamos a que solo vea los suyos
+    if (Yii::$app->user->can('verTickets') && !Yii::$app->user->can('asignarTicket')) {
+        $consultorId = $userId;
     }
+
+    $query = \app\models\Tickets::find()
+        ->with(['cliente','sistema','servicio','usuarioAsignado']);
+
+    if (!empty($consultorId)) {
+        $query->andWhere(['Asignado_a' => (int)$consultorId]);
+    }
+
+    $tickets = $query->all();
+
+    $events = [];
+    foreach ($tickets as $t) {
+        // ✅ Usa HoraInicio si existe, si no usa Fecha_creacion
+        $start = $t->HoraInicio ?: $t->Fecha_creacion;
+
+        if (!$start) {
+            continue;
+        }
+
+        $events[] = [
+            'id'    => $t->id,
+            'title' => $t->Folio,
+            'start' => date('c', strtotime($start)), // ISO 8601 (FullCalendar friendly)
+
+            // Opcional: colores por consultor
+            'backgroundColor' => $t->usuarioAsignado->color ?? '#8BA590',
+            'borderColor'     => $t->usuarioAsignado->color ?? '#8BA590',
+
+            'extendedProps' => [
+                'consultorNombre' => $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? 'N/A',
+                'cliente'   => $t->cliente->Nombre ?? 'N/A',
+                'sistema'   => $t->sistema->Nombre ?? 'N/A',
+                'servicio'  => $t->servicio->Nombre ?? 'N/A',
+                'prioridad' => $t->Prioridad ?? 'N/A',
+                'estado'    => $t->Estado ?? 'N/A',
+                'description' => $t->Descripcion ?? '',
+            ],
+        ];
+    }
+
+    return $events;
+}
+
+
     /**
      * Request password reset
      */

@@ -17,7 +17,8 @@ $this->title = 'Crear Ticket';
 $clientes = Clientes::find()->asArray()->all();
 $sistemas = Sistemas::find()->asArray()->all();
 $servicios = Servicios::find()->asArray()->all();
-$usuarios = Usuarios::find()->where(['rol' => 'consultor'])->asArray()->all();
+$usuarios = Usuarios::find()->where(['rol' => ['consultor','Consultores']])->asArray()->all();
+
 
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \yii\web\View::POS_HEAD]);
@@ -268,13 +269,13 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
                 </div>
 
                 <div class="form-group">
-                    <?= $form->field($model, 'Asignado_a')->dropDownList(
-                        ArrayHelper::map($usuarios, 'id', 'email'),
-                        [
-                            'prompt' => 'Seleccionar Consultor',
-                            'class' => 'form-select'
-                        ]
-                    )->label('Asignado A') ?>
+                                <?= $form->field($model, 'Asignado_a')->dropDownList(
+                    $consultoresList,
+                    [
+                        'prompt' => 'Seleccionar Consultor',
+                        'class' => 'form-select'
+                    ]
+                )->label('Asignado A') ?>
                 </div>
 
                 <div class="form-group">
