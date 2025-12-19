@@ -7,7 +7,9 @@ use yii\helpers\Html;
 
 $form = ActiveForm::begin([
     'id' => 'form-clientes',
-    'action' => ['update', 'id' => $model->id],
+    'action' => $model->isNewRecord
+        ? ['create']
+        : ['update', 'id' => $model->id],
     'method' => 'post',
     'options' => ['class' => 'needs-validation', 'novalidate' => true],
 ]);
@@ -76,7 +78,7 @@ $form = ActiveForm::begin([
                 </div>
                 <div class="col-md-6">
                     <?= $form->field($model, 'Tipo_servicio')->dropDownList(
-                        ['Servicio A' => 'Servicio A', 'Servicio B' => 'Servicio B'],
+                        ['POLIZA' => 'POLIZA', 'EVENTO' => 'EVENTO'],
                         ['class' => 'form-select form-select-sm']
                     )->label(false) ?>
                 </div>

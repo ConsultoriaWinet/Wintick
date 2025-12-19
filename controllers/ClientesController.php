@@ -88,23 +88,31 @@ class ClientesController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
-    public function actionCreate()
-    {
-        $model = new Clientes();
+ public function actionCreate()
+        {
+            $model = new Clientes();
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            if ($model->load(Yii::$app->request->post())) {
+
+                $time = time();
+                $model->created_at = $time;
+                $model->updated_at = $time;
+
+                if ($model->save()) {
+                    Yii::$app->session->setFlash('success', 'Cliente creado correctamente');
+                    return $this->redirect(['view', 'id' => $model->id]);
+                }
+
+                Yii::$app->session->setFlash(
+                    'error',
+                    'No se pudo guardar: ' . json_encode($model->errors)
+                );
             }
-        } else {
-            $model->loadDefaultValues();
+
+            return $this->render('create', [
+                'model' => $model,
+            ]);
         }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
-    }
-
     /**
      * Updates an existing Clientes model.
      * If update is successful, the browser will be redirected to the 'view' page.
@@ -117,7 +125,7 @@ class ClientesController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            // Puedes redirigir o hacer algo después de guardar
+             $model->updated_at = date('Y-m-d H:i:s');
             return $this->redirect(['index']);
         }
 
