@@ -67,6 +67,14 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                             <label>Mes</label>
                             <input type="month" name="mes" value="<?= $_GET['mes'] ?? '' ?>" placeholder="Seleccionar mes (opcional)">
                         </div>
+                        <div class="compact-filter-group">
+                            <label>Desde</label>
+                            <input type="date" name="fecha_inicio" value="<?= $_GET['fecha_inicio'] ?? '' ?>" placeholder="Desde (opcional)">
+                        </div>
+                        <div class="compact-filter-group">
+                            <label>Hasta</label>
+                            <input type="date" name="fecha_fin" value="<?= $_GET['fecha_fin'] ?? '' ?>" placeholder="Hasta (opcional)">
+                        </div>
 
                         <!-- Sección: Identidad -->
                         <div class="filter-section-title">
@@ -883,7 +891,7 @@ function saveTicket(row) {
                 title: '¡Éxito!',
                 text: 'Ticket guardado: ' + ticket.Folio,
                 showConfirmButton: false,
-                timer: 2000,
+                timer: 1000,
                 timerProgressBar: true,
                 toast: true,
                 position: 'top-end'

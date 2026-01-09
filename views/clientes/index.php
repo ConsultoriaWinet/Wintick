@@ -89,7 +89,18 @@ $this->registerCss($css);
 
                         [
                             'attribute' => 'Tiempo',
-                            'label' => 'Tiempo Efectivo',
+                            'label' => 'Tiempo Restante',
+                            'format' => 'raw',
+                            'value' => function ($model) {
+                                $tiempoNum = floatval($model->Tiempo);
+                                
+                                // Si es negativo o cero, mostrar badge rojo
+                                if ($tiempoNum <= 0) {
+                                    return '<span class="badge bg-danger">' . Html::encode($model->Tiempo) . ' ⚠️ SIN HORAS</span>';
+                                } else {
+                                    return '<span class="badge bg-success">' . Html::encode($model->Tiempo) . '</span>';
+                                }
+                            }
                         ],
                         'RFC',
                         [
@@ -111,19 +122,47 @@ $this->registerCss($css);
             <!-- ================= MOBILE CARDS ================= -->
             <div class="d-block d-md-none">
                 <?php foreach ($dataProvider->models as $model): ?>
-                    <div class="card mb-2 shadow-sm card-mobile" onclick="openModal(<?= $model->id ?>)">
+                    <div class="card mb-3 shadow-sm card-mobile" onclick="openModal(<?= $model->id ?>)" style="border-left: 4px solid #28a745;">
                         <div class="card-body p-3">
-                            <h5 class="card-title mb-1"><?= Html::encode($model->Nombre) ?></h5>
-                            <p class="mb-1"><strong>RFC:</strong> <?= Html::encode($model->RFC) ?></p>
-                            <p class="mb-1">
-                                <strong>Razón Social:</strong><br><?= Html::encode($model->Razon_social) ?>
-                            </p>
-                            <p class="mb-1">
-                                <strong>Correo:</strong>
-                                <?= Html::a(Html::encode($model->Correo), '#', [
-                                    'onclick' => "copyToClipboard(event, '" . Html::encode($model->Correo) . "')"
-                                ]) ?>
-                            </p>
+                            <!-- Encabezado -->
+                            <h5 class="card-title mb-3 text-primary fw-bold"><?= Html::encode($model->Nombre) ?></h5>
+                            
+                            <!-- Grid de campos -->
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label text-muted small fw-bold">RFC</label>
+                                    <p class="mb-2 text-dark"><?= Html::encode($model->RFC) ?></p>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label text-muted small fw-bold">Razón Social</label>
+                                    <p class="mb-2 text-dark"><?= Html::encode($model->Razon_social) ?></p>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label text-muted small fw-bold">Correo</label>
+                                    <p class="mb-2">
+                                        <?= Html::a(Html::encode($model->Correo), '#', [
+                                            'onclick' => "copyToClipboard(event, '" . Html::encode($model->Correo) . "')",
+                                            'class' => 'text-primary text-decoration-none'
+                                        ]) ?>
+                                    </p>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label class="form-label text-muted small fw-bold">Tiempo Efectivo</label>
+                                    <p class="mb-0">
+                                        <?php
+                                            $tiempoNum = floatval($model->Tiempo);
+                                            if ($tiempoNum <= 0) {
+                                                echo '<span class="badge bg-danger p-2">' . Html::encode($model->Tiempo) . ' ⚠️ SIN HORAS</span>';
+                                            } else {
+                                                echo '<span class="badge bg-success p-2">' . Html::encode($model->Tiempo) . '</span>';
+                                            }
+                                        ?>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>

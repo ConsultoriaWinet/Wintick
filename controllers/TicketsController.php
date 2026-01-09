@@ -78,33 +78,15 @@ class TicketsController extends Controller
     $searchModel  = new TicketsSearch();
     $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
-    // 👇 obtenemos el query del dataProvider
-    $query   = $dataProvider->query;
     $request = Yii::$app->request;
 
-    // lo que venga por GET en el filtro
+    // Para la vista - obtener el parámetro asignado_a si existe
     $asignadoParam = $request->get('asignado_a', null);
-    $asignadoFiltro = null;
-
-    if (!Yii::$app->user->isGuest) {
-        $usuarioActualId = Yii::$app->user->id;
-
-        if ($asignadoParam === null) {
-            // 👉 NO viene en la URL → por defecto: solo tickets del usuario logeado
-            $query->andWhere(['Asignado_a' => $usuarioActualId]);
-            $asignadoFiltro = $usuarioActualId;
-        } elseif ($asignadoParam === '') {
-            // 👉 viene "Todos" (value="") → NO filtramos por Asignado_a
-            $asignadoFiltro = '';
-        } else {
-            // 👉 viene un id específico
-            $query->andWhere(['Asignado_a' => $asignadoParam]);
-            $asignadoFiltro = $asignadoParam;
-        }
+    if ($asignadoParam === null) {
+        $asignadoFiltro = Yii::$app->user->isGuest ? '' : Yii::$app->user->id;
+    } else {
+        $asignadoFiltro = $asignadoParam;
     }
-
-    // ====== AQUÍ VA LO QUE YA TENÍAS ======
-    // Ejemplo (ajusta a tu código real):
 
     $clientes  = Clientes::find()
         ->select(['id', 'Nombre', 'Prioridad', 'Tipo_servicio'])
@@ -196,20 +178,22 @@ class TicketsController extends Controller
         $model->Estado = 'Abierto';
 
         if ($this->request->isPost && $model->load($this->request->post())) {
+            
+            // ✅ ASEGURAR QUE CREADO_POR SE GUARDE CON EL USUARIO ACTUAL (ANTES DE SAVE)
+            $model->Creado_por = Yii::$app->user->id;
+            
             if ($model->save()) {
-                $auth = Yii::$app->authManager;
-
-                // Borra asignaciones previas por seguridad
-                $auth->revokeAll($model->id);
-
-                // OJO: aquí $model->rol debe ser EXACTO: Consultores, Administracion, Supervisores...
-                $role = $auth->getRole($model->rol);
-
-                if ($role) {
-                    $auth->assign($role, $model->id);
-                } else {
-                    Yii::error("ROL RBAC NO EXISTE: ".$model->rol);
+                // ✅ CREAR NOTIFICACIÓN AL CREAR TICKET Y ASIGNAR
+                if ($model->Asignado_a) {
+                    $this->crearNotificacion(
+                        $model->Asignado_a,
+                        'asignado',
+                        'Nuevo ticket asignado',
+                        'Se te ha asignado un nuevo ticket: ' . $model->Folio,
+                        $model->id
+                    );
                 }
+                
                 Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -234,14 +218,42 @@ class TicketsController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        
+        // Guardar valores anteriores para detectar cambios
+        $asignadoAntes = $model->Asignado_a;
+        $estadoAntes = $model->Estado;
 
-        // ✅ OBTENER TODAS LAS VARIABLES NECESARIAS PARA LA VISTA
+      
         $clientes = Clientes::find()->asArray()->all();
         $sistemas = Sistemas::find()->asArray()->all();
         $servicios = Servicios::find()->asArray()->all();
         $usuarios = Usuarios::find()->asArray()->all();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            // ✅ CREAR NOTIFICACIÓN AL ACTUALIZAR
+            
+            // Si cambió la asignación a una nueva persona
+            if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
+                $this->crearNotificacion(
+                    $model->Asignado_a,
+                    'asignado',
+                    'Nuevo ticket asignado',
+                    'Se te ha asignado el ticket: ' . $model->Folio,
+                    $model->id
+                );
+            }
+            
+            // Si cambió el estado
+            if ($estadoAntes !== $model->Estado && $model->Asignado_a) {
+                $this->crearNotificacion(
+                    $model->Asignado_a,
+                    'actualizado',
+                    'Estado del ticket actualizado',
+                    'El ticket ' . $model->Folio . ' cambió de estado a: ' . $model->Estado,
+                    $model->id
+                );
+            }
+            
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
@@ -250,7 +262,7 @@ class TicketsController extends Controller
             'clientes' => $clientes,
             'sistemas' => $sistemas,
             'servicios' => $servicios,
-            'usuarios' => $usuarios, // ✅ Agregar esta línea
+            'usuarios' => $usuarios,
         ]);
     }
 
@@ -258,7 +270,7 @@ class TicketsController extends Controller
      * Deletes an existing Tickets model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param int $id ID
-     * @return \yii\web\Response
+     * @return \yii\web\Response|array
      * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionDelete($id)
@@ -266,8 +278,20 @@ class TicketsController extends Controller
         try {
             $model = $this->findModel($id);
             $folio = $model->Folio; // Guardar el folio antes de eliminar
+            $asignadoA = $model->Asignado_a; // Guardar quién estaba asignado
 
             if ($model->delete()) {
+                // ✅ CREAR NOTIFICACIÓN AL ELIMINAR
+                if ($asignadoA) {
+                    $this->crearNotificacion(
+                        $asignadoA,
+                        'eliminado',
+                        'Ticket eliminado',
+                        'El ticket ' . $folio . ' ha sido eliminado.',
+                        $id
+                    );
+                }
+                
                 if (Yii::$app->request->isAjax) {
                     Yii::$app->response->format = Response::FORMAT_JSON;
                     return ['success' => true, 'message' => "Ticket {$folio} eliminado correctamente"];
@@ -554,12 +578,8 @@ public function actionSaveSolution()
                 // restar el delta
                 $tiempoClienteDespues = $tiempoClienteAntes - $deltaHoras;
 
-                // No permitir negativo
-                if ($tiempoClienteDespues < 0) {
-                    $tiempoClienteDespues = 0;
-                }
-
-                // Guardar como string con 2 decimales (ej: "10.50")
+                // ✅ PERMITIR NEGATIVOS (para indicar que debe horas)
+                // Guardar como string con 2 decimales (ej: "10.50" o "-2.50")
                 $cliente->Tiempo = number_format($tiempoClienteDespues, 2, '.', '');
 
                 // Si quieres evitar validaciones, usa save(false)
@@ -744,8 +764,8 @@ protected function parseHoras($valor)
                 return false;
             }
 
-            // 📧 ENVIAR CORREO si es tipo 'asignado' (DESPUÉS DE GUARDAR)
-            if ($tipo === 'asignado' && $ticket_id) {
+            // 📧 ENVIAR CORREO si es tipo 'asignado' o 'actualizado' (DESPUÉS DE GUARDAR)
+            if (($tipo === 'asignado' || $tipo === 'actualizado') && $ticket_id) {
                 $this->enviarCorreoAsignacion($usuario_id, $ticket_id);
             }
 

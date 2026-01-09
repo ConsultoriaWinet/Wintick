@@ -27,19 +27,19 @@ $form = ActiveForm::begin([
             <h6 class="text-secondary mb-2"><i class="bi bi-info-circle"></i> Información General</h6>
             <div class="row gx-2 gy-2">
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Nombre')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Nombre del cliente'])->label(false) ?>
+                    <?= $form->field($model, 'Nombre')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Nombre del cliente']) ?>
                 </div>
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Razon_social')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Razón social'])->label(false) ?>
+                    <?= $form->field($model, 'Razon_social')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Razón social']) ?>
                 </div>
             </div>
 
             <div class="row gx-2 gy-2">
                 <div class="col-md-6">
-                    <?= $form->field($model, 'RFC')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'RFC'])->label(false) ?>
+                    <?= $form->field($model, 'RFC')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'RFC']) ?>
                 </div>
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Correo')->input('email', ['class' => 'form-control form-control-sm', 'placeholder' => 'Correo electrónico'])->label(false) ?>
+                    <?= $form->field($model, 'Correo')->input('email', ['class' => 'form-control form-control-sm', 'placeholder' => 'Correo electrónico']) ?>
                 </div>
             </div>
         </div>
@@ -49,19 +49,19 @@ $form = ActiveForm::begin([
             <h6 class="text-secondary mb-2"><i class="bi bi-telephone"></i> Contacto</h6>
             <div class="row gx-2 gy-2">
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Contacto_nombre')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Nombre del contacto'])->label(false) ?>
+                    <?= $form->field($model, 'Contacto_nombre')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Nombre del contacto']) ?>
                 </div>
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Tiempo')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Tiempo de respuesta'])->label(false) ?>
+                    <?= $form->field($model, 'Tiempo')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Tiempo Restante']) ?>
                 </div>
             </div>
 
             <div class="row gx-2 gy-2">
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Whatsapp_contacto')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Número de WhatsApp'])->label(false) ?>
+                    <?= $form->field($model, 'Whatsapp_contacto')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Número de WhatsApp']) ?>
                 </div>
                 <div class="col-md-6">
-                    <?= $form->field($model, 'Telefono')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Teléfono'])->label(false) ?>
+                    <?= $form->field($model, 'Telefono')->textInput(['class' => 'form-control form-control-sm', 'placeholder' => 'Teléfono']) ?>
                 </div>
             </div>
         </div>
@@ -74,13 +74,13 @@ $form = ActiveForm::begin([
                     <?= $form->field($model, 'Prioridad')->dropDownList(
                         ['Alta' => 'Alta', 'Media' => 'Media', 'Baja' => 'Baja'],
                         ['class' => 'form-select form-select-sm']
-                    )->label(false) ?>
+                    ) ?>
                 </div>
                 <div class="col-md-6">
                     <?= $form->field($model, 'Tipo_servicio')->dropDownList(
                         ['POLIZA' => 'POLIZA', 'EVENTO' => 'EVENTO'],
                         ['class' => 'form-select form-select-sm']
-                    )->label(false) ?>
+                    ) ?>
                 </div>
             </div>
 
@@ -89,7 +89,7 @@ $form = ActiveForm::begin([
                     <?= $form->field($model, 'Estado')->dropDownList(
                         ['10' => 'Activo', '0' => 'Inactivo'],
                         ['class' => 'form-select form-select-sm']
-                    )->label(false) ?>
+                    ) ?>
                 </div>
             </div>
         </div>
