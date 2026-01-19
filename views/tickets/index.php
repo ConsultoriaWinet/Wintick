@@ -4,11 +4,18 @@ use app\models\Tickets;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\ArrayHelper;
-
+use yii\widgets\LinkPager;
 
 /** @var yii\web\View $this */
 /** @var app\models\TicketsSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+
+// ✅ VALIDAR QUE LAS VARIABLES EXISTAN
+$clientes = $clientes ?? [];
+$sistemas = $sistemas ?? [];
+$servicios = $servicios ?? [];
+$Usuarios = $Usuarios ?? [];
+$asignadoFiltro = $asignadoFiltro ?? '';
 
 $this->title = 'Tickets';
 //Estilos generales de aqui para todos los tickets
@@ -23,6 +30,83 @@ $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbn
 // Scripts de Flatpickr + Idioma Español
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
+// ✅ Script de filtros mejorados
+$this->registerJsFile('@web/js/tickets-filters.js', ['position' => \yii\web\View::POS_END]);
+
+// ✅ CSS PARA PAGINACIÓN Y FILTROS
+$this->registerCss('
+    /* Estilos de paginación */
+    .pagination {
+        gap: 5px;
+    }
+    
+    .pagination .page-link {
+        color: #8BA590;
+        border: 1px solid #ddd;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #f0f0f0;
+        color: #7a9582;
+    }
+    
+    .pagination .page-link.active {
+        background-color: #8BA590;
+        border-color: #8BA590;
+    }
+    
+    .pagination .page-link.disabled {
+        color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    /* Info de paginación */
+    .table-container > div:first-child {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    /* Filtro compacto mejorado */
+    .compact-filter-menu {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    /* Aviso de filtros */
+    .filter-section-notice {
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+        padding: 10px 12px;
+        margin: 10px 0;
+        font-size: 12px;
+        color: #92400e;
+        border-radius: 4px;
+    }
+    
+    /* Animación para dropdown */
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Estilos de inputs de fecha */
+    .compact-filter-group input[type="date"],
+    .compact-filter-group input[type="month"] {
+        max-width: 100%;
+    }
+');
+
 // Obtener mes y año actual si no hay filtro
 $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
@@ -57,11 +141,15 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     Filtros
                 </button>
                 
-                <div class="compact-filter-menu" id="compactFilterMenu">
+                <div class="compact-filter-menu" id="compactFilterMenu" style="display: none;">
                     <form method="get" id="compactFilterForm">
                         <!-- Sección: Fechas -->
                         <div class="filter-section-title">
-                            <i class="fas fa-calendar"></i> FECHAS
+                            <i class="fas fa-calendar-alt"></i> <strong>FECHAS PROGRAMADAS</strong>
+                        </div>
+                        
+                        <div class="filter-section-notice">
+                            💡 Selecciona UNO: mes O rango de fechas (inicio-fin)
                         </div>
                         <div class="compact-filter-group">
                             <label>Mes</label>
@@ -82,10 +170,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </div>
                         <div class="compact-filter-group">
                             <label>Cliente</label>
-                            <select name="cliente_id">
+                            <select name="Cliente_id">
                                 <option value="">Todos</option>
                                 <?php foreach ($clientes as $cliente): ?>
-                                    <option value="<?= $cliente['id'] ?>" <?= ($_GET['cliente_id'] ?? '') == $cliente['id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $cliente['id'] ?>" <?= ($_GET['Cliente_id'] ?? '') == $cliente['id'] ? 'selected' : '' ?>>
                                         <?= Html::encode($cliente['Nombre']) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -94,10 +182,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
                         <div class="compact-filter-group">
                             <label>Sistema</label>
-                            <select name="sistema_id">
+                            <select name="Sistema_id">
                                 <option value="">Todos</option>
                                 <?php foreach ($sistemas as $sistema): ?>
-                                    <option value="<?= $sistema['id'] ?>" <?= ($_GET['sistema_id'] ?? '') == $sistema['id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $sistema['id'] ?>" <?= ($_GET['Sistema_id'] ?? '') == $sistema['id'] ? 'selected' : '' ?>>
                                         <?= Html::encode($sistema['Nombre']) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -106,10 +194,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
                         <div class="compact-filter-group">
                             <label>Servicio</label>
-                            <select name="servicio_id">
+                            <select name="Servicio_id">
                                 <option value="">Todos</option>
                                 <?php foreach ($servicios as $servicio): ?>
-                                    <option value="<?= $servicio['id'] ?>" <?= ($_GET['servicio_id'] ?? '') == $servicio['id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $servicio['id'] ?>" <?= ($_GET['Servicio_id'] ?? '') == $servicio['id'] ? 'selected' : '' ?>>
                                         <?= Html::encode($servicio['Nombre']) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -122,30 +210,30 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </div>
                         <div class="compact-filter-group">
                             <label>Prioridad</label>
-                            <select name="prioridad">
+                            <select name="Prioridad">
                                 <option value="">Todas</option>
-                                <option value="BAJA" <?= ($_GET['prioridad'] ?? '') == 'BAJA' ? 'selected' : '' ?>>Baja</option>
-                                <option value="MEDIA" <?= ($_GET['prioridad'] ?? '') == 'MEDIA' ? 'selected' : '' ?>>Media</option>
-                                <option value="ALTA" <?= ($_GET['prioridad'] ?? '') == 'ALTA' ? 'selected' : '' ?>>Alta</option>
+                                <option value="BAJA" <?= ($_GET['Prioridad'] ?? '') == 'BAJA' ? 'selected' : '' ?>>Baja</option>
+                                <option value="MEDIA" <?= ($_GET['Prioridad'] ?? '') == 'MEDIA' ? 'selected' : '' ?>>Media</option>
+                                <option value="ALTA" <?= ($_GET['Prioridad'] ?? '') == 'ALTA' ? 'selected' : '' ?>>Alta</option>
                             </select>
                         </div>
 
                         <div class="compact-filter-group">
                             <label>Estado</label>
-                            <select name="estado">
+                            <select name="Estado">
                                 <option value="">Todos</option>
-                                <option value="ABIERTO" <?= ($_GET['estado'] ?? '') == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
-                                <option value="EN PROCESO" <?= ($_GET['estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
-                                <option value="CERRADO" <?= ($_GET['estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
+                                <option value="ABIERTO" <?= ($_GET['Estado'] ?? '') == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
+                                <option value="EN PROCESO" <?= ($_GET['Estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
+                                <option value="CERRADO" <?= ($_GET['Estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
                             </select>
                         </div>
 
                         <div class="compact-filter-group">
                             <label>Asignado A</label>
                             <?php
-$asignadoFiltroView = $asignadoFiltro
-    ?? ($_GET['asignado_a'] ?? (Yii::$app->user->id ?? ''));
-?>
+                            $asignadoFiltroView = $asignadoFiltro
+                                ?? ($_GET['asignado_a'] ?? (Yii::$app->user->id ?? ''));
+                            ?>
 
                             <select name="asignado_a">
                                 <option value="">Todos</option>
@@ -159,7 +247,7 @@ $asignadoFiltroView = $asignadoFiltro
 
                         <!-- Botones -->
                         <div class="compact-filter-actions">
-                            <button type="submit" class="btn-apply-filter">
+                            <button type="submit" class="btn-apply-filter" name="apply">
                                 <i class="fas fa-check"></i> Aplicar
                             </button>
                             <a href="<?= Url::to(['index']) ?>" class="btn-clear-filter" style="text-align: center; text-decoration: none; line-height: 32px;">
@@ -199,6 +287,10 @@ $asignadoFiltroView = $asignadoFiltro
 
     <!-- Tabla -->
     <div class="table-container">
+        <div style="margin-bottom: 15px; font-size: 12px; color: #666;">
+            <strong>Mostrando:</strong> <?= count($dataProvider->getModels()) ?> de <?= $dataProvider->getTotalCount() ?> tickets
+        </div>
+        
         <table class="table table-hover table-sm" id="ticketsTable">
             <thead>
                 <tr>
@@ -392,9 +484,20 @@ $asignadoFiltroView = $asignadoFiltro
                         </select>
                     </td>
                     <td style="white-space: nowrap;">
-                        <button class="btn btn-sm btn-outline-info" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                            <i class="fas fa-comments"></i>
-                        </button>
+                        <?php
+                        // ✅ Contar comentarios para este ticket
+                        $comentarioCount = \app\models\Comentarios::find()
+                            ->where(['ticket_id' => $ticket->id])
+                            ->count();
+                        ?>
+                        <div style="position: relative; display: inline-block;">
+                            <button class="btn btn-sm btn-outline-info comment-btn-<?= $ticket->id ?>" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
+                                <i class="fas fa-comments"></i>
+                            </button>
+                            <?php if ($comentarioCount > 0): ?>
+                                <span class="badge bg-danger badge-count-<?= $ticket->id ?>" style="position: absolute; top: -8px; right: -8px; font-size: 11px; padding: 3px 6px; min-width: 24px; text-align: center; border-radius: 50%; font-weight: bold;"><?= $comentarioCount ?></span>
+                            <?php endif; ?>
+                        </div>
                                 <button class="btn btn-sm btn-outline-primary" title="Agregar solución"
                                     onclick="openSolutionModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
                                 <i class="fas fa-lightbulb"></i>
@@ -419,6 +522,16 @@ $asignadoFiltroView = $asignadoFiltro
                 </tr>
             </tbody>
         </table>
+        
+        <!-- ✅ PAGINADOR -->
+        <nav aria-label="Paginación">
+            <?= LinkPager::widget([
+                'pagination' => $dataProvider->pagination,
+                'options' => ['class' => 'pagination justify-content-center mt-4'],
+                'linkOptions' => ['class' => 'page-link'],
+                'disabledListItemSubTagOptions' => ['tag' => 'span', 'class' => 'page-link disabled'],
+            ]) ?>
+        </nav>
     </div>
 
     
@@ -1379,6 +1492,8 @@ function agregarComentario() {
         if (data.success) {
             document.getElementById('nuevoComentario').value = '';
             cargarComentarios(ticketId);
+            // ✅ Actualizar el badge de comentarios
+            updateCommentBadge(ticketId);
         } else {
             alert('Error: ' + data.message);
         }
@@ -1411,6 +1526,58 @@ function escapeHtml(text) {
 }
 
 // ========================================
+// CARGAR COMENTARIOS - BADGES
+// ========================================
+function updateCommentBadge(ticketId) {
+    // Recargar la página para actualizar los badges
+    // O podemos hacer un AJAX ligero solo para actualizar el badge
+    fetch('<?= Url::to(['contar-comentarios']) ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+        },
+        body: JSON.stringify({ ticket_id: ticketId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const button = document.querySelector('.comment-btn-' + ticketId);
+            if (button) {
+                // Buscar el contenedor padre (div con position: relative)
+                const container = button.parentElement;
+                let badge = container.querySelector('.badge-count-' + ticketId);
+                
+                if (data.count > 0) {
+                    if (!badge) {
+                        // Crear el badge si no existe
+                        badge = document.createElement('span');
+                        badge.className = 'badge bg-danger badge-count-' + ticketId;
+                        badge.style.position = 'absolute';
+                        badge.style.top = '-8px';
+                        badge.style.right = '-8px';
+                        badge.style.fontSize = '11px';
+                        badge.style.padding = '3px 6px';
+                        badge.style.minWidth = '24px';
+                        badge.style.textAlign = 'center';
+                        badge.style.borderRadius = '50%';
+                        badge.style.fontWeight = 'bold';
+                        container.appendChild(badge);
+                    }
+                    badge.textContent = data.count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    if (badge) {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        }
+    })
+    .catch(error => console.error('Error actualizando comentarios:', error));
+}
+
+// ========================================
 // DOCUMENT READY
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -1418,12 +1585,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearButton = document.getElementById('clearSearch');
     const filterBtn = document.getElementById('compactFilterBtn');
     const filterMenu = document.getElementById('compactFilterMenu');
+    const filterForm = document.getElementById('compactFilterForm');
     const horaFinalizoInput = document.getElementById('horaFinalizo');
     const addRowsBtn = document.getElementById('addMoreRows');
 
     buildRowsCache();
     document.querySelectorAll('.flatpickr-datetime').forEach(initializeFlatpickr);
-    
     const initialSaveBtn = document.querySelector('.new-row .saveRow');
     if (initialSaveBtn) {
         initialSaveBtn.addEventListener('click', function() {

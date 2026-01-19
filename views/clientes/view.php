@@ -43,7 +43,11 @@ $this->title = "Cliente: {$model->Nombre}";
                     'Baja' => 'Baja'
                 ], ['prompt' => 'Selecciona Prioridad']) ?>
 
-                <?= $form->field($model, 'Tipo_servicio')->textInput(['maxlength' => true]) ?>
+                <?= $form->field($model, 'Criticidad')->dropDownList([
+                    'Baja' => 'Baja',
+                    'Media' => 'Media',
+                    'Urgente' => 'Urgente'
+                ], ['prompt' => 'Selecciona Criticidad']) ?>
                 <?= $form->field($model, 'Estado')->textInput(['maxlength' => true]) ?>
                 <?= $form->field($model, 'created_at')->textInput(['readonly' => true]) ?>
                 <?= $form->field($model, 'updated_at')->textInput(['readonly' => true]) ?>

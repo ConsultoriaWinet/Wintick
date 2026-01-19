@@ -1034,38 +1034,49 @@ protected function parseHoras($valor)
         if (!empty($_GET['folio'])) {
             $query->andWhere(['like', 'Folio', $_GET['folio']]);
         }
-        if (!empty($_GET['cliente_id'])) {
-            $query->andWhere(['Cliente_id' => $_GET['cliente_id']]);
+        if (!empty($_GET['Cliente_id'])) {
+            $query->andWhere(['Cliente_id' => $_GET['Cliente_id']]);
         }
-        if (!empty($_GET['sistema_id'])) {
-            $query->andWhere(['Sistema_id' => $_GET['sistema_id']]);
+        if (!empty($_GET['Sistema_id'])) {
+            $query->andWhere(['Sistema_id' => $_GET['Sistema_id']]);
         }
-        if (!empty($_GET['servicio_id'])) {
-            $query->andWhere(['Servicio_id' => $_GET['servicio_id']]);
+        if (!empty($_GET['Servicio_id'])) {
+            $query->andWhere(['Servicio_id' => $_GET['Servicio_id']]);
         }
-        if (!empty($_GET['asignado_a'])) {
-            $query->andWhere(['Asignado_a' => $_GET['asignado_a']]);
+        if (!empty($_GET['Asignado_a'])) {
+            $query->andWhere(['Asignado_a' => $_GET['Asignado_a']]);
         }
-        if (!empty($_GET['prioridad'])) {
-            $query->andWhere(['Prioridad' => $_GET['prioridad']]);
+        if (!empty($_GET['Prioridad'])) {
+            $query->andWhere(['Prioridad' => $_GET['Prioridad']]);
         }
-        if (!empty($_GET['estado'])) {
-            $query->andWhere(['Estado' => $_GET['estado']]);
+        if (!empty($_GET['Estado'])) {
+            $query->andWhere(['Estado' => $_GET['Estado']]);
         }
 
+        // ✅ FILTROS DE FECHA (HoraProgramada)
         // Filtro por mes
         if (!empty($_GET['mes'])) {
             $mes = $_GET['mes'];
             $primerDia = $mes . '-01 00:00:00';
             $ultimoDia = date('Y-m-t 23:59:59', strtotime($mes . '-01'));
-        } else {
-            $mesActual = date('Y-m');
-            $primerDia = $mesActual . '-01 00:00:00';
-            $ultimoDia = date('Y-m-t 23:59:59');
+            $query->andWhere(['>=', 'HoraProgramada', $primerDia])
+                  ->andWhere(['<=', 'HoraProgramada', $ultimoDia]);
         }
 
-        $query->andWhere(['>=', 'Fecha_creacion', $primerDia]);
-        $query->andWhere(['<=', 'Fecha_creacion', $ultimoDia]);
+        // Filtro por rango de fechas (DESDE - HASTA)
+        if (!empty($_GET['fecha_inicio'])) {
+            $fechaInicio = strtotime($_GET['fecha_inicio']);
+            if ($fechaInicio) {
+                $query->andWhere(['>=', 'HoraProgramada', date('Y-m-d 00:00:00', $fechaInicio)]);
+            }
+        }
+
+        if (!empty($_GET['fecha_fin'])) {
+            $fechaFin = strtotime($_GET['fecha_fin']);
+            if ($fechaFin) {
+                $query->andWhere(['<=', 'HoraProgramada', date('Y-m-d 23:59:59', $fechaFin)]);
+            }
+        }
 
         $tickets = $query->orderBy(['id' => SORT_DESC])->all();
 
@@ -1237,5 +1248,24 @@ protected function parseHoras($valor)
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Obtener cantidad de comentarios para un ticket
+     */
+    public function actionContarComentarios()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $ticket_id = Yii::$app->request->post('ticket_id');
+        if (!$ticket_id) {
+            return ['success' => false, 'count' => 0];
+        }
+        
+        $count = Comentarios::find()
+            ->where(['ticket_id' => $ticket_id])
+            ->count();
+        
+        return ['success' => true, 'count' => $count];
     }
 }

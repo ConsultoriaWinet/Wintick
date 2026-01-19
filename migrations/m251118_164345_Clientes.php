@@ -39,6 +39,7 @@ class m251118_164345_Clientes extends Migration
             'Prioridad' => $this->string()->notNull(), //Prioridad del cliente
             'Tipo_servicio' => $this->string()->notNull(), //Tipo de servicio contratado
             'Estado' => $this->boolean()->notNull()->defaultValue(1),
+            'Criticidad' => $this->string()->notNull(), //Criticidad del cliente
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
         ]);

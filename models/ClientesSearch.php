@@ -18,7 +18,7 @@ class ClientesSearch extends Clientes
     {
         return [
             [['id', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
-            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre', 'Prioridad', 'Tipo_servicio'], 'safe'],
+            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Criticidad', 'Contacto_nombre', 'Prioridad', 'Tipo_servicio'], 'safe'],
         ];
     }
 

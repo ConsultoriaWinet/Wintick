@@ -91,6 +91,12 @@ $form = ActiveForm::begin([
                         ['class' => 'form-select form-select-sm']
                     ) ?>
                 </div>
+                <div class="col-md-6">
+                    <?= $form->field($model, 'Criticidad')->dropDownList(
+                        [ 'Baja' => 'Baja','Media' => 'Media','Urgente' => 'Urgente',],
+                        ['class' => 'form-select form-select-sm']
+                    ) ?>
+                </div>
             </div>
         </div>
 

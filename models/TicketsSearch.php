@@ -53,20 +53,20 @@ class TicketsSearch extends Tickets
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 50,
+                'pageSize' => 20,
             ],
             'sort' => [
-                'defaultOrder' => ['id' => SORT_DESC],
+                'defaultOrder' => ['Fecha_creacion' => SORT_DESC],
             ],
         ]);
 
-        $this->load($params, $formName);
+        // ✅ CARGAR PARÁMETROS DIRECTAMENTE (sin formName)
+        $this->load($params, '');
 
-        if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
-            return $dataProvider;
-        }
+        // No validar, simplemente cargar los parámetros y aplicar filtros
+        // if (!$this->validate()) {
+        //     return $dataProvider;
+        // }
 
         // ✅ LÓGICA DE USUARIO ASIGNADO - APLICAR FILTRO POR DEFECTO
         $asignadoParam = isset($params['asignado_a']) ? $params['asignado_a'] : null;
@@ -105,13 +105,22 @@ class TicketsSearch extends Tickets
             $ultimoDia = date('Y-m-t 23:59:59', strtotime($this->mes . '-01'));
             $query->andWhere(['>=', 'HoraProgramada', $primerDia])
                   ->andWhere(['<=', 'HoraProgramada', $ultimoDia]);
-        } else {
-            // Si no hay mes específico, filtrar por rango de fechas
-            if (!empty($this->fecha_inicio)) {
-                $query->andWhere(['>=', 'HoraProgramada', $this->fecha_inicio . ' 00:00:00']);
+        }
+        
+        // Filtro por rango de fechas (DESDE - HASTA)
+        if (!empty($this->fecha_inicio)) {
+            // Convertir formato YYYY-MM-DD a YYYY-MM-DD 00:00:00
+            $fechaInicio = strtotime($this->fecha_inicio);
+            if ($fechaInicio) {
+                $query->andWhere(['>=', 'HoraProgramada', date('Y-m-d 00:00:00', $fechaInicio)]);
             }
-            if (!empty($this->fecha_fin)) {
-                $query->andWhere(['<=', 'HoraProgramada', $this->fecha_fin . ' 23:59:59']);
+        }
+        
+        if (!empty($this->fecha_fin)) {
+            // Convertir formato YYYY-MM-DD a YYYY-MM-DD 23:59:59
+            $fechaFin = strtotime($this->fecha_fin);
+            if ($fechaFin) {
+                $query->andWhere(['<=', 'HoraProgramada', date('Y-m-d 23:59:59', $fechaFin)]);
             }
         }
 

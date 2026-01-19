@@ -17,6 +17,7 @@ use Yii;
  * @property int $Whatsapp_contacto
  * @property int $Telefono
  * @property string $Prioridad
+ * @property string $Criticidad
  * @property int $Estado
  * @property int $created_at
  * @property int $updated_at
@@ -41,7 +42,7 @@ class Clientes extends \yii\db\ActiveRecord
         return [
             [['RFC'], 'default', 'value' => null],
             [['Estado'], 'default', 'value' => 1],
-            [['Nombre', 'Razon_social', 'Correo', 'Contacto_nombre', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Prioridad', 'created_at', 'updated_at'], 'required'],
+            [['Nombre', 'Razon_social', 'Correo','Criticidad','Contacto_nombre', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Prioridad', 'created_at', 'updated_at'], 'required'],
             [['Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
             [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre', 'Prioridad'], 'string', 'max' => 255],
             [['RFC'], 'unique'],
@@ -64,6 +65,7 @@ class Clientes extends \yii\db\ActiveRecord
             'Whatsapp_contacto' => 'Whatsapp Contacto',
             'Telefono' => 'Telefono',
             'Prioridad' => 'Prioridad',
+            'Criticidad' => 'Criticidad',
             'Estado' => 'Estado',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
