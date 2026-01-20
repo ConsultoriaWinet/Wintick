@@ -10,7 +10,7 @@ use yii\widgets\LinkPager;
 /** @var app\models\TicketsSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
-// ✅ VALIDAR QUE LAS VARIABLES EXISTAN
+
 $clientes = $clientes ?? [];
 $sistemas = $sistemas ?? [];
 $servicios = $servicios ?? [];
@@ -18,24 +18,16 @@ $Usuarios = $Usuarios ?? [];
 $asignadoFiltro = $asignadoFiltro ?? '';
 
 $this->title = 'Tickets';
-//Estilos generales de aqui para todos los tickets
 $this->registerCssFile('@web/views/tickets/styles.css');
-// Scripts generales de aqui para todos los tickets 
-
 
 $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-// Estilos de Flatpickr (Tema Airbnb)
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css');
-// Scripts de Flatpickr + Idioma Español
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
-// ✅ Script de filtros mejorados
 $this->registerJsFile('@web/js/tickets-filters.js', ['position' => \yii\web\View::POS_END]);
 
-// ✅ CSS PARA PAGINACIÓN Y FILTROS
 $this->registerCss('
-    /* Estilos de paginación */
     .pagination {
         gap: 5px;
     }
@@ -62,7 +54,6 @@ $this->registerCss('
         cursor: not-allowed;
     }
     
-    /* Info de paginación */
     .table-container > div:first-child {
         display: flex;
         justify-content: space-between;
@@ -71,13 +62,11 @@ $this->registerCss('
         border-bottom: 1px solid #eee;
     }
     
-    /* Filtro compacto mejorado */
     .compact-filter-menu {
         max-height: 600px;
         overflow-y: auto;
     }
     
-    /* Aviso de filtros */
     .filter-section-notice {
         background: #fffbeb;
         border-left: 3px solid #f59e0b;
@@ -88,7 +77,6 @@ $this->registerCss('
         border-radius: 4px;
     }
     
-    /* Animación para dropdown */
     @keyframes slideDown {
         from {
             opacity: 0;
@@ -100,7 +88,6 @@ $this->registerCss('
         }
     }
     
-    /* Estilos de inputs de fecha */
     .compact-filter-group input[type="date"],
     .compact-filter-group input[type="month"] {
         max-width: 100%;
@@ -407,6 +394,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                  data-ticket-id="<?= $ticket->id ?>"
                 data-folio="<?= Html::encode($ticket->Folio) ?>"
                 data-cliente="<?= Html::encode($ticket->cliente ? $ticket->cliente->Nombre : '-') ?>"
+                data-criticidad="<?= Html::encode($ticket->cliente ? $ticket->cliente->Criticidad : '-') ?>"
                 data-sistema="<?= Html::encode($ticket->sistema ? $ticket->sistema->Nombre : '-') ?>"
                 data-servicio="<?= Html::encode($ticket->servicio ? $ticket->servicio->Nombre : '-') ?>"
                 data-usuario-reporta="<?= Html::encode($ticket->Usuario_reporta) ?>"
@@ -424,8 +412,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <td><?= $ticket->servicio ? Html::encode($ticket->servicio->Nombre) : '-' ?></td>
                     <td><?= Html::encode($ticket->Usuario_reporta) ?></td>
                     <td> <?php if ($ticket->usuarioAsignado): ?>
-        <span title="<?= Html::encode($ticket->usuarioAsignado->email) ?>">  <!-- 👈 correo en tooltip -->
-            <?= Html::encode($ticket->usuarioAsignado->Nombre) ?>            <!-- 👈 nombre visible -->
+        <span title="<?= Html::encode($ticket->usuarioAsignado->email) ?>">  
+            <?= Html::encode($ticket->usuarioAsignado->Nombre) ?>            
         </span>
     <?php else: ?>
         -
@@ -702,20 +690,13 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 </div>
 
 <script>
-// ========================================
-// VARIABLES GLOBALES
-// ========================================
 let rowsCache = [];
 const totalTicketsOriginal = <?= $dataProvider->getTotalCount() ?>;
 let tieneTiempoGuardado = false;
 let tiempoEditadoManualmente = false;   
-let solutionOpenedFromEstadoChange = false;  // 👈 se abrió modal al cambiar a CERRADO
-let lastTicketIdSolution = null;  
+let solutionOpenedFromEstadoChange = false;
+let lastTicketIdSolution = null;
 
-
-// ========================================
-// FOLIO AUTOINCREMENTAL
-// ========================================
 function loadNextFolio(inputElement) {
     if (!inputElement) return;
     
@@ -744,9 +725,6 @@ function loadNextFolio(inputElement) {
     });
 }
 
-// ========================================
-// CARGAR DATOS DE CLIENTE
-// ========================================
 function loadClienteData(selectElement) {
     const row = selectElement.closest('tr');
     const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -763,9 +741,6 @@ function loadClienteData(selectElement) {
     row.querySelector('.estado').value = 'ABIERTO';
 }
 
-// ========================================
-// BÚSQUEDA UNIVERSAL
-// ========================================
 function normalizeText(text) {
     return text.toLowerCase()
         .normalize('NFD')
@@ -913,9 +888,6 @@ function debounce(func, wait) {
 
 const debouncedSearch = debounce(performSearch, 150);
 
-// ========================================
-// INICIALIZAR FLATPICKR
-// ========================================
 function initializeFlatpickr(element) {
     flatpickr(element, {
         enableTime: true,
@@ -931,12 +903,7 @@ function initializeFlatpickr(element) {
     });
 }
 
-// ========================================
-// GUARDAR TICKET
-// ========================================
 function saveTicket(row) {
-    console.log('🚀 Guardando ticket...');
-    
     const ticket = {
         Folio: row.querySelector('.folio').value,
         Cliente_id: row.querySelector('.cliente').value,
@@ -950,8 +917,6 @@ function saveTicket(row) {
         HoraProgramada: row.querySelector('.hora-programada').value,
         HoraInicio: row.querySelector('.hora-inicio').value,
     };
-
-    console.log('📋 Datos del ticket:', ticket);
 
     if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
         Swal.fire({
@@ -996,8 +961,6 @@ function saveTicket(row) {
         return response.json();
     })
     .then(data => {
-        console.log('📦 Datos:', data);
-        
         if (data.success) {
             Swal.fire({
                 icon: 'success',
@@ -1025,7 +988,7 @@ function saveTicket(row) {
         }
     })
     .catch(error => {
-        console.error('💥 Error:', error);
+        console.error('Error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -1038,20 +1001,15 @@ function saveTicket(row) {
     });
 }
 
-// ========================================
-// ESTADOS
-// ========================================
 function updateEstado(selectElement, ticketId) {
     const estado = selectElement.value;
     const div = selectElement.previousElementSibling;
     
-    // actualizar visualmente
     div.className = 'estado-clickeable ' + getEstadoClass(estado);
     div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
     div.style.display = 'inline-flex';
     selectElement.style.display = 'none';
     
-    // guardar en BD
     fetch('<?= Url::to(['update-estado']) ?>', {
         method: 'POST',
         headers: {
@@ -1065,15 +1023,13 @@ function updateEstado(selectElement, ticketId) {
         if (data.success) {
             buildRowsCache();
 
-            // 🔥 Si se puso en CERRADO, abrimos modal de solución
             if (estado === 'CERRADO') {
-                const row   = selectElement.closest('tr');
+                const row = selectElement.closest('tr');
                 const folio = row.dataset.folio || '';
 
                 solutionOpenedFromEstadoChange = true;
-                lastTicketIdSolution          = ticketId;
+                lastTicketIdSolution = ticketId;
 
-                // tercer parámetro = true → viene de cambio de estado
                 openSolutionModal(ticketId, folio, true);
             }
         }
@@ -1113,9 +1069,7 @@ function getEstadoIcon(estado) {
     };
     return icons[estado] || 'fa-question-circle';
 }
-// ========================================
-// FORMATEAR Y CALCULAR TIEMPO EFECTIVO
-// ========================================
+
 function formatearFechaBonita(fechaStr) {
     const d = new Date(fechaStr);
     if (isNaN(d.getTime())) return fechaStr || '-';
@@ -1131,17 +1085,16 @@ function formatearFechaBonita(fechaStr) {
 }
 
 function calcularTiempoEfectivo() {
-    // Si el usuario ya escribió algo manualmente, no pisar su valor
     if (tiempoEditadoManualmente) {
         return;
     }
 
-    const inicioStr   = document.getElementById('horaInicioTicket').value; // hidden
-    const finInput    = document.getElementById('horaFinalizo');
-    const finStr      = finInput.value;
+    const inicioStr = document.getElementById('horaInicioTicket').value; 
+    const finInput = document.getElementById('horaFinalizo');
+    const finStr = finInput.value;
     const salidaInput = document.getElementById('tiempoEfectivo');
-    const badge       = document.getElementById('badgeTiempoEfectivo');
-    const labelFin    = document.getElementById('labelHoraFinalizo');
+    const badge = document.getElementById('badgeTiempoEfectivo');
+    const labelFin = document.getElementById('labelHoraFinalizo');
 
     if (!inicioStr || !finStr) {
         salidaInput.value = '';
@@ -1151,7 +1104,7 @@ function calcularTiempoEfectivo() {
     }
 
     const inicio = new Date(inicioStr);
-    const fin    = new Date(finStr);
+    const fin = new Date(finStr);
 
     if (isNaN(inicio.getTime()) || isNaN(fin.getTime()) || fin < inicio) {
         salidaInput.value = '';
@@ -1161,7 +1114,7 @@ function calcularTiempoEfectivo() {
     }
 
     const diffMs = fin - inicio;
-    let totalMin = Math.floor(diffMs / 60000); // minutos totales
+    let totalMin = Math.floor(diffMs / 60000);
 
     if (totalMin <= 0) {
         salidaInput.value = '';
@@ -1170,11 +1123,8 @@ function calcularTiempoEfectivo() {
         return;
     }
 
-    // Pasar a horas + redondeo según tus reglas:
-    // 1–29 min -> 0.5 h
-    // 30–59 min -> 1 h
     let horasEnteras = Math.floor(totalMin / 60);
-    let mins         = totalMin % 60;
+    let mins = totalMin % 60;
     let horasDecimales = horasEnteras;
 
     if (mins > 0 && mins < 30) {
@@ -1183,12 +1133,12 @@ function calcularTiempoEfectivo() {
         horasDecimales += 1;
     }
 
-    // Formato bonito: si es entero, sin decimales; si no, 1 decimal
+   
     let textoHoras;
     if (Number.isInteger(horasDecimales)) {
-        textoHoras = horasDecimales.toString();      // "1", "2", etc.
+        textoHoras = horasDecimales.toString();
     } else {
-        textoHoras = horasDecimales.toFixed(1);      // "1.5", "2.5"
+        textoHoras = horasDecimales.toFixed(1);
     }
 
     salidaInput.value = textoHoras;
@@ -1196,9 +1146,6 @@ function calcularTiempoEfectivo() {
     labelFin.textContent = formatearFechaBonita(finStr);
 }
 
-// ========================================
-// MODAL DE SOLUCIÓN
-// ========================================
 function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
     const selectElement = document.querySelector('.estado-' + ticketId);
     if (!selectElement) {
@@ -1208,9 +1155,8 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
 
     const estado = selectElement.value;
 
-    // guardamos de dónde vino
     solutionOpenedFromEstadoChange = openedFromEstadoChange;
-    lastTicketIdSolution          = ticketId;
+    lastTicketIdSolution = ticketId;
 
     if (estado !== 'CERRADO') {
         Swal.fire({
@@ -1222,14 +1168,13 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
         return;
     }
 
-    // Setear IDs & folio
+  
     document.getElementById('ticketId').value = ticketId;
     const folioBadge = document.getElementById('solutionTicketFolio');
     if (folioBadge) {
         folioBadge.textContent = 'Ticket ' + folio;
     }
 
-    // Limpiar campos visuales
     document.getElementById('horaFinalizo').value = '';
     document.getElementById('solucion').value = '';
     document.getElementById('tiempoEfectivo').value = '';
@@ -1241,7 +1186,6 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
     tieneTiempoGuardado = false;
     tiempoEditadoManualmente = false;
 
-    // Obtener datos del ticket
     fetch('<?= Url::to(['get-ticket-data']) ?>', {
         method: 'POST',
         headers: {
@@ -1283,7 +1227,6 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
         }
     });
 
-    // Mostrar modal
     const modal = document.getElementById('solutionModal');
     modal.classList.add('show');
     modal.style.display = 'block';
@@ -1291,7 +1234,7 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
 
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop fade show';
-    backdrop.id = 'solutionBackdrop';   // 👈 IMPORTANTE
+    backdrop.id = 'solutionBackdrop';
     document.body.appendChild(backdrop);
 }
 
@@ -1325,7 +1268,7 @@ function saveSolution() {
         console.log('🔍 Respuesta save-solution:', data);
 
         if (data.success) {
-            // 👇 Aquí decimos: ya no revertir estado
+          
             solutionOpenedFromEstadoChange = false;
             lastTicketIdSolution = null;
 
@@ -1341,7 +1284,7 @@ function saveSolution() {
         }
     })
     .catch(error => {
-        console.error('💥 Error en fetch save-solution:', error);
+        console.error('Error saving solution:', error);
         alert('Error de comunicación con el servidor: ' + error.message);
     });
 }
@@ -1359,7 +1302,6 @@ function closeModal() {
     document.getElementById('solucion').value = '';
     document.getElementById('tiempoEfectivo').value = '';
 
-    // 👇 SI EL MODAL SE ABRIÓ POR CAMBIO A CERRADO Y NO SE GUARDÓ SOLUCIÓN
     if (solutionOpenedFromEstadoChange && lastTicketIdSolution) {
         const select = document.querySelector('.estado-' + lastTicketIdSolution);
         if (select) {
@@ -1374,7 +1316,7 @@ function closeModal() {
                 select.style.display = 'none';
             }
 
-            // Actualizar en BD
+         
             fetch('<?= Url::to(['update-estado']) ?>', {
                 method: 'POST',
                 headers: {
@@ -1389,18 +1331,14 @@ function closeModal() {
                     buildRowsCache();
                 }
             })
-            .catch(err => console.error('Error al revertir estado:', err));
+            .catch(err => console.error('Error reverting status:', err));
         }
     }
 
-    // limpiar banderas
     solutionOpenedFromEstadoChange = false;
     lastTicketIdSolution = null;
 }
 
-// ========================================
-// MODAL DE COMENTARIOS
-// ========================================
 function openComentariosModal(ticketId, folio) {
     document.getElementById('ticketIdComentarios').value = ticketId;
     document.getElementById('ticketFolioComentarios').textContent = folio;
@@ -1492,7 +1430,6 @@ function agregarComentario() {
         if (data.success) {
             document.getElementById('nuevoComentario').value = '';
             cargarComentarios(ticketId);
-            // ✅ Actualizar el badge de comentarios
             updateCommentBadge(ticketId);
         } else {
             alert('Error: ' + data.message);
@@ -1525,12 +1462,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ========================================
-// CARGAR COMENTARIOS - BADGES
-// ========================================
 function updateCommentBadge(ticketId) {
-    // Recargar la página para actualizar los badges
-    // O podemos hacer un AJAX ligero solo para actualizar el badge
     fetch('<?= Url::to(['contar-comentarios']) ?>', {
         method: 'POST',
         headers: {
@@ -1703,11 +1635,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }));
 });
 
-// ========================================
-// DOBLE CLICK EN FILA → DETALLE COMPLETO
-// ========================================
+
     // ========================================
-    // DOBLE CLICK EN FILA → DETALLE BONITO
+    // DOBLE CLICK EN FILA
     // ========================================
     function getStatusClass(estado) {
         const e = (estado || '').toUpperCase();
@@ -1724,16 +1654,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (p === 'BAJA') return 'swal-priority-baja';
         return '';
     }
+    function getCriticidadClass(criticidad) {
+        const c = (criticidad || '').toUpperCase().trim();
+      if (c === 'URGENTE') return 'swal-criticidad-urgente';
+        if (c === 'MEDIA') return 'swal-criticidad-media';
+        if (c === 'BAJA' || c === 'BAJO') return 'swal-criticidad-baja';
+        return '';
+    }
 
     document.querySelectorAll('tr.existing-row').forEach(row => {
         row.addEventListener('dblclick', function (e) {
-            // si hace doble click en un botón/enlace, lo dejamos en paz
+           
             if (e.target.closest('button, a, select, input, textarea')) return;
 
             const d = this.dataset;
 
             const estadoClass   = getStatusClass(d.estado);
             const prioridadClass = getPriorityClass(d.prioridad);
+            const criticidadClass = getCriticidadClass(d.criticidad); 
 
             const html = `
                 <div class="swal-ticket-card">
@@ -1777,6 +1715,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="swal-info-value">
                                         <span class="swal-priority-badge ${prioridadClass}">
                                             ${escapeHtml(d.prioridad || '-')}
+                                        </span>
+                                    </span>
+                                </div>
+
+                                 <div class="swal-info-item">
+                                    <span class="swal-info-label">Criticidad</span>
+                                    <span class="swal-info-value">
+                                        <span class="swal-criticidad-badge ${criticidadClass}">
+                                            ${escapeHtml(d.criticidad || '-')}
                                         </span>
                                     </span>
                                 </div>

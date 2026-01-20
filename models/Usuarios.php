@@ -17,13 +17,14 @@ use Yii;
  * @property int $created_at
  * @property int $updated_at
  * @property string|null $color
+ * 
  *
  * @property Comentarios[] $comentarios
  * @property Notificaciones[] $notificaciones
  */
 class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-
+public $password; 
 
     /**
      * {@inheritdoc}
@@ -39,14 +40,28 @@ class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterfac
     public function rules()
     {
         return [
-            [['password_reset_token'], 'default', 'value' => null],
-            [['status'], 'default', 'value' => 10],
-            [['Nombre', 'password_hash', 'email', 'rol', 'created_at', 'updated_at', 'color'], 'required'],
-            [['status', 'created_at', 'updated_at'], 'integer'],
-            [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
-            [['Nombre'], 'unique'],
-            [['email'], 'unique'],
-            [['password_reset_token'], 'unique'],
+              [['password_reset_token'], 'default', 'value' => null],
+        [['status'], 'default', 'value' => 10],
+
+        [['Nombre', 'email', 'rol', 'color'], 'required'],
+        [['status', 'created_at', 'updated_at'], 'integer'],
+        [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
+        [['color'], 'string', 'max' => 20],
+
+        [['Nombre'], 'unique'],
+        [['email'], 'unique'],
+        [['password_reset_token'], 'unique'],
+
+      
+        [['password'], 'required', 'on' => 'create'],
+        [['password'], 'string', 'min' => 6],
+
+      
+        [['password'], 'safe', 'on' => 'update'],
+
+
+
+
         ];
     }
 
@@ -140,17 +155,15 @@ class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterfac
      * {@inheritdoc}
      */
     public function beforeSave($insert)
-    {
-        if (parent::beforeSave($insert)) {
-            if ($this->isNewRecord || !empty($this->password)) {
-                if (!empty($this->password)) {
-                    $this->password_hash = Yii::$app->security->generatePasswordHash($this->password);
-                }
-            }
-            return true;
-        }
+   {
+    if (!parent::beforeSave($insert)) {
         return false;
-    }
+        }
+        if (!empty($this->password)) {
+            $this->setPassword(Yii::$app->security->generatePasswordHash($this->password));
+     }
+   return true;
+   }
 
     /**
      * Validates password

@@ -592,13 +592,13 @@ JS;
         let notificationCheckInterval;
 
         function inicializarNotificaciones() {
-            console.log('🔔 Inicializando notificaciones...');
+       
             notificationCheckInterval = setInterval(cargarNotificaciones, 8000);
             cargarNotificaciones();
         }
 
         function cargarNotificaciones() {
-            console.log('📡 Cargando notificaciones...');
+          
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]');
             const token = csrfToken ? csrfToken.getAttribute('content') : '';
@@ -612,7 +612,7 @@ JS;
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('📊 Datos recibidos:', data);
+                 
                     if (data.success) {
                         mostrarNotificaciones(data.notificaciones);
                     }
@@ -621,12 +621,12 @@ JS;
         }
 
         function mostrarNotificaciones(notificaciones) {
-            console.log('👀 Total de notificaciones:', notificaciones.length);
+          
             const notifList = document.getElementById('notificationList');
             const badge = document.getElementById('notificationCount');
             const noLeidas = notificaciones.filter(n => !n.leida).length;
 
-            console.log('📢 No leídas:', noLeidas);
+           
 
             if (noLeidas > 0) {
                 badge.textContent = noLeidas;
@@ -667,7 +667,7 @@ JS;
                     function abrirNotificacion(event, notifId, ticketId) {
                 event.stopPropagation();
 
-                // Si no hay ticket relacionado
+             
                 if (!ticketId) {
                     marcarNotificacion(notifId);
                     return;
@@ -683,7 +683,7 @@ JS;
                     },
                     body: JSON.stringify({ notif_id: notifId })
                 })
-                .catch(() => {}) // aunque falle, entra al ticket
+                .catch(() => {}) 
                 .finally(() => {
                     window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
                 });

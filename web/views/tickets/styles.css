@@ -850,7 +850,7 @@
 
     .swal-ticket-card {
     background: #ffffff;
-    border-radius: 16px;
+  
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     font-size: 14px;
@@ -929,7 +929,8 @@
     }
 
     .swal-status-badge,
-    .swal-priority-badge {
+    .swal-priority-badge,
+    .swal-criticidad-badge {
         padding: 4px 10px;
         border-radius: 999px;
         font-size: 11px;
@@ -946,6 +947,10 @@
     .swal-priority-alta  { background:#fee2e2; color:#991b1b; }
     .swal-priority-media { background:#fef3c7; color:#b45309; }
     .swal-priority-baja  { background:#d1fae5; color:#065f46; }
+
+    .swal-criticidad-urgente { background:#7c2d12; color:#fef3c7; font-weight: 700; box-shadow: 0 0 10px rgba(124, 45, 18, 0.5); }
+    .swal-criticidad-media  { background:#ea580c; color:#ffffff; font-weight: 700; }
+    .swal-criticidad-baja   { background:#16a34a; color:#ffffff; font-weight: 700; }
 
     .swal-description,
     .swal-times {

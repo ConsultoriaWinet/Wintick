@@ -162,53 +162,42 @@ class UsuariosController extends Controller
      * - Si viene password, se re-hashea
      */
     public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
+{
+    $model = $this->findModel($id);
 
-        if (Yii::$app->request->isPost) {
+    if (Yii::$app->request->isPost) {
 
-            // Guardamos rol anterior para detectar cambios
-            $rolAnterior = $model->rol;
+        $rolAnterior = $model->rol;
+        $oldHash = $model->password_hash; // blindaje
 
-            if ($model->load(Yii::$app->request->post())) {
+        if ($model->load(Yii::$app->request->post())) {
 
-                $model->updated_at = time();
+            $model->updated_at = time();
 
-                // Normalizar rol (si viene del formulario)
-                $model->rol = $this->normalizarRol($model->rol);
-                if (!$model->rol) {
-                    Yii::$app->session->setFlash('error', 'Rol inválido. Seleccione un rol válido.');
-                    return $this->redirect(['index']);
-                }
-
-                // Si el formulario manda password_hash, lo re-hasheamos
-                if (!empty($model->password_hash)) {
-                    $model->password_hash = Yii::$app->security->generatePasswordHash($model->password_hash);
-                } else {
-                    // Si tu form manda vacío, podrías querer NO sobreescribir.
-                    // Aquí dependerá de tu vista: si siempre manda algo, elimina este else.
-                    // Si quieres conservar password actual cuando viene vacío, descomenta:
-                    // $model->password_hash = $model->getOldAttribute('password_hash');
-                }
-
-                if ($model->save()) {
-
-                    // Sincroniza RBAC solo si cambió rol (o si quieres siempre, quita el if)
-                    if ($rolAnterior !== $model->rol) {
-                        $this->syncRbacAssignment($model->id, $model->rol);
-                    }
-
-                    Yii::$app->session->setFlash('success', 'Usuario actualizado correctamente.');
-                    return $this->redirect(['index', 'updated' => 1]);
-                }
-
-                Yii::$app->session->setFlash('error', 'No se pudo actualizar el usuario: ' . $this->formatErrors($model));
+            $model->rol = $this->normalizarRol($model->rol);
+            if (!$model->rol) {
+                Yii::$app->session->setFlash('error', 'Rol inválido. Seleccione un rol válido.');
                 return $this->redirect(['index']);
             }
-        }
 
-        return $this->redirect(['index']);
+            // Si NO tienes un campo separado para contraseña, no permitas que se toque aquí:
+            $model->password_hash = $oldHash;
+
+            if ($model->save()) {
+                if ($rolAnterior !== $model->rol) {
+                    $this->syncRbacAssignment($model->id, $model->rol);
+                }
+                Yii::$app->session->setFlash('success', 'Usuario actualizado correctamente.');
+                return $this->redirect(['index', 'updated' => 1]);
+            }
+
+            Yii::$app->session->setFlash('error', 'No se pudo actualizar el usuario: ' . $this->formatErrors($model));
+            return $this->redirect(['index']);
+        }
     }
+
+    return $this->redirect(['index']);
+}
 
     /**
      * Eliminar usuario.
