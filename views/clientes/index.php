@@ -90,6 +90,7 @@ $this->registerCss($css);
                             'attribute' => 'Tiempo',
                             'label' => 'Tiempo Restante',
                             'format' => 'raw',
+                            'contentOptions' => ['class' => 'm-auto text-center'],
                             'value' => function ($model) {
                                 $tiempoNum = floatval($model->Tiempo);
                                 
