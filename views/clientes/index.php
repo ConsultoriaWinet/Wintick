@@ -44,7 +44,6 @@ $this->registerCss($css);
         max-width: 60px;
     }
 
-    /* Columna ID más compacta */
     .cursor-pointer {
         cursor: pointer;
     }

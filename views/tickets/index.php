@@ -5,6 +5,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\ArrayHelper;
 use yii\widgets\LinkPager;
+use app\models\Clientes;
 
 /** @var yii\web\View $this */
 /** @var app\models\TicketsSearch $searchModel */
