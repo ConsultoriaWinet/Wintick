@@ -617,7 +617,7 @@ JS;
                         mostrarNotificaciones(data.notificaciones);
                     }
                 })
-                .catch(error => console.error('❌ Error cargando notificaciones:', error));
+                .catch(error => console.error('Error cargando notificaciones:', error));
         }
 
         function mostrarNotificaciones(notificaciones) {
@@ -664,30 +664,32 @@ JS;
             }).join('');
         }
 
-                    function abrirNotificacion(event, notifId, ticketId) {
-                event.stopPropagation();
+function abrirNotificacion(event, notifId, ticketId, tipo) {
+  event.stopPropagation();
 
-             
-                if (!ticketId) {
-                    marcarNotificacion(notifId);
-                    return;
-                }
+  if (!ticketId) {
+    marcarNotificacion(notifId);
+    return;
+  }
 
-                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-                fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': token
-                    },
-                    body: JSON.stringify({ notif_id: notifId })
-                })
-                .catch(() => {}) 
-                .finally(() => {
-                    window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
-                });
-            }
+  fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+    body: JSON.stringify({ notif_id: notifId })
+  }).catch(() => {}).finally(() => {
+
+
+    if (tipo === 'mencion') {
+      window.location.href = `<?= Url::to(['/tickets/index']) ?>?openComments=1&ticket_id=${encodeURIComponent(ticketId)}&notif_id=${encodeURIComponent(notifId)}`;
+      return;
+    }
+
+    // ✅ default: ir a view (como ya lo haces)
+    window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
+  });
+}
 
 
         function toggleNotifications() {

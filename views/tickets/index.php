@@ -93,6 +93,22 @@ $this->registerCss('
     .compact-filter-group input[type="month"] {
         max-width: 100%;
     }
+
+    .mention-box{
+    position:absolute; z-index:99999; background:#fff;
+    border:1px solid #e5e7eb; border-radius:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,.15);
+    width:360px; display:none; overflow:hidden;
+    }
+    .mention-item{
+    padding:10px 12px; cursor:pointer; font-size:13px; line-height:1.2;
+    border-bottom:1px solid #f1f5f9;
+    }
+    .mention-item:last-child{ border-bottom:none; }
+    .mention-item:hover{ background:#f8fafc; }
+    .mention-top{ display:flex; justify-content:space-between; gap:10px; }
+    .mention-name{ font-weight:700; }
+    .mention-email{ color:#64748b; font-size:12px; }
 ');
 
 // Obtener mes y año actual si no hay filtro
@@ -474,7 +490,9 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     </td>
                     <td style="white-space: nowrap;">
                         <?php
-                        // ✅ Contar comentarios para este ticket
+                       
+
+                       //cuenta los comentarios para asi mostrarlos en el front 
                         $comentarioCount = \app\models\Comentarios::find()
                             ->where(['ticket_id' => $ticket->id])
                             ->count();
@@ -667,14 +685,15 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <div class="mb-3">
                         <label class="form-label"><i class="fas fa-tag"></i> Tipo de comentario</label>
                         <select id="tipoComentario" class="form-select">
-                            <option value="comentario">💬 Comentario general</option>
-                            <option value="nota_interna">📝 Nota interna</option>
-                            <option value="solucion">✅ Solución propuesta</option>
+                            <option value="comentario"> Comentario general</option>
+                            <option value="nota_interna"> Nota interna</option>
+                            <option value="solucion">Solución propuesta</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label"><i class="fas fa-comment"></i> Comentario</label>
                         <textarea id="nuevoComentario" class="form-control" rows="3" placeholder="Escribe tu comentario aquí..."></textarea>
+                        <div id="mentionBox" class="mention-box"></div>
                     </div>
                 </div>
             </div>
@@ -689,61 +708,84 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         </div>
     </div>
 </div>
-
 <script>
+window.WINTICK_USERS = <?= json_encode(array_map(function($u){
+    return [
+        'id' => (int)$u['id'],
+        'email' => $u['email'],
+        'nombre' => $u['Nombre'],
+        'primerNombre' => preg_split('/\s+/', trim($u['Nombre'] ?? ''))[0] ?? ''
+    ];
+}, $Usuarios), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+</script>
+<script>
+/**
+ * =========================================================
+ * ✅ WinTick - JS completo (incluye @menciones PRO)
+ * - En el textarea se ve bonito: @Nombre
+ * - En el backend se guarda token: @[email:correo@dominio.com]
+ * - Al renderizar comentarios se ve @Nombre con badge
+ * =========================================================
+ */
+
 let rowsCache = [];
 const totalTicketsOriginal = <?= $dataProvider->getTotalCount() ?>;
 let tieneTiempoGuardado = false;
-let tiempoEditadoManualmente = false;   
+let tiempoEditadoManualmente = false;
 let solutionOpenedFromEstadoChange = false;
 let lastTicketIdSolution = null;
 
+// ========================================
+// FOLIO
+// ========================================
 function loadNextFolio(inputElement) {
     if (!inputElement) return;
-    
+
     inputElement.value = '⏳ Generando...';
     inputElement.style.color = '#f59e0b';
-    
+
     fetch('<?= Url::to(['/tickets/get-next-folio']) ?>', {
         credentials: 'same-origin'
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.nextFolio) {
-            inputElement.value = data.nextFolio;
-            inputElement.style.color = '#10b981';
-        } else {
+        .then(response => response.json())
+        .then(data => {
+            if (data.nextFolio) {
+                inputElement.value = data.nextFolio;
+                inputElement.style.color = '#10b981';
+            } else {
+                inputElement.value = '❌ Error';
+                inputElement.style.color = '#ef4444';
+                console.error('No se recibió el siguiente folio');
+            }
+        })
+        .catch(error => {
+            console.error('Error obteniendo folio:', error);
             inputElement.value = '❌ Error';
             inputElement.style.color = '#ef4444';
-            console.error('No se recibió el siguiente folio');
-        }
-    })
-    .catch(error => {
-        console.error('Error obteniendo folio:', error);
-        inputElement.value = '❌ Error';
-        inputElement.style.color = '#ef4444';
-        inputElement.readOnly = false;
-    });
+            inputElement.readOnly = false;
+        });
 }
 
+// ========================================
+// CLIENTE -> PRIORIDAD
+// ========================================
 function loadClienteData(selectElement) {
     const row = selectElement.closest('tr');
     const selectedOption = selectElement.options[selectElement.selectedIndex];
-    
-    if (selectedOption.value === '') {
-        return;
-    }
-    
+
+    if (selectedOption.value === '') return;
+
     const prioridad = selectedOption.getAttribute('data-prioridad');
-    
-    if (prioridad) {
-        row.querySelector('.prioridad').value = prioridad;
-    }
+    if (prioridad) row.querySelector('.prioridad').value = prioridad;
+
     row.querySelector('.estado').value = 'ABIERTO';
 }
 
+// ========================================
+// SEARCH
+// ========================================
 function normalizeText(text) {
-    return text.toLowerCase()
+    return (text || '').toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^\w\s]/gi, ' ')
@@ -754,14 +796,14 @@ function normalizeText(text) {
 function buildRowsCache() {
     rowsCache = [];
     const rows = document.querySelectorAll('#tableBody tr.existing-row');
-    
+
     rows.forEach(row => {
         const visibleText = row.innerText;
         const descripcionCell = row.querySelector('.descripcion-cell');
         const fullDescription = descripcionCell ? descripcionCell.getAttribute('data-full-text') : '';
-        
+
         const searchText = normalizeText(visibleText + ' ' + fullDescription);
-        
+
         rowsCache.push({
             element: row,
             searchText: searchText
@@ -788,9 +830,7 @@ function confirmarEliminar(ticketId, folio) {
                 icon: 'info',
                 allowOutsideClick: false,
                 showConfirmButton: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                didOpen: () => Swal.showLoading()
             });
 
             fetch('<?= Url::to(['delete']) ?>?id=' + ticketId, {
@@ -801,49 +841,43 @@ function confirmarEliminar(ticketId, folio) {
                 },
                 body: '<?= Yii::$app->request->csrfParam ?>=<?= Yii::$app->request->getCsrfToken() ?>'
             })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (response.ok || response.status === 302) {
+                .then(response => {
+                    if (response.ok || response.status === 302) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Eliminado!',
+                            text: `Ticket ${folio} eliminado correctamente`,
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        }).then(() => location.reload());
+                    } else {
+                        throw new Error('Error del servidor: ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error completo:', error);
                     Swal.fire({
-                        icon: 'success',
-                        title: '¡Eliminado!',
-                        text: `Ticket ${folio} eliminado correctamente`,
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true
-                    }).then(() => {
-                        location.reload();
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar el ticket: ' + error.message,
+                        confirmButtonColor: '#ef4444'
                     });
-                } else {
-                    throw new Error('Error del servidor: ' + response.status);
-                }
-            })
-            .catch(error => {
-                console.error('Error completo:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudo eliminar el ticket: ' + error.message,
-                    confirmButtonColor: '#ef4444'
                 });
-            });
         }
     });
 }
 
 function performSearch(query) {
     const normalizedQuery = normalizeText(query);
-    
+
     if (!normalizedQuery) {
-        rowsCache.forEach(item => {
-            item.element.style.display = '';
-        });
+        rowsCache.forEach(item => item.element.style.display = '');
         updateSearchStats(totalTicketsOriginal, false);
         return;
     }
-    
+
     let visibleCount = 0;
-    
     rowsCache.forEach(item => {
         if (item.searchText.includes(normalizedQuery)) {
             item.element.style.display = '';
@@ -852,14 +886,14 @@ function performSearch(query) {
             item.element.style.display = 'none';
         }
     });
-    
+
     updateSearchStats(visibleCount, true);
 }
 
 function updateSearchStats(count, isFiltered) {
     const filteredCount = document.getElementById('filteredCount');
     const noResultsRow = document.getElementById('noResultsRow');
-    
+
     if (isFiltered) {
         if (count === 0) {
             noResultsRow.classList.add('active');
@@ -878,17 +912,16 @@ function updateSearchStats(count, isFiltered) {
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
+        const later = () => { clearTimeout(timeout); func(...args); };
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
 }
-
 const debouncedSearch = debounce(performSearch, 150);
 
+// ========================================
+// FLATPICKR
+// ========================================
 function initializeFlatpickr(element) {
     flatpickr(element, {
         enableTime: true,
@@ -904,6 +937,9 @@ function initializeFlatpickr(element) {
     });
 }
 
+// ========================================
+// SAVE TICKET
+// ========================================
 function saveTicket(row) {
     const ticket = {
         Folio: row.querySelector('.folio').value,
@@ -931,7 +967,7 @@ function saveTicket(row) {
     }
 
     if (!ticket.Descripcion || ticket.Descripcion.trim() === '') {
-        swal.fire({
+        Swal.fire({
             icon: 'warning',
             title: 'Descripción vacía',
             text: '⚠️ La descripción no puede estar vacía',
@@ -954,63 +990,59 @@ function saveTicket(row) {
         },
         body: JSON.stringify({ tickets: [ticket] })
     })
-    .then(response => {
-        console.log('📡 Respuesta:', response.status);
-        if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: 'Ticket guardado: ' + ticket.Folio,
-                showConfirmButton: false,
-                timer: 1000,
-                timerProgressBar: true,
-                toast: true,
-                position: 'top-end'
-            }).then(() => {
-                location.reload();
-            });
-        } else {
-            console.error('❌ Error:', data);
+        .then(response => {
+            if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: 'Ticket guardado: ' + ticket.Folio,
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    toast: true,
+                    position: 'top-end'
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al guardar',
+                    text: data.message || JSON.stringify(data.errors || 'Error desconocido'),
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#ef4444'
+                });
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalHtml;
+            }
+        })
+        .catch(error => {
             Swal.fire({
                 icon: 'error',
-                title: 'Error al guardar',
-                text: data.message || JSON.stringify(data.errors || 'Error desconocido'),
+                title: 'Error',
+                text: '❌ Error: ' + error.message,
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#ef4444'
             });
             saveBtn.disabled = false;
             saveBtn.innerHTML = originalHtml;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: '❌ Error: ' + error.message,
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#ef4444'
         });
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalHtml;
-    });
 }
 
+// ========================================
+// ESTADO
+// ========================================
 function updateEstado(selectElement, ticketId) {
     const estado = selectElement.value;
     const div = selectElement.previousElementSibling;
-    
+
     div.className = 'estado-clickeable ' + getEstadoClass(estado);
     div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
     div.style.display = 'inline-flex';
     selectElement.style.display = 'none';
-    
+
     fetch('<?= Url::to(['update-estado']) ?>', {
         method: 'POST',
         headers: {
@@ -1019,26 +1051,25 @@ function updateEstado(selectElement, ticketId) {
         },
         body: JSON.stringify({ id: ticketId, estado: estado })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            buildRowsCache();
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                buildRowsCache();
 
-            if (estado === 'CERRADO') {
-                const row = selectElement.closest('tr');
-                const folio = row.dataset.folio || '';
+                if (estado === 'CERRADO') {
+                    const row = selectElement.closest('tr');
+                    const folio = row.dataset.folio || '';
 
-                solutionOpenedFromEstadoChange = true;
-                lastTicketIdSolution = ticketId;
+                    solutionOpenedFromEstadoChange = true;
+                    lastTicketIdSolution = ticketId;
 
-                openSolutionModal(ticketId, folio, true);
+                    openSolutionModal(ticketId, folio, true);
+                }
             }
-        }
-    })
-    .catch(error => console.error('Error:', error));
+        })
+        .catch(error => console.error('Error:', error));
 }
 
-// mostrar el <select> para cambiar estado
 function toggleEstadoSelect(element, ticketId) {
     const select = document.querySelector('.estado-' + ticketId);
     if (!select) return;
@@ -1071,6 +1102,9 @@ function getEstadoIcon(estado) {
     return icons[estado] || 'fa-question-circle';
 }
 
+// ========================================
+// TIEMPO EFECTIVO
+// ========================================
 function formatearFechaBonita(fechaStr) {
     const d = new Date(fechaStr);
     if (isNaN(d.getTime())) return fechaStr || '-';
@@ -1086,11 +1120,9 @@ function formatearFechaBonita(fechaStr) {
 }
 
 function calcularTiempoEfectivo() {
-    if (tiempoEditadoManualmente) {
-        return;
-    }
+    if (tiempoEditadoManualmente) return;
 
-    const inicioStr = document.getElementById('horaInicioTicket').value; 
+    const inicioStr = document.getElementById('horaInicioTicket').value;
     const finInput = document.getElementById('horaFinalizo');
     const finStr = finInput.value;
     const salidaInput = document.getElementById('tiempoEfectivo');
@@ -1128,25 +1160,19 @@ function calcularTiempoEfectivo() {
     let mins = totalMin % 60;
     let horasDecimales = horasEnteras;
 
-    if (mins > 0 && mins < 30) {
-        horasDecimales += 0.5;
-    } else if (mins >= 30) {
-        horasDecimales += 1;
-    }
+    if (mins > 0 && mins < 30) horasDecimales += 0.5;
+    else if (mins >= 30) horasDecimales += 1;
 
-   
-    let textoHoras;
-    if (Number.isInteger(horasDecimales)) {
-        textoHoras = horasDecimales.toString();
-    } else {
-        textoHoras = horasDecimales.toFixed(1);
-    }
+    let textoHoras = Number.isInteger(horasDecimales) ? horasDecimales.toString() : horasDecimales.toFixed(1);
 
     salidaInput.value = textoHoras;
     badge.textContent = textoHoras + ' h';
     labelFin.textContent = formatearFechaBonita(finStr);
 }
 
+// ========================================
+// SOLUTION MODAL
+// ========================================
 function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
     const selectElement = document.querySelector('.estado-' + ticketId);
     if (!selectElement) {
@@ -1165,16 +1191,14 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
             title: 'Atención',
             text: '⚠️ Solo puedes agregar una solución a un ticket que esté en estado CERRADO. Cambia el estado e inténtalo de nuevo.',
             confirmButtonColor: '#f59e0b'
-        }); 
+        });
         return;
     }
 
-  
     document.getElementById('ticketId').value = ticketId;
+
     const folioBadge = document.getElementById('solutionTicketFolio');
-    if (folioBadge) {
-        folioBadge.textContent = 'Ticket ' + folio;
-    }
+    if (folioBadge) folioBadge.textContent = 'Ticket ' + folio;
 
     document.getElementById('horaFinalizo').value = '';
     document.getElementById('solucion').value = '';
@@ -1195,38 +1219,33 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
         },
         body: JSON.stringify({ id: ticketId })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.ticket) {
-            const t = data.ticket;
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.ticket) {
+                const t = data.ticket;
 
-            if (t.HoraInicio) {
-                document.getElementById('horaInicioTicket').value = t.HoraInicio;
-                document.getElementById('labelHoraInicio').textContent = formatearFechaBonita(t.HoraInicio);
-            }
+                if (t.HoraInicio) {
+                    document.getElementById('horaInicioTicket').value = t.HoraInicio;
+                    document.getElementById('labelHoraInicio').textContent = formatearFechaBonita(t.HoraInicio);
+                }
 
-            if (t.HoraFinalizo) {
-                document.getElementById('horaFinalizo').value = t.HoraFinalizo;
-                document.getElementById('labelHoraFinalizo').textContent = formatearFechaBonita(t.HoraFinalizo);
-            }
+                if (t.HoraFinalizo) {
+                    document.getElementById('horaFinalizo').value = t.HoraFinalizo;
+                    document.getElementById('labelHoraFinalizo').textContent = formatearFechaBonita(t.HoraFinalizo);
+                }
 
-            if (t.Solucion) {
-                document.getElementById('solucion').value = t.Solucion;
-            }
+                if (t.Solucion) document.getElementById('solucion').value = t.Solucion;
 
-            if (t.TiempoEfectivo) {
-                tieneTiempoGuardado = true;
-                document.getElementById('tiempoEfectivo').value = t.TiempoEfectivo;
-                document.getElementById('badgeTiempoEfectivo').textContent = t.TiempoEfectivo;
-                tieneTiempoGuardado = true;
-            } else {
-                tieneTiempoGuardado = false;
-                if (t.HoraInicio && t.HoraFinalizo) {
-                    calcularTiempoEfectivo();
+                if (t.TiempoEfectivo) {
+                    tieneTiempoGuardado = true;
+                    document.getElementById('tiempoEfectivo').value = t.TiempoEfectivo;
+                    document.getElementById('badgeTiempoEfectivo').textContent = t.TiempoEfectivo;
+                } else {
+                    tieneTiempoGuardado = false;
+                    if (t.HoraInicio && t.HoraFinalizo) calcularTiempoEfectivo();
                 }
             }
-        }
-    });
+        });
 
     const modal = document.getElementById('solutionModal');
     modal.classList.add('show');
@@ -1239,55 +1258,63 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
     document.body.appendChild(backdrop);
 }
 
-
 function saveSolution() {
-    const ticketId      = document.getElementById('ticketId').value;
-    const solucion      = document.getElementById('solucion').value;
-    const horaFinalizo  = document.getElementById('horaFinalizo').value;
+    const ticketId = document.getElementById('ticketId').value;
+    const solucion = document.getElementById('solucion').value;
+    const horaFinalizo = document.getElementById('horaFinalizo').value;
     const tiempoEfectivo = document.getElementById('tiempoEfectivo').value;
-    
+
     if (!solucion || !horaFinalizo || !tiempoEfectivo) {
-        alert('⚠️ Completa todos los campos');
+       Swal.fire({
+            icon: 'warning',
+            title: 'Faltan datos',
+            text: '⚠️ Por favor completa todos los campos antes de guardar la solución.',
+            confirmButtonColor: '#f59e0b'
+        });
         return;
     }
-    
+
     fetch('<?= Url::to(['save-solution']) ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
         },
-        body: JSON.stringify({ 
-            id: ticketId, 
-            solucion: solucion, 
+        body: JSON.stringify({
+            id: ticketId,
+            solucion: solucion,
             horaFinalizo: horaFinalizo,
             tiempoEfectivo: tiempoEfectivo
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('🔍 Respuesta save-solution:', data);
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                solutionOpenedFromEstadoChange = false;
+                lastTicketIdSolution = null;
 
-        if (data.success) {
-          
-            solutionOpenedFromEstadoChange = false;
-            lastTicketIdSolution = null;
-
-            alert('✅ Solución guardada');
-            closeModal();
-            location.reload();
-        } else {
-            let msg = data.message || 'Error desconocido';
-            if (data.errors) {
-                msg += '\n\nDetalles:\n' + JSON.stringify(data.errors, null, 2);
+              Swal.fire({ 
+                    icon: 'success',
+                    title: '¡Solución guardada!',
+                    text: 'La solución del ticket se ha guardado correctamente.',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true,
+                    toast: true,
+                    position: 'top-end'
+              })
+                closeModal();
+                location.reload();
+            } else {
+                let msg = data.message || 'Error desconocido';
+                if (data.errors) msg += '\n\nDetalles:\n' + JSON.stringify(data.errors, null, 2);
+                alert(msg);
             }
-            alert(msg);
-        }
-    })
-    .catch(error => {
-        console.error('Error saving solution:', error);
-        alert('Error de comunicación con el servidor: ' + error.message);
-    });
+        })
+        .catch(error => {
+            console.error('Error saving solution:', error);
+            alert('Error de comunicación con el servidor: ' + error.message);
+        });
 }
 
 function closeModal() {
@@ -1295,10 +1322,10 @@ function closeModal() {
     modal.classList.remove('show');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
-    
+
     const backdrop = document.getElementById('solutionBackdrop');
     if (backdrop) backdrop.remove();
-    
+
     document.getElementById('horaFinalizo').value = '';
     document.getElementById('solucion').value = '';
     document.getElementById('tiempoEfectivo').value = '';
@@ -1317,7 +1344,6 @@ function closeModal() {
                 select.style.display = 'none';
             }
 
-         
             fetch('<?= Url::to(['update-estado']) ?>', {
                 method: 'POST',
                 headers: {
@@ -1326,13 +1352,9 @@ function closeModal() {
                 },
                 body: JSON.stringify({ id: lastTicketIdSolution, estado: nuevoEstado })
             })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    buildRowsCache();
-                }
-            })
-            .catch(err => console.error('Error reverting status:', err));
+                .then(r => r.json())
+                .then(data => { if (data.success) buildRowsCache(); })
+                .catch(err => console.error('Error reverting status:', err));
         }
     }
 
@@ -1340,19 +1362,26 @@ function closeModal() {
     lastTicketIdSolution = null;
 }
 
+// ========================================
+// COMENTARIOS MODAL
+// ========================================
 function openComentariosModal(ticketId, folio) {
     document.getElementById('ticketIdComentarios').value = ticketId;
     document.getElementById('ticketFolioComentarios').textContent = folio;
     document.getElementById('nuevoComentario').value = '';
     document.getElementById('tipoComentario').value = 'comentario';
-    
+
+    // reset menciones si existen
+    const ta = document.getElementById('nuevoComentario');
+    if (ta) ta._mentions = [];
+
     cargarComentarios(ticketId);
-    
+
     const modal = document.getElementById('comentariosModal');
     modal.classList.add('show');
     modal.style.display = 'block';
     document.body.classList.add('modal-open');
-    
+
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop fade show';
     backdrop.id = 'comentariosBackdrop';
@@ -1362,21 +1391,21 @@ function openComentariosModal(ticketId, folio) {
 function cargarComentarios(ticketId) {
     const lista = document.getElementById('listaComentarios');
     lista.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
-    
+
     fetch('<?= Url::to(['/tickets/obtener-comentarios']) ?>?ticket_id=' + ticketId)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            mostrarComentarios(data.comentarios);
-        } else {
-            lista.innerHTML = '<div class="alert alert-danger">Error al cargar</div>';
-        }
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarComentarios(data.comentarios);
+            } else {
+                lista.innerHTML = '<div class="alert alert-danger">Error al cargar</div>';
+            }
+        });
 }
 
 function mostrarComentarios(comentarios) {
     const lista = document.getElementById('listaComentarios');
-    
+
     if (comentarios.length === 0) {
         lista.innerHTML = `
             <div class="comentarios-empty">
@@ -1386,34 +1415,46 @@ function mostrarComentarios(comentarios) {
         `;
         return;
     }
-    
+
     lista.innerHTML = comentarios.map(c => `
         <div class="comentario-item ${c.tipo}">
             <div class="comentario-header">
                 <div class="comentario-usuario">
                     <i class="fas fa-user-circle"></i>
-                    ${c.usuario}
+                    ${escapeHtml(c.usuario)}
                     <span class="comentario-tipo ${c.tipo}">${getTipoLabel(c.tipo)}</span>
                 </div>
                 <span class="comentario-fecha">
-                    <i class="fas fa-clock"></i> ${c.fecha}
+                    <i class="fas fa-clock"></i> ${escapeHtml(c.fecha)}
                 </span>
             </div>
-            <p class="comentario-texto">${escapeHtml(c.comentario)}</p>
+            <p class="comentario-texto">${renderMentions(c.comentario)}</p>
         </div>
     `).join('');
 }
 
+// Render token almacenado en BD -> badge @Nombre
+function renderMentions(text) {
+    const safe = escapeHtml(text || '');
+    return safe.replace(/@\[(?:email):([^\]]+)\]/g, (m, email) => {
+        email = (email || '').trim().toLowerCase();
+        const user = (window.WINTICK_USERS || []).find(u => (u.email || '').toLowerCase() === email);
+        const nombre = user?.primerNombre || (user?.Nombre ? user.Nombre.split(/\s+/)[0] : 'usuario');
+        return `<span class="badge bg-primary-subtle text-primary-emphasis">@${escapeHtml(nombre)}</span>`;
+    });
+}
+
 function agregarComentario() {
     const ticketId = document.getElementById('ticketIdComentarios').value;
-    const comentario = document.getElementById('nuevoComentario').value.trim();
+    const comentarioVisible = document.getElementById('nuevoComentario').value;
+    const comentario = (window.buildCommentPayload ? window.buildCommentPayload(comentarioVisible) : comentarioVisible.trim());
     const tipo = document.getElementById('tipoComentario').value;
-    
-    if (!comentario) {
+
+    if (!comentario || comentario.trim() === '') {
         alert('Escribe un comentario');
         return;
     }
-    
+
     fetch('<?= Url::to(['/tickets/agregar-comentario']) ?>', {
         method: 'POST',
         headers: {
@@ -1426,16 +1467,17 @@ function agregarComentario() {
             tipo: tipo
         })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('nuevoComentario').value = '';
-            cargarComentarios(ticketId);
-            updateCommentBadge(ticketId);
-        } else {
-            alert('Error: ' + data.message);
-        }
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const ta = document.getElementById('nuevoComentario');
+                if (ta) { ta.value = ''; ta._mentions = []; }
+                cargarComentarios(ticketId);
+                updateCommentBadge(ticketId);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
 }
 
 function closeComentariosModal() {
@@ -1443,7 +1485,7 @@ function closeComentariosModal() {
     modal.classList.remove('show');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
-    
+
     const backdrop = document.getElementById('comentariosBackdrop');
     if (backdrop) backdrop.remove();
 }
@@ -1459,7 +1501,7 @@ function getTipoLabel(tipo) {
 
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = text ?? '';
     return div.innerHTML;
 }
 
@@ -1472,103 +1514,89 @@ function updateCommentBadge(ticketId) {
         },
         body: JSON.stringify({ ticket_id: ticketId })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const button = document.querySelector('.comment-btn-' + ticketId);
-            if (button) {
-                // Buscar el contenedor padre (div con position: relative)
-                const container = button.parentElement;
-                let badge = container.querySelector('.badge-count-' + ticketId);
-                
-                if (data.count > 0) {
-                    if (!badge) {
-                        // Crear el badge si no existe
-                        badge = document.createElement('span');
-                        badge.className = 'badge bg-danger badge-count-' + ticketId;
-                        badge.style.position = 'absolute';
-                        badge.style.top = '-8px';
-                        badge.style.right = '-8px';
-                        badge.style.fontSize = '11px';
-                        badge.style.padding = '3px 6px';
-                        badge.style.minWidth = '24px';
-                        badge.style.textAlign = 'center';
-                        badge.style.borderRadius = '50%';
-                        badge.style.fontWeight = 'bold';
-                        container.appendChild(badge);
-                    }
-                    badge.textContent = data.count;
-                    badge.style.display = 'inline-block';
-                } else {
-                    if (badge) {
-                        badge.style.display = 'none';
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const button = document.querySelector('.comment-btn-' + ticketId);
+                if (button) {
+                    const container = button.parentElement;
+                    let badge = container.querySelector('.badge-count-' + ticketId);
+
+                    if (data.count > 0) {
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'badge bg-danger badge-count-' + ticketId;
+                            badge.style.position = 'absolute';
+                            badge.style.top = '-8px';
+                            badge.style.right = '-8px';
+                            badge.style.fontSize = '11px';
+                            badge.style.padding = '3px 6px';
+                            badge.style.minWidth = '24px';
+                            badge.style.textAlign = 'center';
+                            badge.style.borderRadius = '50%';
+                            badge.style.fontWeight = 'bold';
+                            container.appendChild(badge);
+                        }
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        if (badge) badge.style.display = 'none';
                     }
                 }
             }
-        }
-    })
-    .catch(error => console.error('Error actualizando comentarios:', error));
+        })
+        .catch(error => console.error('Error actualizando comentarios:', error));
 }
 
 // ========================================
-// DOCUMENT READY
+// DOM READY
 // ========================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('globalSearch');
     const clearButton = document.getElementById('clearSearch');
     const filterBtn = document.getElementById('compactFilterBtn');
     const filterMenu = document.getElementById('compactFilterMenu');
-    const filterForm = document.getElementById('compactFilterForm');
     const horaFinalizoInput = document.getElementById('horaFinalizo');
     const addRowsBtn = document.getElementById('addMoreRows');
 
     buildRowsCache();
     document.querySelectorAll('.flatpickr-datetime').forEach(initializeFlatpickr);
+
     const initialSaveBtn = document.querySelector('.new-row .saveRow');
-    if (initialSaveBtn) {
-        initialSaveBtn.addEventListener('click', function() {
-            saveTicket(this.closest('tr'));
-        });
-    }
-    
+    if (initialSaveBtn) initialSaveBtn.addEventListener('click', function () {
+        saveTicket(this.closest('tr'));
+    });
+
     const initialDeleteBtn = document.querySelector('.new-row .deleteRow');
-    if (initialDeleteBtn) {
-        initialDeleteBtn.addEventListener('click', function() {
-            const row = this.closest('tr');
-            row.querySelectorAll('input, textarea, select').forEach(field => {
-                if (!field.classList.contains('folio')) {
-                    field.value = '';
-                }
-            });
-            loadNextFolio(row.querySelector('.folio'));
+    if (initialDeleteBtn) initialDeleteBtn.addEventListener('click', function () {
+        const row = this.closest('tr');
+        row.querySelectorAll('input, textarea, select').forEach(field => {
+            if (!field.classList.contains('folio')) field.value = '';
         });
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const query = e.target.value.trim();
-            clearButton.classList.toggle('active', !!query);
-            debouncedSearch(query);
-        });
-    }
-    
-    if (clearButton) {
-        clearButton.addEventListener('click', function() {
-            searchInput.value = '';
-            clearButton.classList.remove('active');
-            performSearch('');
-            searchInput.focus();
-        });
-    }
-    
+        loadNextFolio(row.querySelector('.folio'));
+    });
+
+    if (searchInput) searchInput.addEventListener('input', function (e) {
+        const query = e.target.value.trim();
+        clearButton?.classList.toggle('active', !!query);
+        debouncedSearch(query);
+    });
+
+    if (clearButton) clearButton.addEventListener('click', function () {
+        searchInput.value = '';
+        clearButton.classList.remove('active');
+        performSearch('');
+        searchInput.focus();
+    });
+
     if (filterBtn && filterMenu) {
-        filterBtn.addEventListener('click', function(e) {
+        filterBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             filterMenu.classList.toggle('show');
             filterBtn.classList.toggle('active');
         });
-        
-        document.addEventListener('click', function(e) {
+
+        document.addEventListener('click', function (e) {
             if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
                 filterMenu.classList.remove('show');
                 filterBtn.classList.remove('active');
@@ -1582,53 +1610,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (addRowsBtn) {
-        addRowsBtn.addEventListener('click', function() {
+        addRowsBtn.addEventListener('click', function () {
             const tableBody = document.getElementById('tableBody');
             const templateRow = document.querySelector('.new-row');
             const newRow = templateRow.cloneNode(true);
-            
+
             newRow.querySelectorAll('input, textarea, select').forEach(field => {
-                if (!field.classList.contains('folio')) {
-                    field.value = '';
-                }
-                if (field.tagName === 'SELECT' && !field.classList.contains('estado')) {
-                    field.selectedIndex = 0;
-                }
+                if (!field.classList.contains('folio')) field.value = '';
+                if (field.tagName === 'SELECT' && !field.classList.contains('estado')) field.selectedIndex = 0;
             });
-            
+
             loadNextFolio(newRow.querySelector('.folio'));
-            
-            newRow.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-                if (element._flatpickr) {
-                    element._flatpickr.destroy();
-                }
+
+            newRow.querySelectorAll('.flatpickr-datetime').forEach(function (element) {
+                if (element._flatpickr) element._flatpickr.destroy();
                 initializeFlatpickr(element);
             });
-            
+
             const saveBtn = newRow.querySelector('.saveRow');
             const deleteBtn = newRow.querySelector('.deleteRow');
             const clienteSelect = newRow.querySelector('.cliente');
-            
-            saveBtn.addEventListener('click', function() {
-                saveTicket(newRow);
-            });
-            
-            deleteBtn.addEventListener('click', function() {
-                if (confirm('¿Eliminar fila?')) {
-                    newRow.remove();
-                }
-            });
-            
-            clienteSelect.addEventListener('change', function() {
-                loadClienteData(this);
-            });
-            
+
+            saveBtn.addEventListener('click', function () { saveTicket(newRow); });
+            deleteBtn.addEventListener('click', function () { if (confirm('¿Eliminar fila?')) newRow.remove(); });
+            clienteSelect.addEventListener('change', function () { loadClienteData(this); });
+
             tableBody.appendChild(newRow);
         });
     }
 
     loadNextFolio(document.querySelector('.new-row .folio'));
-    
+
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl, {
         trigger: 'hover',
@@ -1636,172 +1648,369 @@ document.addEventListener('DOMContentLoaded', function() {
     }));
 });
 
+// ========================================
+// DOBLE CLICK EN FILA -> SWEETALERT
+// ========================================
+function getStatusClass(estado) {
+    const e = (estado || '').toUpperCase();
+    if (e === 'ABIERTO') return 'swal-status-abierto';
+    if (e === 'EN PROCESO') return 'swal-status-en-proceso';
+    if (e === 'CERRADO') return 'swal-status-cerrado';
+    return '';
+}
 
-    // ========================================
-    // DOBLE CLICK EN FILA
-    // ========================================
-    function getStatusClass(estado) {
-        const e = (estado || '').toUpperCase();
-        if (e === 'ABIERTO') return 'swal-status-abierto';
-        if (e === 'EN PROCESO') return 'swal-status-en-proceso';
-        if (e === 'CERRADO') return 'swal-status-cerrado';
-        return '';
-    }
+function getPriorityClass(prioridad) {
+    const p = (prioridad || '').toUpperCase();
+    if (p === 'ALTA') return 'swal-priority-alta';
+    if (p === 'MEDIA') return 'swal-priority-media';
+    if (p === 'BAJA') return 'swal-priority-baja';
+    return '';
+}
 
-    function getPriorityClass(prioridad) {
-        const p = (prioridad || '').toUpperCase();
-        if (p === 'ALTA') return 'swal-priority-alta';
-        if (p === 'MEDIA') return 'swal-priority-media';
-        if (p === 'BAJA') return 'swal-priority-baja';
-        return '';
-    }
-    function getCriticidadClass(criticidad) {
-        const c = (criticidad || '').toUpperCase().trim();
-      if (c === 'URGENTE') return 'swal-criticidad-urgente';
-        if (c === 'MEDIA') return 'swal-criticidad-media';
-        if (c === 'BAJA' || c === 'BAJO') return 'swal-criticidad-baja';
-        return '';
-    }
+function getCriticidadClass(criticidad) {
+    const c = (criticidad || '').toUpperCase().trim();
+    if (c === 'URGENTE') return 'swal-criticidad-urgente';
+    if (c === 'MEDIA') return 'swal-criticidad-media';
+    if (c === 'BAJA' || c === 'BAJO') return 'swal-criticidad-baja';
+    return '';
+}
 
-    document.querySelectorAll('tr.existing-row').forEach(row => {
-        row.addEventListener('dblclick', function (e) {
-           
-            if (e.target.closest('button, a, select, input, textarea')) return;
+document.querySelectorAll('tr.existing-row').forEach(row => {
+    row.addEventListener('dblclick', function (e) {
+        if (e.target.closest('button, a, select, input, textarea')) return;
 
-            const d = this.dataset;
+        const d = this.dataset;
 
-            const estadoClass   = getStatusClass(d.estado);
-            const prioridadClass = getPriorityClass(d.prioridad);
-            const criticidadClass = getCriticidadClass(d.criticidad); 
+        const estadoClass = getStatusClass(d.estado);
+        const prioridadClass = getPriorityClass(d.prioridad);
+        const criticidadClass = getCriticidadClass(d.criticidad);
 
-            const html = `
-                <div class="swal-ticket-card">
-                    <div class="swal-ticket-header">
-                        <div class="swal-ticket-title">
-                            <i class="fas fa-ticket-alt"></i>
-                            Ticket #${escapeHtml(d.folio || '')}
-                        </div>
-                        <p class="swal-ticket-subtitle">
-                            Cliente: ${escapeHtml(d.cliente || 'No asignado')}
-                        </p>
+        const html = `
+            <div class="swal-ticket-card">
+                <div class="swal-ticket-header">
+                    <div class="swal-ticket-title">
+                        <i class="fas fa-ticket-alt"></i>
+                        Ticket #${escapeHtml(d.folio || '')}
                     </div>
-                    <div class="swal-ticket-body">
+                    <p class="swal-ticket-subtitle">
+                        Cliente: ${escapeHtml(d.cliente || 'No asignado')}
+                    </p>
+                </div>
+                <div class="swal-ticket-body">
+                    <div class="swal-ticket-grid">
+                        <div class="swal-info-card">
+                            <h3><i class="fas fa-info-circle"></i> Información General</h3>
 
-                        <div class="swal-ticket-grid">
-                            <!-- Información General -->
-                            <div class="swal-info-card">
-                                <h3><i class="fas fa-info-circle"></i> Información General</h3>
-
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Usuario reporta</span>
-                                    <span class="swal-info-value">${escapeHtml(d.usuarioReporta || '-')}</span>
-                                </div>
-
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Asignado a</span>
-                                    <span class="swal-info-value">${escapeHtml(d.asignadoA || '-')}</span>
-                                </div>
-
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Estado</span>
-                                    <span class="swal-info-value">
-                                        <span class="swal-status-badge ${estadoClass}">
-                                            ${escapeHtml(d.estado || '-')}
-                                        </span>
-                                    </span>
-                                </div>
-
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Prioridad</span>
-                                    <span class="swal-info-value">
-                                        <span class="swal-priority-badge ${prioridadClass}">
-                                            ${escapeHtml(d.prioridad || '-')}
-                                        </span>
-                                    </span>
-                                </div>
-
-                                 <div class="swal-info-item">
-                                    <span class="swal-info-label">Criticidad</span>
-                                    <span class="swal-info-value">
-                                        <span class="swal-criticidad-badge ${criticidadClass}">
-                                            ${escapeHtml(d.criticidad || '-')}
-                                        </span>
-                                    </span>
-                                </div>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Usuario reporta</span>
+                                <span class="swal-info-value">${escapeHtml(d.usuarioReporta || '-')}</span>
                             </div>
 
-                            <!-- Información de Servicio -->
-                            <div class="swal-info-card">
-                                <h3><i class="fas fa-cogs"></i> Información del servicio</h3>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Asignado a</span>
+                                <span class="swal-info-value">${escapeHtml(d.asignadoA || '-')}</span>
+                            </div>
 
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Cliente</span>
-                                    <span class="swal-info-value">${escapeHtml(d.cliente || 'No asignado')}</span>
-                                </div>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Estado</span>
+                                <span class="swal-info-value">
+                                    <span class="swal-status-badge ${estadoClass}">
+                                        ${escapeHtml(d.estado || '-')}
+                                    </span>
+                                </span>
+                            </div>
 
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Sistema</span>
-                                    <span class="swal-info-value">${escapeHtml(d.sistema || 'No asignado')}</span>
-                                </div>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Prioridad</span>
+                                <span class="swal-info-value">
+                                    <span class="swal-priority-badge ${prioridadClass}">
+                                        ${escapeHtml(d.prioridad || '-')}
+                                    </span>
+                                </span>
+                            </div>
 
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Servicio</span>
-                                    <span class="swal-info-value">${escapeHtml(d.servicio || 'No asignado')}</span>
-                                </div>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Criticidad</span>
+                                <span class="swal-info-value">
+                                    <span class="swal-criticidad-badge ${criticidadClass}">
+                                        ${escapeHtml(d.criticidad || '-')}
+                                    </span>
+                                </span>
                             </div>
                         </div>
 
-                        <!-- Fechas y tiempos -->
-                        <div class="swal-times">
-                            <div class="swal-section-title">
-                                <i class="fas fa-clock"></i> Fechas y tiempos
+                        <div class="swal-info-card">
+                            <h3><i class="fas fa-cogs"></i> Información del servicio</h3>
+
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Cliente</span>
+                                <span class="swal-info-value">${escapeHtml(d.cliente || 'No asignado')}</span>
                             </div>
-                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Hora programada</span>
-                                    <span class="swal-info-value">${escapeHtml(d.horaProgramada || '-')}</span>
-                                </div>
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Hora inicio</span>
-                                    <span class="swal-info-value">${escapeHtml(d.horaInicio || '-')}</span>
-                                </div>
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Hora finalizó</span>
-                                    <span class="swal-info-value">${escapeHtml(d.horaFinalizo || '-')}</span>
-                                </div>
-                                <div class="swal-info-item">
-                                    <span class="swal-info-label">Tiempo efectivo</span>
-                                    <span class="swal-info-value">${escapeHtml(d.tiempoEfectivo || '-')}</span>
-                                </div>
+
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Sistema</span>
+                                <span class="swal-info-value">${escapeHtml(d.sistema || 'No asignado')}</span>
+                            </div>
+
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Servicio</span>
+                                <span class="swal-info-value">${escapeHtml(d.servicio || 'No asignado')}</span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Descripción -->
-                        <div class="swal-description">
-                            <div class="swal-section-title">
-                                <i class="fas fa-file-alt"></i> Descripción del problema
+                    <div class="swal-times">
+                        <div class="swal-section-title">
+                            <i class="fas fa-clock"></i> Fechas y tiempos
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Hora programada</span>
+                                <span class="swal-info-value">${escapeHtml(d.horaProgramada || '-')}</span>
                             </div>
-                            <div class="swal-description-text">
-                                ${
-                                    d.descripcion
-                                        ? escapeHtml(d.descripcion)
-                                        : '<span class="swal-empty">No hay descripción disponible</span>'
-                                }
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Hora inicio</span>
+                                <span class="swal-info-value">${escapeHtml(d.horaInicio || '-')}</span>
                             </div>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Hora finalizó</span>
+                                <span class="swal-info-value">${escapeHtml(d.horaFinalizo || '-')}</span>
+                            </div>
+                            <div class="swal-info-item">
+                                <span class="swal-info-label">Tiempo efectivo</span>
+                                <span class="swal-info-value">${escapeHtml(d.tiempoEfectivo || '-')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="swal-description">
+                        <div class="swal-section-title">
+                            <i class="fas fa-file-alt"></i> Descripción del problema
+                        </div>
+                        <div class="swal-description-text">
+                            ${d.descripcion ? escapeHtml(d.descripcion) : '<span class="swal-empty">No hay descripción disponible</span>'}
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
 
-            Swal.fire({
-                html: html,
-                width: 800,
-                showConfirmButton: true,
-                confirmButtonText: 'Cerrar',
-                showCloseButton: true,
-                focusConfirm: false
+        Swal.fire({
+            html: html,
+            width: 800,
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            showCloseButton: true,
+            focusConfirm: false
+        });
+    });
+});
+
+// ========================================
+// ✅ MENCIONES PRO (textarea bonito, token al enviar)
+// ========================================
+(function initMentionsPro() {
+    const ta = document.getElementById('nuevoComentario');
+    if (!ta) return;
+
+    // Crear mentionBox si no existe
+    let box = document.getElementById('mentionBox');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'mentionBox';
+        document.body.appendChild(box);
+    }
+
+    // Estilos premium
+    if (!document.getElementById('mentionProStyles')) {
+        const st = document.createElement('style');
+        st.id = 'mentionProStyles';
+        st.textContent = `
+          #mentionBox{
+            position:absolute; z-index:99999; display:none;
+            width:360px; background:#fff; border:1px solid #e5e7eb; border-radius:14px;
+            box-shadow:0 14px 40px rgba(0,0,0,.15); overflow:hidden;
+          }
+          #mentionBox .m-head{
+            padding:10px 12px; background:#f8fafc; border-bottom:1px solid #eef2f7;
+            font-size:12px; color:#64748b; display:flex; gap:8px; align-items:center;
+          }
+          #mentionBox .m-item{
+            padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;
+            display:flex; justify-content:space-between; gap:10px; align-items:center;
+          }
+          #mentionBox .m-item:last-child{ border-bottom:none; }
+          #mentionBox .m-item:hover{ background:#f8fafc; }
+          #mentionBox .m-left{ display:flex; flex-direction:column; gap:2px; }
+          #mentionBox .m-name{ font-weight:800; font-size:13px; color:#0f172a; }
+          #mentionBox .m-email{ font-size:12px; color:#64748b; }
+          #mentionBox .m-tag{
+            font-size:12px; font-weight:700; padding:6px 10px;
+            border-radius:999px; background:#e0f2fe; color:#075985;
+            white-space:nowrap;
+          }
+        `;
+        document.head.appendChild(st);
+    }
+
+    // Normalizar usuarios
+    const users = (window.WINTICK_USERS || []).map(u => ({
+        id: u.id,
+        email: (u.email || '').trim(),
+        nombre: (u.nombre || u.Nombre || '').trim(),
+        primerNombre: (u.primerNombre || (u.Nombre || '').trim().split(/\s+/)[0] || '').trim(),
+    })).filter(u => u.email);
+
+    ta._mentions = ta._mentions || [];
+
+    function firstNameFromUser(u) {
+        return u.primerNombre || (u.nombre ? u.nombre.split(/\s+/)[0] : '') || u.email.split('@')[0];
+    }
+
+    function positionBox() {
+        const r = ta.getBoundingClientRect();
+        box.style.left = (window.scrollX + r.left) + 'px';
+        box.style.top = (window.scrollY + r.bottom + 6) + 'px';
+    }
+
+    function hide() { box.style.display = 'none'; box.innerHTML = ''; }
+
+    function getMentionQuery(text, caret) {
+        const left = text.slice(0, caret);
+        const at = left.lastIndexOf('@');
+        if (at === -1) return null;
+        if (at > 0 && /\w/.test(left[at - 1])) return null;
+
+        const q = left.slice(at + 1);
+        if (q.includes(' ') || q.includes('\n')) return null;
+
+        return { atIndex: at, q };
+    }
+
+    function filterUsers(q) {
+        const query = (q || '').toLowerCase();
+        if (!query) return users.slice(0, 8);
+
+        return users.filter(u => {
+            const fn = firstNameFromUser(u).toLowerCase();
+            return u.email.toLowerCase().includes(query)
+                || (u.nombre || '').toLowerCase().includes(query)
+                || fn.includes(query);
+        }).slice(0, 8);
+    }
+
+    function insertPrettyMention(user, atIndex, caret) {
+        const label = firstNameFromUser(user);
+        const pretty = `@${label}`;
+
+        const text = ta.value;
+        const before = text.slice(0, atIndex);
+        const after = text.slice(caret);
+
+        const inserted = pretty + ' ';
+        ta.value = before + inserted + after;
+
+        const start = before.length;
+        const end = before.length + pretty.length;
+        ta._mentions.push({ start, end, email: user.email, label });
+
+        const newPos = (before + inserted).length;
+        ta.focus();
+        ta.setSelectionRange(newPos, newPos);
+        hide();
+    }
+
+    function cleanupMentions() {
+        const text = ta.value;
+        ta._mentions = (ta._mentions || []).filter(m => text.slice(m.start, m.end) === `@${m.label}`);
+    }
+
+    ta.addEventListener('input', () => {
+        cleanupMentions();
+
+        const caret = ta.selectionStart;
+        const info = getMentionQuery(ta.value, caret);
+        if (!info) return hide();
+
+        const list = filterUsers(info.q);
+        if (!list.length) return hide();
+
+        positionBox();
+        box.innerHTML = `
+          <div class="m-head">Menciona a alguien · clic para seleccionar</div>
+          ${list.map(u => {
+            const label = firstNameFromUser(u);
+            return `
+              <div class="m-item" data-email="${u.email}">
+                <div class="m-left">
+                  <div class="m-name">@${label}</div>
+                  <div class="m-email">${u.email}</div>
+                </div>
+                <div class="m-tag">${label}</div>
+              </div>
+            `;
+          }).join('')}
+        `;
+        box.style.display = 'block';
+
+        [...box.querySelectorAll('.m-item')].forEach(el => {
+            el.addEventListener('click', () => {
+                const email = el.dataset.email;
+                const user = users.find(x => x.email === email);
+                if (!user) return;
+                insertPrettyMention(user, info.atIndex, caret);
             });
         });
     });
 
+    ta.addEventListener('blur', () => setTimeout(hide, 160));
+    window.addEventListener('resize', () => { if (box.style.display === 'block') positionBox(); });
+    window.addEventListener('scroll', () => { if (box.style.display === 'block') positionBox(); });
+
+    // ✅ función global para convertir texto visible -> token guardado
+    window.buildCommentPayload = function (commentVisible) {
+        let text = commentVisible || '';
+        const ms = (ta._mentions || []).slice().sort((a, b) => b.start - a.start);
+
+        ms.forEach(m => {
+            const current = text.slice(m.start, m.end);
+            const expected = `@${m.label}`;
+            if (current === expected) {
+                const token = `@[email:${m.email}]`;
+                text = text.slice(0, m.start) + token + text.slice(m.end);
+            }
+        });
+
+        return text.trim();
+    };
+})();
+</script>
+<?php
+$openComments = (int)Yii::$app->request->get('openComments', 0);
+$ticketId     = (int)Yii::$app->request->get('ticket_id', 0);
+?>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const openComments = <?= $openComments ?>;
+  const ticketId = <?= $ticketId ?>;
+
+  if (!openComments || !ticketId) return;
+
+  // 1) Intentar abrir con tu función si existe
+  if (typeof openCommentsModal === 'function') {
+    openCommentsModal(ticketId);
+    return;
+  }
+
+  // 2) Si tu modal se abre por un botón, simula el click
+  const btn = document.querySelector(`[data-open-comments="${ticketId}"]`);
+  if (btn) {
+    btn.click();
+    return;
+  }
+
+  // 3) Si lo abres por un ícono con clase, ajusta selector aquí
+  const altBtn = document.querySelector(`.btn-comentarios[data-ticket-id="${ticketId}"]`);
+  if (altBtn) altBtn.click();
+});
 </script>

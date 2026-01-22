@@ -155,15 +155,18 @@ public $password;
      * {@inheritdoc}
      */
     public function beforeSave($insert)
-   {
-    if (!parent::beforeSave($insert)) {
-        return false;
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
         }
+
+        // Si viene password en claro, lo hasheas UNA sola vez
         if (!empty($this->password)) {
-            $this->setPassword(Yii::$app->security->generatePasswordHash($this->password));
-     }
-   return true;
-   }
+            $this->setPassword($this->password); // ✅ sin generatePasswordHash aquí
+        }
+
+        return true;
+    }
 
     /**
      * Validates password

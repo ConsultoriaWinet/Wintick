@@ -641,7 +641,40 @@ protected function parseHoras($valor)
 
     return 0.0;
 }
+    private function extractMentionEmails(string $text): array
+    {
+        // tokens: @[email:admin@gmail.com]
+        preg_match_all('/@\[(?:email):([^\]]+)\]/i', $text, $m);
+        $emails = array_map(fn($e) => mb_strtolower(trim($e)), $m[1] ?? []);
+        $emails = array_values(array_unique(array_filter($emails)));
+        return $emails;
+    }
 
+    private function crearNotificacionMencion(int $usuarioId, Tickets $ticket, int $comentarioId): void
+    {
+        // Evitar duplicar la misma notificación por comentario+usuario
+        $exists = Notificaciones::find()
+            ->where([
+                'usuario_id' => $usuarioId,
+                'ticket_id'  => $ticket->id,
+                'tipo'       => 'mencion',
+                // Si NO tienes un campo "ref_id" o similar, puedes quitar esta parte.
+                // 'ref_id'  => $comentarioId,
+            ])
+            ->andWhere(['>=', 'fecha_creacion', date('Y-m-d H:i:s', time() - 60)]) // anti-duplicado básico 60s
+            ->exists();
+
+        if ($exists) return;
+
+        $actorEmail = Yii::$app->user->identity->email ?? 'Alguien';
+        $this->crearNotificacion(
+            $usuarioId,
+            'mencion',
+            'Te mencionaron en ticket ' . $ticket->Folio,
+            $actorEmail . ' te mencionó en un comentario',
+            $ticket->id
+        );
+    }
 
 
 
@@ -679,6 +712,15 @@ protected function parseHoras($valor)
                     'leida' => (bool) $notif->leida,
                     'fecha' => date('d/m H:i', strtotime($notif->fecha_creacion)),
                     'ticket_id' => $notif->ticket_id,
+
+
+                    //la url para ir al index y lo de los comentarios apa 
+                    'url' => \yii\helpers\Url::to([
+                    'tickets/index',
+                    'openComments' => 1,
+                    'ticket_id' => $notif->ticket_id,
+                    'notif_id' => $notif->id, // opcional, para marcar leída
+                      ]),
                 ];
             }
 
@@ -1168,46 +1210,76 @@ protected function parseHoras($valor)
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $input = \Yii::$app->request->getRawBody();
+            $input = Yii::$app->request->getRawBody();
             $data = json_decode($input, true);
 
             if (empty($data['ticket_id']) || empty($data['comentario'])) {
                 return ['success' => false, 'message' => 'Datos incompletos'];
             }
 
+            $ticket = Tickets::findOne((int)$data['ticket_id']);
+            if (!$ticket) {
+                return ['success' => false, 'message' => 'Ticket no encontrado'];
+            }
+
             $comentario = new Comentarios();
             $comentario->ticket_id = $data['ticket_id'];
             $comentario->usuario_id = \Yii::$app->user->id;
             $comentario->comentario = $data['comentario'];
+            $comentario->comentario = (string)$data['comentario']; 
             $comentario->tipo = $data['tipo'] ?? 'comentario';
 
-            if ($comentario->save()) {
-                // Crear notificación si el comentario no es del asignado
-                $ticket = Tickets::findOne($data['ticket_id']);
-                if ($ticket && $ticket->Asignado_a != \Yii::$app->user->id) {
-                    $usuarioActual = \Yii::$app->user->identity->email;
-                    $this->crearNotificacion(
-                        $ticket->Asignado_a,
-                        'comentario',
-                        'Nuevo comentario en ticket ' . $ticket->Folio,
-                        $usuarioActual . ' agregó un comentario',
-                        $ticket->id
-                    );
-                }
+            if (!$comentario->save()) {
+            return ['success' => false, 'errors' => $comentario->errors];
+        }
 
-                return [
-                    'success' => true,
-                    'comentario' => [
-                        'id' => $comentario->id,
-                        'usuario' => \Yii::$app->user->identity->email,
-                        'comentario' => $comentario->comentario,
-                        'tipo' => $comentario->tipo,
-                        'fecha' => date('d/m/Y H:i', strtotime($comentario->fecha_creacion))
-                    ]
-                ];
+            $usuarioActualEmail = Yii::$app->user->identity->email ?? '';
+
+            // ============================
+            // (A) Notificación al asignado (tu lógica actual)
+            // ============================
+            if ($ticket->Asignado_a && (int)$ticket->Asignado_a !== (int)Yii::$app->user->id) {
+                $this->crearNotificacion(
+                    (int)$ticket->Asignado_a,
+                    'comentario',
+                    'Nuevo comentario en ticket ' . $ticket->Folio,
+                    $usuarioActualEmail . ' agregó un comentario',
+                    $ticket->id
+                );
             }
 
-            return ['success' => false, 'errors' => $comentario->errors];
+            // ============================
+            // (B) ✅ Notificaciones por menciones (1 por cada usuario mencionado)
+            // ============================
+            $emails = $this->extractMentionEmails($comentario->comentario);
+
+            if (!empty($emails)) {
+                // Buscar usuarios por email (tu columna se llama "email")
+                $usuariosMencionados = Usuarios::find()
+                    ->where(['lower(email)' => $emails])
+                    ->all();
+
+                foreach ($usuariosMencionados as $u) {
+                    $uid = (int)$u->id;
+
+                    // evitar auto-mención
+                    if ($uid === (int)Yii::$app->user->id) continue;
+
+                    $this->crearNotificacionMencion($uid, $ticket, (int)$comentario->id);
+                }
+            }
+
+            return [
+                'success' => true,
+                'comentario' => [
+                    'id' => $comentario->id,
+                    'usuario' => $usuarioActualEmail,
+                    'comentario' => $comentario->comentario,
+                    'tipo' => $comentario->tipo,
+                    'fecha' => date('d/m/Y H:i', strtotime($comentario->fecha_creacion))
+                ]
+            ];
+
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }

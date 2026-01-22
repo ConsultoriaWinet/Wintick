@@ -113,6 +113,7 @@ class UsuariosController extends Controller
     public function actionCreate()
     {
         $model = new Usuarios();
+        $model->scenario = 'create';
         $model->created_at = time();
         $model->updated_at = time();
 
