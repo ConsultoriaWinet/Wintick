@@ -18,7 +18,7 @@ $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
 $this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
 $this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
-$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/icon-wintick.ico')]);
+$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/icon-wintickl.ico')]);
 
 // CDN Resources
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
@@ -31,6 +31,7 @@ $this->registerJsFile('https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/m
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/TextPlugin.min.js', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerCssFile('https://unpkg.com/phosphor-icons@1.4.1/src/css/phosphor.css', ['position' => \yii\web\View::POS_HEAD]);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -38,7 +39,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/TextPlugin.
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js'></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
+<script src="https://unpkg.com/phosphor-icons"></script>
 <style>
     :root {
         --primary-color: #A0BAA5;
@@ -98,10 +99,44 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/TextPlugin.
         transition: top 0.3s, background-color 0.3s;
 
     }
+/* Contenedor del menú */
+.navbar-nav {
+    gap: 1.5rem;
+}
 
+/* Links del nav */
+.navbar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #1f2933;
+    padding: 6px 12px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+/* Iconos */
+.navbar-nav .nav-link i {
+    font-size: 1.15rem;
+    opacity: 0.85;
+}
+
+/* Hover elegante */
+.navbar-nav .nav-link:hover {
+    background: rgba(0,0,0,0.04);
+    transform: translateY(-0.5px);
+}
+
+/* Activo (muy importante para UX) */
+.navbar-nav .nav-link.active {
+    background: rgba(0,0,0,0.07);
+    font-weight: 600;
+}
     /* Ajusta el padding del body según la altura de tu navbar */
     body {
-        padding-top: 80px;
+        padding-top: 8px;
     }
 
 
@@ -447,46 +482,54 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/TextPlugin.
             !in_array(Yii::$app->controller->action->id, ['login', 'requestpassword', 'resetpassword'])
         ): ?>
             <?php
+                    NavBar::begin([
+                        'brandLabel' => Html::img(
+                            Yii::getAlias('@web/icon-wintickl.ico'),
+                            [
+                                'alt' => 'Wintick',
+                                'style' => 'height:32px; margin-right:8px; border-radius:6px;',
+                            ]
+                        ) . ' Wintick',
+                        'brandUrl' => Yii::$app->homeUrl,
+                        'options' => [
+                            'class' => 'navbar navbar-expand-lg navbar-light shadow-sm elpepe',
+                        ],
+                    ]);
+                    
+                    
+        echo Nav::widget([
+            'options' => ['class' => 'navbar-nav m-auto'],
+            'items' => array_filter([
 
-            NavBar::begin([
-                'brandLabel' => Yii::$app->name,
-                'brandUrl' => Yii::$app->homeUrl,
-                'options' => [
-                    'class' => 'navbar navbar-expand-lg navbar-light shadow-sm elpepe',
-                ],
-            ]);
+                // -------------------------
+                // MENÚ: TICKETS
+                // -------------------------
+                Yii::$app->user->can('verTickets') ? [
+                    'label' => '<i class="ph-duotone ph-ticket"></i> Tickets',
+                    'url' => ['/tickets/index'],
+                    'encode' => false,
+                ] : null,
 
-echo Nav::widget([
-    'options' => ['class' => 'navbar-nav'],
-    'items' => array_filter([
-        
-        // -------------------------
-        // MENÚ: TICKETS
-        // -------------------------
-        Yii::$app->user->can('verTickets') ? [
-            'label' => 'Tickets',
-            'url' => ['/tickets/index']
-        ] : null,
+                // -------------------------
+                // MENÚ: CLIENTES
+                // -------------------------
+                Yii::$app->user->can('verClientes') ? [
+                    'label' => '<i class="ph-duotone ph-users"></i> Clientes',
+                    'url' => ['/clientes/index'],
+                    'encode' => false,
+                ] : null,
 
-        // -------------------------
-        // MENÚ: CLIENTES
-        // -------------------------
-        Yii::$app->user->can('verClientes') ? [
-            'label' => 'Clientes',
-            'url' => ['/clientes/index']
-        ] : null,
+                // -------------------------
+                // MENÚ: USUARIOS
+                // -------------------------
+                Yii::$app->user->can('administrarUsuarios') ? [
+                    'label' => '<i class="ph-duotone ph-user-gear"></i> Usuarios',
+                    'url' => ['/usuarios/index'],
+                    'encode' => false,
+                ] : null,
 
-        // -------------------------
-        // MENÚ: USUARIOS
-        // -------------------------
-        Yii::$app->user->can('administrarUsuarios') ? [
-            'label' => 'Usuarios',
-            'url' => ['/usuarios/index']
-        ] : null,
-
-    ])
-]);
-
+            ])
+        ]);
             ?>
 
             <!-- Notificaciones y Usuario -->
@@ -494,12 +537,12 @@ echo Nav::widget([
                 <?php if (!Yii::$app->user->isGuest): ?>
                     <!-- Notificaciones -->
                     <div class="notification-bell" onclick="toggleNotifications()" style="position: relative;">
-                        <i class="fas fa-bell"></i>
+                        <i class="ph ph-bell"></i>
                         <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
 
                         <div class="notification-dropdown" id="notificationDropdown">
                             <div class="notification-header">
-                                <span><i class="fas fa-bell"></i> Notificaciones</span>
+                                <span><i class="ph ph-bell"></i> Notificaciones</span>
                                 <button onclick="marcarTodasLeidas(event)">
                                     <i class="fas fa-check-double"></i> Marcar todas
                                 </button>
@@ -516,20 +559,22 @@ echo Nav::widget([
                     <!-- Dropdown Usuario -->
                     <div class="user-dropdown">
                         <div class="user-dropdown-toggle" onclick="toggleUserMenu()">
-                            <i class="fas fa-user-circle"></i>
+                            <i class="ph ph-user-circle"></i>
                             <span><?= Html::encode(Yii::$app->user->identity->email) ?></span>
-                            <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
+                            <i class="ph ph-chevron-down" style="font-size: 12px;"></i>
                         </div>
 
                         <div class="user-dropdown-menu" id="userDropdownMenu">
                             <div class="user-dropdown-header">
-                                <strong><?= Html::encode(Yii::$app->user->identity->email) ?></strong>
+                                <i class="ph ph-user">
+                                    <strong><?= Html::encode(Yii::$app->user->identity->email) ?></strong>
+                                </i>
                                 <small>Usuario Activo</small>
                             </div>
 
                             <?= Html::beginForm(['/site/logout'], 'post') ?>
                             <button type="submit" class="user-dropdown-item logout-btn">
-                                <i class="fas fa-sign-out-alt"></i>
+                                <i class="ph ph-sign-out"></i>
                                 Cerrar Sesión
                             </button>
                             <?= Html::endForm() ?>
@@ -587,274 +632,311 @@ JS;
     $this->registerJs($js);
     ?>
 
-    <!-- JavaScript para notificaciones -->
     <script>
-        let notificationCheckInterval;
+  // ==== SONIDO NOTIFICACIONES ====
+  const NOTIF_SOUND_URL = <?= json_encode(Yii::getAlias('@web/sounds/notify.mp3')) ?>;
+  let notifAudio = null;
+  let audioArmed = false;
 
-        function inicializarNotificaciones() {
-       
-            notificationCheckInterval = setInterval(cargarNotificaciones, 8000);
-            cargarNotificaciones();
-        }
+  function armNotificationAudio() {
+    if (audioArmed) return;
+    audioArmed = true;
 
-        function cargarNotificaciones() {
-          
+    notifAudio = new Audio(NOTIF_SOUND_URL);
+    notifAudio.volume = 0.55;
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
-            const token = csrfToken ? csrfToken.getAttribute('content') : '';
-
-            fetch('<?= Url::to(['/tickets/obtener-notificaciones']) ?>', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-Token': token,
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                 
-                    if (data.success) {
-                        mostrarNotificaciones(data.notificaciones);
-                    }
-                })
-                .catch(error => console.error('Error cargando notificaciones:', error));
-        }
-
-        function mostrarNotificaciones(notificaciones) {
-          
-            const notifList = document.getElementById('notificationList');
-            const badge = document.getElementById('notificationCount');
-            const noLeidas = notificaciones.filter(n => !n.leida).length;
-
-           
-
-            if (noLeidas > 0) {
-                badge.textContent = noLeidas;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
-            }
-
-            if (notificaciones.length === 0) {
-                notifList.innerHTML = `
-                <div class="notification-empty">
-                    <i class="fas fa-check-circle"></i><br>
-                    <small>No hay notificaciones</small>
-                </div>
-            `;
-                return;
-            }
-
-            notifList.innerHTML = notificaciones.map(notif => {
-                const iconClass = notif.tipo || 'asignado';
-                const icono = getIconoNotificacion(notif.tipo);
-                return `
-                <div class="notification-item ${!notif.leida ? 'unread' : ''}" 
-                     onclick="abrirNotificacion(event, ${notif.id}, ${notif.ticket_id || 'null'})">
-                    <div class="notification-icon ${iconClass}">
-                        <i class="fas fa-${icono}"></i>
-                    </div>                                          
-                    <div class="notification-content">
-                        <div class="notification-title">${notif.titulo}</div>
-                        <div class="notification-message">${notif.mensaje}</div>
-                        <div class="notification-time">${notif.fecha}</div>
-                    </div>
-                </div>
-            `;
-            }).join('');
-        }
-
-function abrirNotificacion(event, notifId, ticketId, tipo) {
-  event.stopPropagation();
-
-  if (!ticketId) {
-    marcarNotificacion(notifId);
-    return;
+    // “warmup” para que Brave permita el play
+    const p = notifAudio.play();
+    if (p && p.then) {
+      p.then(() => {
+        notifAudio.pause();
+        notifAudio.currentTime = 0;
+      }).catch(() => {
+        audioArmed = false;
+      });
+    }
   }
 
-  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  function playNotifSound() {
+    if (!notifAudio) return;
+    notifAudio.currentTime = 0;
+    const p = notifAudio.play();
+    if (p && p.catch) p.catch(()=>{});
+  }
 
-  fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
-    body: JSON.stringify({ notif_id: notifId })
-  }).catch(() => {}).finally(() => {
+  // Armar con el primer click del usuario
+  document.addEventListener('click', armNotificationAudio, { once: true });
 
 
-    if (tipo === 'mencion') {
-      window.location.href = `<?= Url::to(['/tickets/index']) ?>?openComments=1&ticket_id=${encodeURIComponent(ticketId)}&notif_id=${encodeURIComponent(notifId)}`;
+</script>
+   <script>
+  // =========================================
+  //  NOTIFICACIONES (Dropdown + Windows Web Notifications)
+  // =========================================
+  let notificationCheckInterval = null;
+  let lastNotifsSeen = new Set();
+  let firstLoad = true;
+
+  // URLs desde Yii
+  const NOTIFS_URL = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
+  const MARK_ONE_URL = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
+  const MARK_ALL_URL = <?= json_encode(Url::to(['/tickets/marcar-todas-leidas'])) ?>;
+  const TICKET_INDEX_URL = <?= json_encode(Url::to(['/tickets/index'])) ?>;
+
+  // Icono (ruta web)
+  const NOTIF_ICON = <?= json_encode(Yii::getAlias('@web/icon-wintickl.ico')) ?>;
+
+  async function ensureNotificationPermission() {
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "default") return;
+
+    try {
+      await Notification.requestPermission();
+    } catch (e) {
+      console.warn("No se pudo solicitar permiso de notificación:", e);
+    }
+  }
+
+  function inicializarNotificaciones() {
+    // NO rompe nada si el usuario no da permiso
+    ensureNotificationPermission();
+
+    if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+    notificationCheckInterval = setInterval(cargarNotificaciones, 8000);
+    cargarNotificaciones();
+  }
+
+  function cargarNotificaciones() {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    fetch(NOTIFS_URL, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': token,
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success) {
+          mostrarNotificaciones(Array.isArray(data.notificaciones) ? data.notificaciones : []);
+        }
+      })
+      .catch(err => console.error('Error cargando notificaciones:', err));
+  }
+
+  function mostrarNotificaciones(notificaciones) {
+    const notifList = document.getElementById('notificationList');
+    const badge = document.getElementById('notificationCount');
+
+    if (!notifList || !badge) return;
+
+    const noLeidas = notificaciones.filter(n => !n.leida).length;
+
+    if (noLeidas > 0) {
+      badge.textContent = noLeidas;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    if (notificaciones.length === 0) {
+      notifList.innerHTML = `
+        <div class="notification-empty">
+          <i class="fas fa-check-circle"></i><br>
+          <small>No hay notificaciones</small>
+        </div>
+      `;
       return;
     }
 
-    // ✅ default: ir a view (como ya lo haces)
-    window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
-  });
-}
+    notifList.innerHTML = notificaciones.map(notif => {
+      const iconClass = notif.tipo || 'asignado';
+      const icono = getIconoNotificacion(notif.tipo);
+      const ticketId = notif.ticket_id ? Number(notif.ticket_id) : null;
 
+      // OJO: aquí mandamos tipo también
+      return `
+        <div class="notification-item ${!notif.leida ? 'unread' : ''}"
+             onclick="abrirNotificacion(event, ${notif.id}, ${ticketId ?? 'null'}, ${JSON.stringify(notif.tipo || '')})">
+          <div class="notification-icon ${iconClass}">
+            <i class="fas fa-${icono}"></i>
+          </div>
+          <div class="notification-content">
+            <div class="notification-title">${escapeHtml(notif.titulo || '')}</div>
+            <div class="notification-message">${escapeHtml(notif.mensaje || '')}</div>
+            <div class="notification-time">${escapeHtml(notif.fecha || '')}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notificationDropdown');
-            dropdown.classList.toggle('show');
-            document.getElementById('userDropdownMenu').classList.remove('show');
-        }
+    // ==========================
+    // Windows / Web Notification
+    // ==========================
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
 
-        function toggleUserMenu() {
-            const menu = document.getElementById('userDropdownMenu');
-            menu.classList.toggle('show');
-            document.getElementById('notificationDropdown').classList.remove('show');
-        }
+    // Primera carga: NO spamear, solo marcar como vistas
+    if (firstLoad) {
+      notificaciones.forEach(n => lastNotifsSeen.add(String(n.id)));
+      firstLoad = false;
+      return;
+    }
 
-        function marcarNotificacion(notifId) {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
-            const token = csrfToken ? csrfToken.getAttribute('content') : '';
+    // Disparar solo para NO leídas y NO repetidas
+        notificaciones
+        .filter(n => !n.leida)
+        .filter(n => !lastNotifsSeen.has(String(n.id)))
+        .forEach(n => {
+            lastNotifsSeen.add(String(n.id));
 
-            fetch('<?= Url::to(['/tickets/marcar-notificacion']) ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': token
-                },
-                body: JSON.stringify({ notif_id: notifId })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        cargarNotificaciones();
-                    }
-                })
-                .catch(error => console.error('❌ Error:', error));
-        }
+            //  Solo si es ticket nuevo (ajusta el string si tu tipo es otro)
+            if ((n.tipo || '') === 'nuevo_ticket') {
+            playNotifSound();
+            }
 
-        function marcarTodasLeidas(event) {
-            event.stopPropagation();
+            const sysNotif = new Notification(n.titulo || "WinTick", {
+            body: n.mensaje || "",
+            icon: NOTIF_ICON,
+            tag: "wintick-" + n.id,
+            renotify: false
+            });
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
-            const token = csrfToken ? csrfToken.getAttribute('content') : '';
-
-            fetch('<?= Url::to(['/tickets/marcar-todas-leidas']) ?>', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-Token': token,
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        cargarNotificaciones();
-                    }
-                })
-                .catch(error => console.error('❌ Error:', error));
-        }
-
-        function getIconoNotificacion(tipo) {
-            const iconos = {
-                'asignado': 'user-check',
-                'comentario': 'comment',
-                'estado_cambio': 'sync-alt'
+            sysNotif.onclick = () => {
+            window.focus();
+            if (n.ticket_id) {
+                window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(n.ticket_id)}`;
+            }
             };
-            return iconos[tipo] || 'bell';
+        });
+  }
+
+  function abrirNotificacion(event, notifId, ticketId, tipo) {
+    event.stopPropagation();
+
+    // Si no hay ticket, solo marcar leída
+    if (!ticketId) {
+      marcarNotificacion(notifId);
+      return;
+    }
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    fetch(MARK_ONE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+      body: JSON.stringify({ notif_id: notifId })
+    })
+      .catch(() => {})
+      .finally(() => {
+        // Si quieres casos especiales
+        if (tipo === 'mencion') {
+          window.location.href = `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(ticketId)}&notif_id=${encodeURIComponent(notifId)}`;
+          return;
         }
 
-        document.addEventListener('click', function (e) {
-            const bell = document.querySelector('.notification-bell');
-            const dropdown = document.getElementById('notificationDropdown');
-            const userToggle = document.querySelector('.user-dropdown-toggle');
-            const userMenu = document.getElementById('userDropdownMenu');
+        // Default: ir a view
+        window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
+      });
+  }
 
-            if (bell && dropdown && !bell.contains(e.target)) {
-                dropdown.classList.remove('show');
-            }
+  function toggleNotifications() {
+    // de paso: pedir permiso con un gesto del usuario (más confiable en browsers)
+    ensureNotificationPermission();
 
-            if (userToggle && userMenu && !userToggle.contains(e.target) && !userMenu.contains(e.target)) {
-                userMenu.classList.remove('show');
-            }
-        });
+    const dropdown = document.getElementById('notificationDropdown');
+    if (!dropdown) return;
 
-        document.addEventListener('DOMContentLoaded', function () {
-            <?php if (!Yii::$app->user->isGuest): ?>
-                inicializarNotificaciones();
-            <?php endif; ?>
-        });
-    </script>
+    dropdown.classList.toggle('show');
+    document.getElementById('userDropdownMenu')?.classList.remove('show');
+  }
+
+  function toggleUserMenu() {
+    const menu = document.getElementById('userDropdownMenu');
+    if (!menu) return;
+
+    menu.classList.toggle('show');
+    document.getElementById('notificationDropdown')?.classList.remove('show');
+  }
+
+  function marcarNotificacion(notifId) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    fetch(MARK_ONE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+      body: JSON.stringify({ notif_id: notifId })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success) cargarNotificaciones();
+      })
+      .catch(err => console.error('❌ Error:', err));
+  }
+
+  function marcarTodasLeidas(event) {
+    event.stopPropagation();
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    fetch(MARK_ALL_URL, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': token, 'Content-Type': 'application/json' }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success) cargarNotificaciones();
+      })
+      .catch(err => console.error('❌ Error:', err));
+  }
+
+  function getIconoNotificacion(tipo) {
+    const iconos = {
+      'asignado': 'user-check',
+      'comentario': 'comment',
+      'estado_cambio': 'sync-alt',
+      'mencion': 'at'
+    };
+    return iconos[tipo] || 'bell';
+  }
+
+  // Cerrar dropdowns al hacer click fuera
+  document.addEventListener('click', function (e) {
+    const bell = document.querySelector('.notification-bell');
+    const dropdown = document.getElementById('notificationDropdown');
+
+    const userToggle = document.querySelector('.user-dropdown-toggle');
+    const userMenu = document.getElementById('userDropdownMenu');
+
+    if (bell && dropdown && !bell.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+
+    if (userToggle && userMenu && !userToggle.contains(e.target) && !userMenu.contains(e.target)) {
+      userMenu.classList.remove('show');
+    }
+  });
+
+  // Util: evitar que te rompa el HTML si llegan caracteres raros
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    <?php if (!Yii::$app->user->isGuest): ?>
+      inicializarNotificaciones();
+    <?php endif; ?>
+  });
+</script>
 
     <?php $this->endBody() ?>
-
-</body>
+</body> 
 
 </html>
 <?php $this->endPage() ?>
-
-<!-- ✅ MOVER EL BLOQUE DE BIENVENIDA AQUÍ AL FINAL -->
-<?php if (Yii::$app->session->hasFlash('welcome')): ?>
-    <?php 
-    $welcomeData = Yii::$app->session->getFlash('welcome');
-    $nombre = $welcomeData['nombre'];
-    $rol = $welcomeData['rol'];
-    $email = $welcomeData['email'];
-    
-    // Determinar saludo según la hora
-    $hora = date('H');
-    $saludo = 'Buenas noches';
-    if ($hora >= 6 && $hora < 12) {
-        $saludo = 'Buenos días';
-    } elseif ($hora >= 12 && $hora < 18) {
-        $saludo = 'Buenas tardes';
-    }
-    
-    // Determinar icono según el rol
-    $iconoRol = match($rol) {
-        'Administracion', 'Administracion' => '👑',
-        'Consultores', 'Consultores' => '💼',
-        'Cliente', 'Cliente' => '👤',
-        default => '🎯'
-    };
-    ?>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Pequeño delay para que se cargue completamente la página
-        setTimeout(() => {
-            Swal.fire({
-                icon: 'success',
-                title: '<?= $saludo ?>, <?= Html::encode($nombre) ?>! <?= $iconoRol ?>',
-                html: `
-                    <div style="text-align: center; padding: 20px 0;">
-                        <div style="background: linear-gradient(135deg, #8BA590 0%, #7a9582 100%); color: white; padding: 20px; border-radius: 16px; margin: 20px 0; box-shadow: 0 8px 32px rgba(139, 165, 144, 0.3);">
-                            <div style="font-size: 24px; margin-bottom: 8px;">¡Bienvenido de vuelta!</div>
-                            <div style="font-size: 14px; opacity: 0.9;">
-                                <strong><?= Html::encode($rol) ?></strong> • <?= Html::encode($email) ?>
-                            </div>
-                        </div>
-                        <div style="color: #666; font-size: 14px; line-height: 1.6;">
-                            <i class="fas fa-clock" style="color: #8BA590; margin-right: 6px;"></i>
-                            Conectado el <?= date('d/m/Y') ?> a las <?= date('H:i') ?>
-                        </div>
-                    </div>
-                `,
-                showConfirmButton: true,
-                confirmButtonText: '<i class="fas fa-rocket"></i> ¡Empecemos!',
-                confirmButtonColor: '#8BA590',
-                timer: 8000,
-                timerProgressBar: true,
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown animate__faster'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp animate__faster'
-                },
-                backdrop: `
-                    rgba(139, 165, 144, 0.1)
-                    left top
-                    no-repeat
-                `,
-                customClass: {
-                    popup: 'welcome-popup',
-                    title: 'welcome-title',
-                    confirmButton: 'welcome-btn'
-                }
-            });
-        }, 500);
-    });
-    </script>
-<?php endif; ?>

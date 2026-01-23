@@ -177,12 +177,12 @@ $this->title = 'Dashboard - Tickets por Consultor';
                     url += '?consultorId=' + consultorActual;
                 }
 
-                console.log('Cargando tickets desde:', url);
+            
 
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
-                        console.log('Tickets recibidos:', data);
+                       
                         successCallback(data);
                     })
                     .catch(error => {

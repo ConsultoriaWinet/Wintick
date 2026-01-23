@@ -179,10 +179,20 @@ class TicketsController extends Controller
 
         if ($this->request->isPost && $model->load($this->request->post())) {
             
-            // ✅ ASEGURAR QUE CREADO_POR SE GUARDE CON EL USUARIO ACTUAL (ANTES DE SAVE)
+            //  ASEGURAR QUE CREADO_POR SE GUARDE CON EL USUARIO ACTUAL (ANTES DE SAVE)
             $model->Creado_por = Yii::$app->user->id;
             
             if ($model->save()) {
+
+            $notif = new \app\models\Notificaciones();
+            $notif->usuario_id = $model->Asignado_a;     // a quién va
+            $notif->ticket_id  = $model->id;
+            $notif->tipo       = 'nuevo_ticket';
+            $notif->titulo     = 'Nuevo ticket asignado';
+            $notif->mensaje    = 'Folio: '.$model->Folio;
+            $notif->leida      = 0;
+            $notif->fecha      = date('Y-m-d H:i:s');
+            $notif->save(false);
                 // ✅ CREAR NOTIFICACIÓN AL CREAR TICKET Y ASIGNAR
                 if ($model->Asignado_a) {
                     $this->crearNotificacion(
@@ -200,7 +210,7 @@ class TicketsController extends Controller
         } else {
             $model->loadDefaultValues();
         }
-
+        
         return $this->render('create', [
             'model' => $model,
             'consultoresList' => $consultoresList,
@@ -408,30 +418,53 @@ class TicketsController extends Controller
         $input = \Yii::$app->request->getRawBody();
         $data = json_decode($input, true);
 
-        $ticket = Tickets::findOne($data['id']);
-        if ($ticket) {
-            $estadoAnterior = $ticket->Estado;
-            $ticket->Estado = $data['estado'];
-
-            if ($ticket->save()) {
-                // ✅ CREAR NOTIFICACIÓN SI CAMBIÓ EL ESTADO
-                if ($estadoAnterior !== $ticket->Estado && $ticket->Asignado_a) {
-                    $usuarioActual = \Yii::$app->user->identity->email;
-                    $this->crearNotificacion(
-                        $ticket->Asignado_a,
-                        'estado_cambio',
-                        'Cambio de estado: ' . $ticket->Folio,
-                        $usuarioActual . ' cambió el estado a ' . $ticket->Estado,
-                        $ticket->id
-                    );
-                }
-
-                return ['success' => true];
-            }
+        $ticket = Tickets::findOne($data['id'] ?? null);
+        if (!$ticket) {
+            return ['success' => false, 'message' => 'Ticket no encontrado'];
         }
 
-        return ['success' => false];
+        $estadoAnterior = (string)$ticket->Estado;
+        $ticket->Estado = (string)($data['estado'] ?? $ticket->Estado);
+
+        if (!$ticket->save()) {
+            return ['success' => false, 'message' => 'No se pudo guardar', 'errors' => $ticket->errors];
+        }
+
+      
+        $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
+
+     
+        if ($estadoAnterior !== $ticket->Estado && $ticket->Asignado_a) {
+            $this->crearNotificacion(
+                (int)$ticket->Asignado_a,
+                'estado_cambio',
+                'Cambio de estado: ' . $ticket->Folio,
+                $usuarioActualEmail . ' cambió el estado a ' . $ticket->Estado,
+                $ticket->id
+            );
+        }
+
+      
+        $estadoNormalizado = mb_strtolower(trim($ticket->Estado));
+        if ($estadoAnterior !== $ticket->Estado && $estadoNormalizado === 'cerrado') {
+
+            $skip = [];
+            if (!empty($ticket->Asignado_a)) $skip[] = (int)$ticket->Asignado_a;
+            if (!Yii::$app->user->isGuest) $skip[] = (int)Yii::$app->user->id;
+
+            $this->notificarRoles(
+                ['Administracion', 'Administradores', 'Desarrolladores'],
+                'ticket_cerrado',
+                'Ticket cerrado: ' . $ticket->Folio,
+                $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
+                $ticket->id,
+                $skip
+            );
+        }
+
+        return ['success' => true];
     }
+
 
   public function actionGetTicketData()
 {
@@ -1043,6 +1076,27 @@ protected function parseHoras($valor)
                 return '#a0a0a0';  // Gris neutro
         }
     }
+
+//funcion para buscar usuario que pertenezcan a esos roles 
+    private function notificarRoles(array $roles, string $tipo, string $titulo, string $mensaje, ?int $ticketId = null, array $skipUserIds = []): void
+    {
+        $query = Usuarios::find()
+            ->select(['id'])
+            ->where(['rol' => $roles])
+            ->andWhere(['status' => 10]); // activos
+
+        if (!empty($skipUserIds)) {
+            $query->andWhere(['not in', 'id', $skipUserIds]);
+        }
+
+        $usuarios = $query->asArray()->all();
+
+        foreach ($usuarios as $u) {
+            $this->crearNotificacion((int)$u['id'], $tipo, $titulo, $mensaje, $ticketId);
+        }
+    }
+
+
     public function actionTestNotificacion()
     {
         $userId = \Yii::$app->user->id;
@@ -1056,9 +1110,9 @@ protected function parseHoras($valor)
         );
 
         if ($resultado) {
-            echo "✅ Notificación creada. Revisa la tabla 'notificaciones' en la BD.";
+            echo " Notificación creada. Revisa la tabla 'notificaciones' en la BD.";
         } else {
-            echo "❌ Error creando notificación. Revisa runtime/logs/app.log";
+            echo " Error creando notificación. Revisa runtime/logs/app.log";
         }
 
         exit;

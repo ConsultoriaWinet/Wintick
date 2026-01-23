@@ -184,7 +184,7 @@ class SiteController extends Controller
 
     $userId = Yii::$app->user->id;
 
-    // ✅ Si es consultor (no puede asignar tickets), forzamos a que solo vea los suyos
+    // Si es consultor (no puede asignar tickets), forzamos a que solo vea los suyos
     if (Yii::$app->user->can('verTickets') && !Yii::$app->user->can('asignarTicket')) {
         $consultorId = $userId;
     }
@@ -200,7 +200,7 @@ class SiteController extends Controller
 
     $events = [];
     foreach ($tickets as $t) {
-        // ✅ Usa HoraInicio si existe, si no usa Fecha_creacion
+        //  Usa HoraInicio si existe, si no usa Fecha_creacion
         $start = $t->HoraInicio ?: $t->Fecha_creacion;
 
         if (!$start) {
@@ -210,7 +210,7 @@ class SiteController extends Controller
         $events[] = [
             'id'    => $t->id,
             'title' => $t->Folio,
-            'start' => date('c', strtotime($start)), // ISO 8601 (FullCalendar friendly)
+            'start' => date('c', strtotime($start)), // Formato ISO 8601
 
             // Opcional: colores por consultor
             'backgroundColor' => $t->usuarioAsignado->color ?? '#8BA590',

@@ -109,18 +109,171 @@ $this->registerCss('
     .mention-top{ display:flex; justify-content:space-between; gap:10px; }
     .mention-name{ font-weight:700; }
     .mention-email{ color:#64748b; font-size:12px; }
+
+
+
+    
+
+   /* ========================================
+         ======================================== */
+
+
+
+/* ========================================
+   ✅ Mobile: Tabla -> Cards
+   ======================================== */
+@media (max-width: 768px){
+
+
+
+
+
+  /* ====== TABLA A CARDS ====== */
+  #ticketsTable{
+    min-width: 0; /* ya no forzamos ancho */
+    border-spacing: 0;
+    padding:10%;
+  }
+
+  #ticketsTable thead{
+    display: none; /* escondemos encabezado */
+  }
+
+  #ticketsTable tbody,
+  #ticketsTable tr,
+  #ticketsTable td{
+    display: block;
+    width: 100%;
+  }
+
+  /* cada fila como tarjeta */
+  #ticketsTable tbody tr.data-row{
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    margin: 10px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    transform: none !important; /* quita tu scale hover en móvil */
+  }
+
+  /* fila nueva diferenciada */
+  #ticketsTable tbody tr.new-row{
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #10b981;
+    padding: 12px;
+  }
+
+  /* Cada celda como "label: value" */
+  #ticketsTable tbody tr.data-row td{
+    border: none;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* Generamos la etiqueta (según el orden de columnas) */
+  #ticketsTable tbody tr.data-row td::before{
+    content: "";
+    font-weight: 800;
+    color: #6b7280;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    flex: 0 0 42%;
+    padding-right: 8px;
+  }
+
+  /* valores */
+  #ticketsTable tbody tr.data-row td{
+    font-size: 13px;
+  }
+  #ticketsTable tbody tr.data-row td > *{
+    flex: 1;
+    max-width: 58%;
+
+  }
+
+  /* Etiquetas por columna (12 columnas) */
+  #ticketsTable tbody tr.data-row td:nth-child(1)::before { content: "Folio"; }
+  #ticketsTable tbody tr.data-row td:nth-child(2)::before { content: "Cliente"; }
+  #ticketsTable tbody tr.data-row td:nth-child(3)::before { content: "Sistema"; }
+  #ticketsTable tbody tr.data-row td:nth-child(4)::before { content: "Servicio"; }
+  #ticketsTable tbody tr.data-row td:nth-child(5)::before { content: "Usuario reporta"; }
+  #ticketsTable tbody tr.data-row td:nth-child(6)::before { content: "Asignado a"; }
+  #ticketsTable tbody tr.data-row td:nth-child(7)::before { content: "Hora programada"; }
+  #ticketsTable tbody tr.data-row td:nth-child(8)::before { content: "Hora inicio"; }
+  #ticketsTable tbody tr.data-row td:nth-child(9)::before { content: "Descripción"; }
+  #ticketsTable tbody tr.data-row td:nth-child(10)::before{ content: "Prioridad"; }
+  #ticketsTable tbody tr.data-row td:nth-child(11)::before{ content: "Estado"; }
+  #ticketsTable tbody tr.data-row td:nth-child(12)::before{ content: "Acción"; }
+
+  /* Descripción: que se vea completa en móvil */
+  #ticketsTable tbody tr.data-row td:nth-child(9){
+    flex-direction: column;
+  }
+  #ticketsTable tbody tr.data-row td:nth-child(9)::before{
+    flex: none;
+    padding-right: 0;
+    margin-bottom: 6px;
+  }
+  #ticketsTable tbody tr.data-row td:nth-child(9) > *{
+    max-width: 100%;
+    width: 100%;
+  }
+  .descripcion-cell{
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+
+  /* Acciones: botones en fila, wrap */
+  #ticketsTable tbody tr.data-row td:nth-child(12){
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #ticketsTable tbody tr.data-row td:nth-child(12)::before{
+    flex: none;
+    margin-bottom: 8px;
+  }
+  #ticketsTable tbody tr.data-row td:nth-child(12){
+    gap: 10px;
+  }
+  #ticketsTable tbody tr.data-row td:nth-child(12) .btn{
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* inputs/selects en fila nueva al 100% */
+  #ticketsTable .form-control,
+  #ticketsTable .form-select,
+  #ticketsTable textarea{
+    width: 100%;
+  }
+
+  /* Oculta fila sin resultados bien en cards */
+  #noResultsRow td{
+    display:block;
+  }
+
+  /* Paginador no se rompa */
+  .pagination{
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
 ');
 
 // Obtener mes y año actual si no hay filtro
 $mesActual = Yii::$app->request->get('mes', date('Y-m'));
-
-
 ?>
 
 
-
 <div class="tickets-index">
-    <!-- Header Principal con Buscador Universal + Filtro Compacto -->
+    <!-- Header Principal con Buscador Universal  -->
     <div class="tickets-header">
         <h1><i class="fas fa-ticket-alt"></i> <?= Html::encode($this->title) ?></h1>
         
@@ -131,7 +284,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                 <i class="fas fa-search"></i>
                 <input type="text" 
                        id="globalSearch" 
-                       placeholder="🔍 Buscar por cualquier cosa..."
+                       placeholder="Buscar por cualquier cosa..."
                        autocomplete="off">
                 <button class="search-clear-btn" id="clearSearch" title="Limpiar búsqueda">
                     <i class="fas fa-times"></i>

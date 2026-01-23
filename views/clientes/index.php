@@ -59,12 +59,26 @@ $this->registerCss($css);
         </div>
 
         <div class="card-body">
+            <!--Filtro para buscar por cualquier cosa ----->
+         <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input 
+                    type="text" 
+                    id="universalSearch" 
+                    class="form-control" 
+                    placeholder="Buscar por cualquier cosa...">
+            </div>
+        </div>
+
 
             <!-- ================= TABLE DESKTOP ================= -->
             <div class="d-none d-md-block table-responsive">
                 <?= GridView::widget([
                     'dataProvider' => $dataProvider,
-                    'filterModel' => $searchModel,
+                    
                     'rowOptions' => function ($model) {
                                         return [
                                             'class' => 'cursor-pointer',
@@ -96,7 +110,7 @@ $this->registerCss($css);
                                 
                                 // Si es negativo o cero, mostrar badge rojo
                                 if ($tiempoNum <= 0) {
-                                    return '<span class="badge bg-danger">' . Html::encode($model->Tiempo) . ' ⚠️ SIN HORAS</span>';
+                                    return '<span class="badge bg-danger">' . Html::encode($model->Tiempo) . '  SIN HORAS</span>';
                                 } else {
                                     return '<span class="badge bg-success">' . Html::encode($model->Tiempo) . '</span>';
                                 }
@@ -155,7 +169,7 @@ $this->registerCss($css);
                                         <?php
                                             $tiempoNum = floatval($model->Tiempo);
                                             if ($tiempoNum <= 0) {
-                                                echo '<span class="badge bg-danger p-2">' . Html::encode($model->Tiempo) . ' ⚠️ SIN HORAS</span>';
+                                                echo '<span class="badge bg-danger p-2">' . Html::encode($model->Tiempo) . '  SIN HORAS</span>';
                                             } else {
                                                 echo '<span class="badge bg-success p-2">' . Html::encode($model->Tiempo) . '</span>';
                                             }
@@ -231,5 +245,17 @@ $this->registerJs("
             });
         });
     };
+
+
+
+    // Filtro universal
+    $('#universalSearch').on('keyup', function() {
+        var value = $(this).val().toLowerCase();
+        $('.table tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+
+
 ", \yii\web\View::POS_END);
 ?>
