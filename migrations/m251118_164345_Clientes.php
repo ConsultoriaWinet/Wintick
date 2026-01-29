@@ -33,7 +33,7 @@ class m251118_164345_Clientes extends Migration
             'RFC' => $this->string()->unique(),            //RFC de la empresa
             'Correo' => $this->string()->notNull(),         //Correo de la empresa
             'Contacto_nombre' => $this->string()->notNull(),       //Contacto principal de la empresa
-            'Tiempo' => $this->integer()->notNull(),        //Tiempo Comprado de la empresa - OPCIONAL
+            'Tiempo' => $this->decimal()->notNull(),        //Tiempo Comprado de la empresa - OPCIONAL
             "Whatsapp_contacto" => $this->integer()->notNull(),      //Whatsapp de la empresa
             "Telefono" => $this->integer()->notNull(),      //Telefono de la empresa
             'Prioridad' => $this->string()->notNull(), //Prioridad del cliente

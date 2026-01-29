@@ -663,11 +663,11 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                                 <i class="fas fa-lightbulb"></i>
                             </button>
                         <?= Html::a('<i class="fas fa-edit"></i>', ['update', 'id' => $ticket->id], ['class' => 'btn btn-sm btn-outline-secondary', 'title' => 'Editar']) ?>
-                        <?= Html::a('<i class="fas fa-trash"></i>', '#', [
+                        <?= ''/* Html::a('<i class="fas fa-trash"></i>', '#', [
                             'class' => 'btn btn-sm btn-outline-danger',
                             'title' => 'Eliminar',
                             'onclick' => "confirmarEliminar({$ticket->id}, '{$ticket->Folio}')",
-                        ]) ?>
+                        ]) */?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -874,7 +874,7 @@ window.WINTICK_USERS = <?= json_encode(array_map(function($u){
 <script>
 /**
  * =========================================================
- * ✅ WinTick - JS completo (incluye @menciones PRO)
+ *
  * - En el textarea se ve bonito: @Nombre
  * - En el backend se guarda token: @[email:correo@dominio.com]
  * - Al renderizar comentarios se ve @Nombre con badge
@@ -894,7 +894,7 @@ let lastTicketIdSolution = null;
 function loadNextFolio(inputElement) {
     if (!inputElement) return;
 
-    inputElement.value = '⏳ Generando...';
+    inputElement.value = 'Generando...';
     inputElement.style.color = '#f59e0b';
 
     fetch('<?= Url::to(['/tickets/get-next-folio']) ?>', {
@@ -1271,56 +1271,65 @@ function formatearFechaBonita(fechaStr) {
     };
     return d.toLocaleString('es-MX', opciones);
 }
+function roundUpTo15Minutes(totalMin) {
+  if (!Number.isFinite(totalMin) || totalMin <= 0) return 0;
+  return Math.ceil(totalMin / 15) * 15; 
+}
+
+function formatHoursDecimal(hours) {
+  // 2 decimales máximo pero sin ceros innecesarios (1.50 -> 1.5, 2.00 -> 2)
+  return String(parseFloat(hours.toFixed(2)));
+}
 
 function calcularTiempoEfectivo() {
-    if (tiempoEditadoManualmente) return;
+  if (tiempoEditadoManualmente) return;
 
-    const inicioStr = document.getElementById('horaInicioTicket').value;
-    const finInput = document.getElementById('horaFinalizo');
-    const finStr = finInput.value;
-    const salidaInput = document.getElementById('tiempoEfectivo');
-    const badge = document.getElementById('badgeTiempoEfectivo');
-    const labelFin = document.getElementById('labelHoraFinalizo');
+  const inicioStr = document.getElementById('horaInicioTicket').value;
+  const finInput  = document.getElementById('horaFinalizo');
+  const finStr    = finInput.value;
 
-    if (!inicioStr || !finStr) {
-        salidaInput.value = '';
-        badge.textContent = 'Sin calcular';
-        labelFin.textContent = '-';
-        return;
-    }
+  const salidaInput = document.getElementById('tiempoEfectivo');
+  const badge       = document.getElementById('badgeTiempoEfectivo');
+  const labelFin    = document.getElementById('labelHoraFinalizo');
 
-    const inicio = new Date(inicioStr);
-    const fin = new Date(finStr);
+  if (!inicioStr || !finStr) {
+    salidaInput.value = '';
+    badge.textContent = 'Sin calcular';
+    labelFin.textContent = '-';
+    return;
+  }
 
-    if (isNaN(inicio.getTime()) || isNaN(fin.getTime()) || fin < inicio) {
-        salidaInput.value = '';
-        badge.textContent = 'Revisa las fechas';
-        labelFin.textContent = formatearFechaBonita(finStr);
-        return;
-    }
+  const inicio = new Date(inicioStr);
+  const fin    = new Date(finStr);
 
-    const diffMs = fin - inicio;
-    let totalMin = Math.floor(diffMs / 60000);
+  if (isNaN(inicio.getTime()) || isNaN(fin.getTime()) || fin < inicio) {
+    salidaInput.value = '';
+    badge.textContent = 'Revisa las fechas';
+    labelFin.textContent = formatearFechaBonita(finStr);
+    return;
+  }
 
-    if (totalMin <= 0) {
-        salidaInput.value = '';
-        badge.textContent = 'Menos de 1 minuto';
-        labelFin.textContent = formatearFechaBonita(finStr);
-        return;
-    }
+  const diffMs = fin - inicio;
+  const rawMin = Math.floor(diffMs / 60000);
 
-    let horasEnteras = Math.floor(totalMin / 60);
-    let mins = totalMin % 60;
-    let horasDecimales = horasEnteras;
+  if (rawMin <= 0) {
+    salidaInput.value = '';
+    badge.textContent = 'Menos de 1 minuto';
+    labelFin.textContent = formatearFechaBonita(finStr);
+    return;
+  }
 
-    if (mins > 0 && mins < 30) horasDecimales += 0.5;
-    else if (mins >= 30) horasDecimales += 1;
+  const roundedMin = roundUpTo15Minutes(rawMin);
 
-    let textoHoras = Number.isInteger(horasDecimales) ? horasDecimales.toString() : horasDecimales.toFixed(1);
-
+    const h = Math.floor(roundedMin / 60);
+    const m = roundedMin % 60;
+    const textoHoras = `${h}.${String(m).padStart(2,'0')}`;
     salidaInput.value = textoHoras;
     badge.textContent = textoHoras + ' h';
-    labelFin.textContent = formatearFechaBonita(finStr);
+
+  salidaInput.value = textoHoras;
+  badge.textContent = `${textoHoras} h`; 
+  labelFin.textContent = formatearFechaBonita(finStr);
 }
 
 // ========================================
@@ -1342,7 +1351,7 @@ function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
         Swal.fire({
             icon: 'warning',
             title: 'Atención',
-            text: '⚠️ Solo puedes agregar una solución a un ticket que esté en estado CERRADO. Cambia el estado e inténtalo de nuevo.',
+            text: 'Solo puedes agregar una solución a un ticket que esté en estado CERRADO. Cambia el estado e inténtalo de nuevo.',
             confirmButtonColor: '#f59e0b'
         });
         return;
@@ -1421,7 +1430,7 @@ function saveSolution() {
        Swal.fire({
             icon: 'warning',
             title: 'Faltan datos',
-            text: '⚠️ Por favor completa todos los campos antes de guardar la solución.',
+            text: 'Por favor completa todos los campos antes de guardar la solución.',
             confirmButtonColor: '#f59e0b'
         });
         return;
@@ -1587,6 +1596,7 @@ function mostrarComentarios(comentarios) {
 }
 
 // Render token almacenado en BD -> badge @Nombre
+
 function renderMentions(text) {
     const safe = escapeHtml(text || '');
     return safe.replace(/@\[(?:email):([^\]]+)\]/g, (m, email) => {
@@ -1973,35 +1983,82 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
         box.id = 'mentionBox';
         document.body.appendChild(box);
     }
+    const modal = ta.closest('.modal');
+    const modalBody = ta.closest('.modal-body');
 
-    // Estilos premium
+    if (modalBody) {
+    modalBody.addEventListener('scroll', () => {
+        if (box.style.display === 'block') positionBox();
+    }, { passive: true });
+    }
+
+    if (modal) {
+    modal.addEventListener('shown.bs.modal', () => {
+        if (box.style.display === 'block') positionBox();
+    });
+    }
+
+
+    // Estilos 
     if (!document.getElementById('mentionProStyles')) {
         const st = document.createElement('style');
         st.id = 'mentionProStyles';
         st.textContent = `
-          #mentionBox{
-            position:absolute; z-index:99999; display:none;
-            width:360px; background:#fff; border:1px solid #e5e7eb; border-radius:14px;
-            box-shadow:0 14px 40px rgba(0,0,0,.15); overflow:hidden;
-          }
-          #mentionBox .m-head{
-            padding:10px 12px; background:#f8fafc; border-bottom:1px solid #eef2f7;
-            font-size:12px; color:#64748b; display:flex; gap:8px; align-items:center;
-          }
-          #mentionBox .m-item{
-            padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;
-            display:flex; justify-content:space-between; gap:10px; align-items:center;
-          }
-          #mentionBox .m-item:last-child{ border-bottom:none; }
-          #mentionBox .m-item:hover{ background:#f8fafc; }
-          #mentionBox .m-left{ display:flex; flex-direction:column; gap:2px; }
-          #mentionBox .m-name{ font-weight:800; font-size:13px; color:#0f172a; }
-          #mentionBox .m-email{ font-size:12px; color:#64748b; }
-          #mentionBox .m-tag{
-            font-size:12px; font-weight:700; padding:6px 10px;
-            border-radius:999px; background:#e0f2fe; color:#075985;
-            white-space:nowrap;
-          }
+        #mentionBox{
+            position: fixed;              /* clave */
+            z-index: 20000;               /* arriba del modal/backdrop */
+            display: none;
+
+            width: min(380px, calc(100vw - 24px));
+            max-height: 320px;
+            overflow: auto;
+
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 18px 50px rgba(0,0,0,.18);
+            backdrop-filter: blur(6px);
+            }
+
+            #mentionBox .m-head{
+            position: sticky;
+            top: 0;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            }
+
+            #mentionBox .m-item{
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            }
+
+            #mentionBox .m-item:last-child{ border-bottom: none; }
+            #mentionBox .m-item:hover{ background: #f8fafc; }
+
+            #mentionBox .m-left{ display:flex; flex-direction:column; gap:2px; }
+            #mentionBox .m-name{ font-weight: 800; font-size: 13px; color: #0f172a; }
+            #mentionBox .m-email{ font-size: 12px; color: #64748b; }
+
+            #mentionBox .m-tag{
+            font-size: 12px;
+            font-weight: 800;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e0f2fe;
+            color: #075985;
+            white-space: nowrap;
+            }
         `;
         document.head.appendChild(st);
     }
@@ -2021,9 +2078,30 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
     }
 
     function positionBox() {
-        const r = ta.getBoundingClientRect();
-        box.style.left = (window.scrollX + r.left) + 'px';
-        box.style.top = (window.scrollY + r.bottom + 6) + 'px';
+    const r = ta.getBoundingClientRect();
+
+    // base: debajo del textarea
+    let left = r.left;
+    let top  = r.bottom + 6;
+
+    
+    const boxW = box.offsetWidth || 360;
+    const boxH = box.offsetHeight || 240;
+
+   
+    const maxLeft = window.innerWidth - boxW - 12;
+    left = Math.max(12, Math.min(left, maxLeft));
+
+   
+    if (top + boxH > window.innerHeight - 12) {
+        top = r.top - boxH - 6;
+    }
+
+    
+    top = Math.max(12, Math.min(top, window.innerHeight - boxH - 12));
+
+    box.style.left = `${left}px`;
+    box.style.top  = `${top}px`;
     }
 
     function hide() { box.style.display = 'none'; box.innerHTML = ''; }

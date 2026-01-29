@@ -12,6 +12,7 @@ use app\models\ContactForm;
 use app\models\Tickets;
 use app\models\Usuarios;
 
+
 class SiteController extends Controller
 {
     /**
@@ -266,7 +267,7 @@ class SiteController extends Controller
                                 'userName' => $usuario->Nombre ?? $usuario->email,
                             ]
                         )
-                            ->setFrom(['arturo.villa.rey@gmail.com' => 'Wintick - Sistema de Tickets'])
+                            ->setFrom(['consultoria@winetpc.com' => 'Wintick - Sistema de Tickets'])
                             ->setTo($usuario->email)
                             ->setSubject('Recuperación de Contraseña - Token de Verificación')
                             ->send();
