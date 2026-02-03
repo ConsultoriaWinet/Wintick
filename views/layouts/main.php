@@ -18,7 +18,7 @@ $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
 $this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
 $this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
-$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/icon-wintickl.ico')]);
+$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/LOGOWINTICKICO.ico')]);
 
 // CDN Resources
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
@@ -407,12 +407,12 @@ $this->registerJsFile(
         <?php
         NavBar::begin([
             'brandLabel' => Html::img(
-                    Yii::getAlias('@web/icon-wintickl.ico'),
+                    Yii::getAlias('@web/LOGOWINTICKICO.ico'),
                     [
                         'alt' => 'Wintick',
                         'style' => 'height:32px; margin-right:8px; border-radius:6px;',
                     ]
-                ) . ' Wintick',
+                ) . ' ',
             'brandUrl' => Yii::$app->homeUrl,
             'options' => [
                 'class' => 'navbar navbar-expand-lg navbar-light shadow-sm elpepe',
@@ -559,7 +559,7 @@ $this->registerJs($js);
   const TICKET_INDEX_URL= <?= json_encode(Url::to(['/tickets/index'])) ?>;
   const TICKET_VIEW_URL = <?= json_encode(Url::to(['/tickets/view'])) ?>;
 
-  const NOTIF_ICON      = <?= json_encode(Yii::getAlias('@web/icon-wintickl.ico')) ?>;
+  const NOTIF_ICON      = <?= json_encode(Yii::getAlias('@web/LOGOWINTICKICO.ico')) ?>;
 
   // ===== SONIDO =====
   let notifAudio = null;
