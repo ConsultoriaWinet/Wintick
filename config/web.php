@@ -19,7 +19,7 @@ $config = [
         ],
         'request' => [
             'cookieValidationKey' => 'fk3TG_tHdrVbcTFW13tFkkK5RmwTCPbe',
-            'enableCsrfValidation' => false,
+            'enableCsrfValidation' => true,
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',

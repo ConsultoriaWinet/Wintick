@@ -13,6 +13,7 @@ use Yii;
  * @property string $comentario
  * @property string|null $tipo comentario, nota_interna, solucion
  * @property string $fecha_creacion
+ * @property string|null $archivo
  *
  * @property Tickets $ticket
  * @property Usuarios $usuario
@@ -39,8 +40,9 @@ class Comentarios extends \yii\db\ActiveRecord
             [['ticket_id', 'usuario_id', 'comentario'], 'required'],
             [['ticket_id', 'usuario_id'], 'integer'],
             [['comentario'], 'string'],
-            [['fecha_creacion'], 'safe'],
+            [['fecha_creacion', 'archivo'], 'safe'],
             [['tipo'], 'string', 'max' => 20],
+            [['archivo'], 'string', 'max' => 255],
             [['ticket_id'], 'exist', 'skipOnError' => true, 'targetClass' => Tickets::class, 'targetAttribute' => ['ticket_id' => 'id']],
             [['usuario_id'], 'exist', 'skipOnError' => true, 'targetClass' => Usuarios::class, 'targetAttribute' => ['usuario_id' => 'id']],
         ];
@@ -58,6 +60,7 @@ class Comentarios extends \yii\db\ActiveRecord
             'comentario' => 'Comentario',
             'tipo' => 'Tipo',
             'fecha_creacion' => 'Fecha Creacion',
+            'archivo' => 'Archivo',
         ];
     }
 

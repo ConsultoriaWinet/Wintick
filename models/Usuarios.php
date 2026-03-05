@@ -47,6 +47,8 @@ public $password;
         [['status', 'created_at', 'updated_at'], 'integer'],
         [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
         [['color'], 'string', 'max' => 20],
+        [['failed_attempts'], 'integer'],
+        [['lockout_until'], 'safe'],
 
         [['Nombre'], 'unique'],
         [['email'], 'unique'],

@@ -120,6 +120,13 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
     </div>
 
     <div class="update-form">
+        <?php if (Yii::$app->session->hasFlash('error')): ?>
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" style="border-radius:8px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <?= Html::encode(Yii::$app->session->getFlash('error')) ?>
+            </div>
+        <?php endif; ?>
+
         <?php $form = ActiveForm::begin([
             'options' => ['class' => 'row g-3'],
         ]); ?>
@@ -214,27 +221,21 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 
         <div class="col-md-4">
             <?= $form->field($model, 'Estado')->dropDownList([
-                'ABIERTO' => 'Abierto',
+                'ABIERTO'    => 'Abierto',
                 'EN PROCESO' => 'En Proceso',
-                'CERRADO' => 'Cerrado'
             ], [
                 'class' => 'form-select'
             ])->label('Estado') ?>
         </div>
 
-        <div class="col-md-4">
-            <?= $form->field($model, 'TiempoEfectivo')->textInput([
-                'class' => 'form-control',
-                'placeholder' => 'Ej: 2 horas, 30 minutos'
-            ])->label('Tiempo Efectivo') ?>
-        </div>
-
-        <div class="col-12">
-            <?= $form->field($model, 'Solucion')->textarea([
-                'rows' => 3,
-                'class' => 'form-control',
-                'placeholder' => 'Describe la solución aplicada...'
-            ])->label('Solución') ?>
+        <div class="col-md-8">
+            <div class="alert alert-info d-flex align-items-center gap-2 mb-0 mt-3" style="border-radius:8px; font-size:13px;">
+                <i class="fas fa-info-circle fa-lg"></i>
+                <div>
+                    Para <strong>cerrar</strong> el ticket con solución, tiempo efectivo y fecha de cierre,
+                    hazlo desde la <a href="<?= \yii\helpers\Url::to(['/tickets/index']) ?>">lista de tickets</a>.
+                </div>
+            </div>
         </div>
 
         <div class="btn-group col-12">

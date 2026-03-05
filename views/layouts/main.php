@@ -324,6 +324,34 @@ $this->registerJsFile(
 
     .notification-header button:hover { background: rgba(255, 255, 255, 0.3); }
 
+    #notifPermissionBanner {
+        padding: 8px 14px;
+        font-size: 11.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    #notifPermissionBanner.perm-default {
+        background: #fff8e1;
+        color: #7a5800;
+    }
+    #notifPermissionBanner.perm-denied {
+        background: #fdecea;
+        color: #8b0000;
+    }
+    #notifPermissionBanner button {
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1px solid currentColor;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
     .notification-item {
         padding: 12px 16px;
         border-bottom: 1px solid var(--border-color);
@@ -458,6 +486,7 @@ $this->registerJsFile(
                                 <i class="fas fa-check-double"></i> Marcar todas
                             </button>
                         </div>
+                        <div id="notifPermissionBanner" style="display:none;"></div>
                         <div id="notificationList">
                             <div class="notification-empty">
                                 <i class="fas fa-spinner fa-spin"></i><br>
@@ -562,39 +591,25 @@ $this->registerJs($js);
   const NOTIF_ICON      = <?= json_encode(Yii::getAlias('@web/LOGOWINTICKICO.ico')) ?>;
 
   // ===== SONIDO =====
+  // Crear el objeto Audio de inmediato — el navegador permite cargar sin gesto del usuario,
+  // solo bloquea el play() automático. Lo intentamos en cada notificación nueva.
   let notifAudio = null;
-  let audioArmed = false;
-
-  function armNotificationAudio() {
-    if (audioArmed) return;
-    audioArmed = true;
-
-    try {
-      notifAudio = new Audio(NOTIF_SOUND_URL);
-      notifAudio.volume = 0.55;
-
-      const p = notifAudio.play();
-      if (p && p.then) {
-        p.then(() => {
-          notifAudio.pause();
-          notifAudio.currentTime = 0;
-        }).catch(() => {
-          audioArmed = false;
-        });
-      }
-    } catch(e) {
-      audioArmed = false;
-    }
-  }
+  try {
+    notifAudio = new Audio(NOTIF_SOUND_URL);
+    notifAudio.volume = 0.6;
+    notifAudio.preload = 'auto';
+  } catch(e) {}
 
   function playNotifSound() {
     if (!notifAudio) return;
+    // Rebobinar y reproducir; si el navegador bloquea, falla silenciosamente
     notifAudio.currentTime = 0;
     const p = notifAudio.play();
-    if (p && p.catch) p.catch(()=>{});
+    if (p && p.catch) p.catch(() => {});
   }
 
-  document.addEventListener('click', armNotificationAudio, { once: true });
+  // Exponer función para test manual desde consola
+  window.testSound = () => { playNotifSound(); console.log('🔊 Probando sonido:', NOTIF_SOUND_URL); };
 
   // ===== WEB NOTIFICATIONS =====
   let notificationCheckInterval = null;
@@ -630,9 +645,30 @@ $this->registerJs($js);
       .catch(err => console.error('Error cargando notificaciones:', err));
   }
 
+  function actualizarBannerPermiso() {
+    const banner = document.getElementById('notifPermissionBanner');
+    if (!banner) return;
+    if (!("Notification" in window)) {
+      banner.style.display = 'none';
+      return;
+    }
+    const perm = Notification.permission;
+    if (perm === 'granted') {
+      banner.style.display = 'none';
+    } else if (perm === 'default') {
+      banner.className = 'perm-default';
+      banner.style.display = 'flex';
+      banner.innerHTML = `<i class="fas fa-bell-slash"></i> Notificaciones del navegador desactivadas
+        <button onclick="ensureNotificationPermission().then(actualizarBannerPermiso)">Activar</button>`;
+    } else {
+      banner.className = 'perm-denied';
+      banner.style.display = 'flex';
+      banner.innerHTML = `<i class="fas fa-ban"></i> Bloqueaste las notificaciones del navegador. Actívalas en la configuración del sitio.`;
+    }
+  }
+
   function mostrarNotificaciones(notificaciones) {
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
+    actualizarBannerPermiso();
     const notifList = document.getElementById('notificationList');
     const badge = document.getElementById('notificationCount');
     if (!notifList || !badge) return;
@@ -708,7 +744,11 @@ $this->registerJs($js);
         sysNotif.onclick = () => {
           window.focus();
           if (n.ticket_id) {
-            window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(n.ticket_id)}`;
+            if (n.tipo === 'mencion') {
+              window.location.href = `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(n.ticket_id)}&notif_id=${encodeURIComponent(n.id)}`;
+            } else {
+              window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(n.ticket_id)}`;
+            }
           }
         };
       });
@@ -742,7 +782,6 @@ $this->registerJs($js);
 
   function toggleNotifications() {
     ensureNotificationPermission();
-    armNotificationAudio();
 
     const dropdown = document.getElementById('notificationDropdown');
     if (!dropdown) return;
@@ -826,11 +865,6 @@ $this->registerJs($js);
     <?php endif; ?>
   });
 
-  window.testSound = () => {
-  armNotificationAudio();
-  setTimeout(() => playNotifSound(), 200);
-  console.log("probando sonido:", NOTIF_SOUND_URL);
-};
 
 
 

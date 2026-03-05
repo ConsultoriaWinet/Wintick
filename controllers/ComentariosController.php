@@ -6,8 +6,10 @@ use app\models\Comentarios;
 use app\models\ComentariosSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
+use Yii;
 
 /**
  * ComentariosController implements the CRUD actions for Comentarios model.
@@ -104,6 +106,10 @@ class ComentariosController extends Controller
     {
         $model = $this->findModel($id);
 
+        if ($model->usuario_id !== (int)Yii::$app->user->id) {
+            throw new ForbiddenHttpException('No puedes editar comentarios de otros usuarios.');
+        }
+
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
@@ -122,7 +128,13 @@ class ComentariosController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+
+        if ($model->usuario_id !== (int)Yii::$app->user->id) {
+            throw new ForbiddenHttpException('No puedes eliminar comentarios de otros usuarios.');
+        }
+
+        $model->delete();
 
         return $this->redirect(['index']);
     }

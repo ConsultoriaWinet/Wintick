@@ -164,6 +164,40 @@ $this->title = 'Iniciar Sesión';
         color: white;
     }
 
+    .lockout-banner {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .lockout-banner.lockout-hard {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+    }
+    .lockout-banner i { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .lockout-banner.lockout-hard i { color: #842029; }
+    .lockout-banner:not(.lockout-hard) i { color: #856404; }
+    .lockout-banner p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+    .lockout-banner .lockout-timer {
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 6px;
+        letter-spacing: 1px;
+    }
+    .lockout-banner:not(.lockout-hard) .lockout-timer { color: #856404; }
+    .lockout-banner.lockout-hard .lockout-timer { color: #842029; }
+    .attempts-left {
+        font-size: 12px;
+        color: #856404;
+        text-align: center;
+        margin-top: -10px;
+        margin-bottom: 14px;
+    }
+
     @media (max-width: 576px) {
         .login-card {
             padding: 30px 20px;
@@ -197,6 +231,67 @@ $this->title = 'Iniciar Sesión';
 
         <h1><?= Html::encode($this->title) ?></h1>
         <p class="subtitle">Ingresa tus credenciales para acceder al sistema</p>
+
+        <?php
+        // Detectar si la cuenta está actualmente bloqueada para mostrar el countdown
+        $lockoutUntilTs = 0;
+        $attemptsLeft   = null;
+        if (!empty($model->email)) {
+            $u = \app\models\Usuarios::findByEmail($model->email);
+            if ($u) {
+                if ($u->lockout_until && strtotime($u->lockout_until) > time()) {
+                    $lockoutUntilTs = strtotime($u->lockout_until);
+                }
+                $maxAttempts  = (int)(Yii::$app->params['security.maxLoginAttempts'] ?? 5);
+                $used         = (int)($u->failed_attempts ?? 0);
+                if ($used > 0 && $lockoutUntilTs === 0) {
+                    $attemptsLeft = max(0, $maxAttempts - $used);
+                }
+            }
+        }
+        ?>
+
+        <?php if ($lockoutUntilTs > 0): ?>
+        <div class="lockout-banner lockout-hard" id="lockout-banner">
+            <i class="fas fa-lock"></i>
+            <div>
+                <p><strong>Cuenta bloqueada temporalmente</strong><br>
+                   Por seguridad, tu cuenta fue bloqueada tras varios intentos fallidos.<br>
+                   Podrás intentarlo de nuevo en:</p>
+                <div class="lockout-timer" id="lockout-countdown">--:--</div>
+            </div>
+        </div>
+        <script>
+        (function() {
+            const until = <?= $lockoutUntilTs ?> * 1000;
+            function tick() {
+                const diff = Math.max(0, until - Date.now());
+                const m = String(Math.floor(diff / 60000)).padStart(2, '0');
+                const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+                const el = document.getElementById('lockout-countdown');
+                if (el) el.textContent = m + ':' + s;
+                if (diff <= 0) {
+                    document.getElementById('lockout-banner')?.remove();
+                    document.getElementById('login-submit')?.removeAttribute('disabled');
+                } else {
+                    setTimeout(tick, 1000);
+                }
+            }
+            document.getElementById('login-submit')?.setAttribute('disabled', 'disabled');
+            tick();
+        })();
+        </script>
+        <?php elseif ($attemptsLeft !== null && $attemptsLeft <= 2): ?>
+        <div class="lockout-banner" id="lockout-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <p><strong>Advertencia de seguridad</strong><br>
+                   Te queda<?= $attemptsLeft === 1 ? '' : 'n' ?>
+                   <strong><?= $attemptsLeft ?> intento<?= $attemptsLeft !== 1 ? 's' : '' ?></strong>
+                   antes de que la cuenta sea bloqueada temporalmente.</p>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <?php $form = ActiveForm::begin([
             'id' => 'login-form',
@@ -244,7 +339,7 @@ $this->title = 'Iniciar Sesión';
         <div class="form-group">
             <?= Html::submitButton(
                 '<i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión',
-                ['class' => 'btn btn-primary btn-login', 'name' => 'login-button']
+                ['class' => 'btn btn-primary btn-login', 'name' => 'login-button', 'id' => 'login-submit']
             ) ?>
         </div>
 

@@ -156,11 +156,10 @@ $this->title = 'Restablecer Contraseña';
                 <label for="token" class="form-label fw-semibold">Código de Verificación</label>
                 <?= Html::input('text', 'token', '', [
                     'class' => 'form-control',
-                    'placeholder' => '123456',
+                    'placeholder' => 'Ej: aBcD1234',
                     'required' => true,
                     'id' => 'token',
-                    'maxlength' => 6,
-                    'pattern' => '[0-9]{6}',
+                    'maxlength' => 8,
                     'autocomplete' => 'off'
                 ]) ?>
             </div>

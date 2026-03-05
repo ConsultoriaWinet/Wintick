@@ -811,55 +811,346 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
 
 <!-- Modal para Comentarios -->
+<style>
+/* ── Modal comentarios ─────────────────────────────────── */
+#comentariosModal .modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    overflow: hidden;
+}
+#comentariosModal .modal-header {
+    background: linear-gradient(135deg, #8BA590 0%, #6d8f73 100%);
+    color: #fff;
+    padding: 18px 24px;
+    border-bottom: none;
+}
+#comentariosModal .modal-title { font-size: 16px; font-weight: 600; }
+#comentariosModal .modal-body  { padding: 0; background: #f4f6f4; }
+#comentariosModal .modal-footer {
+    background: #fff;
+    border-top: 1px solid #e8ede9;
+    padding: 14px 20px;
+    gap: 10px;
+}
+
+/* ── Lista de comentarios ──────────────────────────────── */
+#listaComentarios {
+    max-height: 360px;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+}
+#listaComentarios::-webkit-scrollbar { width: 5px; }
+#listaComentarios::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 10px; }
+#listaComentarios::-webkit-scrollbar-thumb { background: #b5c9b8; border-radius: 10px; }
+
+.cmnt-item {
+    display: flex;
+    gap: 10px;
+    animation: cmntFadeIn .25s ease;
+}
+@keyframes cmntFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.cmnt-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.cmnt-bubble {
+    flex: 1;
+    background: #fff;
+    border-radius: 0 12px 12px 12px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    position: relative;
+}
+.cmnt-bubble.tipo-nota_interna  { background: #fffbeb; border-left: 3px solid #f59e0b; }
+.cmnt-bubble.tipo-solucion       { background: #f0fdf4; border-left: 3px solid #22c55e; }
+.cmnt-bubble.tipo-comentario     { border-left: 3px solid #8BA590; }
+
+.cmnt-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+}
+.cmnt-author { font-size: 12px; font-weight: 700; color: #374151; }
+.cmnt-fecha  { font-size: 11px; color: #9ca3af; }
+.cmnt-badge  {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+.badge-comentario   { background: #e0f0e3; color: #2d6a2d; }
+.badge-nota_interna { background: #fef3c7; color: #92400e; }
+.badge-solucion     { background: #dcfce7; color: #166534; }
+
+.cmnt-texto {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.55;
+    word-break: break-word;
+    margin: 0;
+}
+.cmnt-mention-tag {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 4px;
+    padding: 0 5px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ── Imagen / Archivo adjunto ──────────────────────────── */
+.cmnt-archivo { margin-top: 8px; }
+.cmnt-img-preview {
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    transition: opacity .2s;
+    display: block;
+}
+.cmnt-img-preview:hover { opacity: .88; }
+.cmnt-file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #4b5563;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 5px 10px;
+    text-decoration: none;
+    transition: background .15s;
+}
+.cmnt-file-link:hover { background: #e5e7eb; color: #111; }
+
+.cmnt-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: #9ca3af;
+}
+.cmnt-empty i { font-size: 36px; margin-bottom: 10px; display: block; }
+
+/* ── Formulario nuevo comentario ───────────────────────── */
+.cmnt-form-wrapper {
+    background: #fff;
+    padding: 16px 20px;
+    border-top: 2px solid #e8ede9;
+}
+.cmnt-tipo-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.cmnt-tab {
+    flex: 1;
+    padding: 6px 4px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #f9fafb;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all .15s;
+    color: #6b7280;
+}
+.cmnt-tab:hover { border-color: #8BA590; color: #4a7c59; }
+.cmnt-tab.active-comentario   { background: #e0f0e3; border-color: #8BA590; color: #2d6a2d; }
+.cmnt-tab.active-nota_interna { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+.cmnt-tab.active-solucion     { background: #dcfce7; border-color: #22c55e; color: #166534; }
+
+#nuevoComentario {
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    resize: none;
+    transition: border-color .2s;
+}
+#nuevoComentario:focus { border-color: #8BA590; box-shadow: 0 0 0 3px rgba(139,165,144,.2); }
+
+/* ── Upload area ───────────────────────────────────────── */
+.cmnt-upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 12px;
+    color: #6b7280;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+.cmnt-upload-area:hover, .cmnt-upload-area.drag-over {
+    border-color: #8BA590;
+    background: #f0f7f1;
+    color: #4a7c59;
+}
+.cmnt-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+.cmnt-upload-preview {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border: 1px solid #e5e7eb;
+}
+.cmnt-upload-preview img {
+    height: 52px;
+    width: 52px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+.cmnt-upload-preview .file-info { flex: 1; font-size: 12px; color: #374151; }
+.cmnt-upload-preview .file-name { font-weight: 600; }
+.cmnt-upload-preview .file-size { color: #9ca3af; }
+.cmnt-remove-file {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+/* ── Lightbox simple ───────────────────────────────────── */
+#imgLightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+#imgLightbox.open { display: flex; }
+#imgLightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+}
+</style>
+
 <div class="modal fade" id="comentariosModal" tabindex="-1" aria-labelledby="comentariosModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="comentariosModalLabel">
-                    <i class="fas fa-comments"></i> Comentarios del Ticket <span id="ticketFolioComentarios"></span>
+                    <i class="fas fa-comments me-2"></i>
+                    Ticket <span id="ticketFolioComentarios" style="font-weight:800;"></span>
+                    <span id="cmntCountBadge" style="font-size:11px; background:rgba(255,255,255,.25); border-radius:20px; padding:2px 9px; margin-left:8px;"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="closeComentariosModal()"></button>
+                <button type="button" class="btn-close btn-close-white" onclick="closeComentariosModal()"></button>
             </div>
+
             <div class="modal-body">
                 <input type="hidden" id="ticketIdComentarios" value="">
-                
-                <!-- Lista de comentarios -->
-                <div id="listaComentarios" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-spinner fa-spin"></i> Cargando comentarios...
+
+                <!-- Lista -->
+                <div id="listaComentarios">
+                    <div class="cmnt-empty">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Cargando comentarios...</p>
                     </div>
                 </div>
-                
-                <!-- Formulario para nuevo comentario -->
-                <div style="border-top: 2px solid #e5e7eb; padding-top: 15px;">
-                    <h6 style="color: #495057; margin-bottom: 10px;">
-                        <i class="fas fa-plus-circle"></i> Agregar nuevo comentario
-                    </h6>
-                    <div class="mb-3">
-                        <label class="form-label"><i class="fas fa-tag"></i> Tipo de comentario</label>
-                        <select id="tipoComentario" class="form-select">
-                            <option value="comentario"> Comentario general</option>
-                            <option value="nota_interna"> Nota interna</option>
-                            <option value="solucion">Solución propuesta</option>
-                        </select>
+
+                <!-- Formulario -->
+                <div class="cmnt-form-wrapper">
+                    <!-- Tabs de tipo -->
+                    <div class="cmnt-tipo-tabs" id="cmntTipoTabs">
+                        <button class="cmnt-tab active-comentario" data-tipo="comentario" onclick="setCmntTipo('comentario', this)">
+                            💬 Comentario
+                        </button>
+                        <button class="cmnt-tab" data-tipo="nota_interna" onclick="setCmntTipo('nota_interna', this)">
+                            📝 Nota interna
+                        </button>
+                        <button class="cmnt-tab" data-tipo="solucion" onclick="setCmntTipo('solucion', this)">
+                            ✅ Solución
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label"><i class="fas fa-comment"></i> Comentario</label>
-                        <textarea id="nuevoComentario" class="form-control" rows="3" placeholder="Escribe tu comentario aquí..."></textarea>
+                    <input type="hidden" id="tipoComentario" value="comentario">
+
+                    <!-- Textarea -->
+                    <div style="position:relative;">
+                        <textarea id="nuevoComentario" class="form-control" rows="3"
+                            placeholder="Escribe tu comentario... Usa @ para mencionar a alguien"></textarea>
                         <div id="mentionBox" class="mention-box"></div>
+                    </div>
+
+                    <!-- Zona de carga de archivo -->
+                    <div class="cmnt-upload-area" id="cmntUploadArea">
+                        <input type="file" id="cmntArchivoInput" accept="image/*,.pdf,.docx,.xlsx"
+                               onchange="handleCmntFileSelect(this)">
+                        <i class="fas fa-paperclip me-1"></i>
+                        Adjuntar imagen o archivo <span style="color:#9ca3af;">(jpg, png, gif, webp, pdf — máx. 8 MB)</span>
+                    </div>
+
+                    <!-- Preview del archivo seleccionado -->
+                    <div class="cmnt-upload-preview" id="cmntUploadPreview">
+                        <img id="cmntPreviewImg" src="" alt="preview" style="display:none;">
+                        <div id="cmntFileIconPreview" style="display:none; font-size:32px;">📄</div>
+                        <div class="file-info">
+                            <div class="file-name" id="cmntFileName"></div>
+                            <div class="file-size" id="cmntFileSize"></div>
+                        </div>
+                        <button class="cmnt-remove-file" onclick="removeCmntFile()" title="Quitar archivo">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
                     </div>
                 </div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeComentariosModal()">
-                    <i class="fas fa-times"></i> Cerrar
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeComentariosModal()">
+                    <i class="fas fa-times me-1"></i> Cerrar
                 </button>
-                <button type="button" class="btn btn-primary" onclick="agregarComentario()">
-                    <i class="fas fa-paper-plane"></i> Enviar Comentario
+                <button type="button" class="btn btn-success btn-sm" id="btnEnviarComentario" onclick="agregarComentario()">
+                    <i class="fas fa-paper-plane me-1"></i> Enviar
                 </button>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Lightbox para imágenes -->
+<div id="imgLightbox" onclick="closeLightbox()">
+    <img id="imgLightboxSrc" src="" alt="imagen ampliada">
 </div>
 <script>
 window.WINTICK_USERS = <?= json_encode(array_map(function($u){
@@ -1529,14 +1820,13 @@ function closeModal() {
 // ========================================
 function openComentariosModal(ticketId, folio) {
     document.getElementById('ticketIdComentarios').value = ticketId;
-    document.getElementById('ticketFolioComentarios').textContent = folio;
-    document.getElementById('nuevoComentario').value = '';
-    document.getElementById('tipoComentario').value = 'comentario';
+    document.getElementById('ticketFolioComentarios').textContent = '#' + folio;
 
-    // reset menciones si existen
     const ta = document.getElementById('nuevoComentario');
-    if (ta) ta._mentions = [];
+    if (ta) { ta.value = ''; ta._mentions = []; }
 
+    setCmntTipo('comentario', document.querySelector('.cmnt-tab[data-tipo="comentario"]'));
+    removeCmntFile();
     cargarComentarios(ticketId);
 
     const modal = document.getElementById('comentariosModal');
@@ -1544,58 +1834,98 @@ function openComentariosModal(ticketId, folio) {
     modal.style.display = 'block';
     document.body.classList.add('modal-open');
 
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    backdrop.id = 'comentariosBackdrop';
-    document.body.appendChild(backdrop);
+    if (!document.getElementById('comentariosBackdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'comentariosBackdrop';
+        document.body.appendChild(backdrop);
+    }
 }
 
 function cargarComentarios(ticketId) {
     const lista = document.getElementById('listaComentarios');
-    lista.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+    lista.innerHTML = `<div class="cmnt-empty"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Cargando...</p></div>`;
 
     fetch('<?= Url::to(['/tickets/obtener-comentarios']) ?>?ticket_id=' + ticketId)
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 mostrarComentarios(data.comentarios);
+                const badge = document.getElementById('cmntCountBadge');
+                if (badge) badge.textContent = data.comentarios.length + (data.comentarios.length === 1 ? ' comentario' : ' comentarios');
             } else {
-                lista.innerHTML = '<div class="alert alert-danger">Error al cargar</div>';
+                lista.innerHTML = `<div class="alert alert-danger m-3">Error al cargar comentarios</div>`;
             }
+        })
+        .catch(() => {
+            lista.innerHTML = `<div class="alert alert-danger m-3">Error de conexión</div>`;
         });
+}
+
+function getAvatarColor(email) {
+    const colors = ['#8BA590','#6d8f73','#5b7a61','#4a6950','#3a5840',
+                    '#a8c4ad','#7fb08a','#6a9975','#5d8868','#4f7659'];
+    let hash = 0;
+    for (let i = 0; i < (email||'').length; i++) hash = email.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+}
+
+function getInitials(nombre, email) {
+    if (nombre && nombre.trim()) {
+        const parts = nombre.trim().split(/\s+/);
+        return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    }
+    return (email || '?')[0].toUpperCase();
 }
 
 function mostrarComentarios(comentarios) {
     const lista = document.getElementById('listaComentarios');
 
-    if (comentarios.length === 0) {
-        lista.innerHTML = `
-            <div class="comentarios-empty">
-                <i class="fas fa-comments"></i>
-                <p>No hay comentarios</p>
-            </div>
-        `;
+    if (!comentarios.length) {
+        lista.innerHTML = `<div class="cmnt-empty"><i class="fas fa-comment-slash"></i><p>Sin comentarios aún. ¡Sé el primero!</p></div>`;
         return;
     }
 
-    lista.innerHTML = comentarios.map(c => `
-        <div class="comentario-item ${c.tipo}">
-            <div class="comentario-header">
-                <div class="comentario-usuario">
-                    <i class="fas fa-user-circle"></i>
-                    ${escapeHtml(c.usuario)}
-                    <span class="comentario-tipo ${c.tipo}">${getTipoLabel(c.tipo)}</span>
-                </div>
-                <span class="comentario-fecha">
-                    <i class="fas fa-clock"></i> ${escapeHtml(c.fecha)}
-                </span>
-            </div>
-            <p class="comentario-texto">${renderMentions(c.comentario)}</p>
-        </div>
-    `).join('');
-}
+    lista.innerHTML = comentarios.map(c => {
+        const initials  = getInitials(c.nombre, c.usuario);
+        const avatarClr = getAvatarColor(c.usuario);
+        const badgeMap  = { comentario:'badge-comentario', nota_interna:'badge-nota_interna', solucion:'badge-solucion' };
+        const labelMap  = { comentario:'💬 Comentario', nota_interna:'📝 Nota interna', solucion:'✅ Solución' };
 
-// Render token almacenado en BD -> badge @Nombre
+        let archivoHtml = '';
+        if (c.archivo) {
+            if (c.esImagen) {
+                archivoHtml = `<div class="cmnt-archivo">
+                    <img src="${escapeHtml(c.archivo)}" class="cmnt-img-preview"
+                         onclick="openLightbox('${escapeHtml(c.archivo)}')"
+                         alt="imagen adjunta" loading="lazy">
+                </div>`;
+            } else {
+                const filename = c.archivo.split('/').pop();
+                archivoHtml = `<div class="cmnt-archivo">
+                    <a href="${escapeHtml(c.archivo)}" target="_blank" class="cmnt-file-link">
+                        <i class="fas fa-file-download"></i> ${escapeHtml(filename)}
+                    </a>
+                </div>`;
+            }
+        }
+
+        return `<div class="cmnt-item">
+            <div class="cmnt-avatar" style="background:${avatarClr};">${initials}</div>
+            <div class="cmnt-bubble tipo-${c.tipo}">
+                <div class="cmnt-meta">
+                    <span class="cmnt-author">${escapeHtml(c.nombre || c.usuario)}</span>
+                    <span class="cmnt-badge ${badgeMap[c.tipo]||'badge-comentario'}">${labelMap[c.tipo]||c.tipo}</span>
+                    <span class="cmnt-fecha"><i class="far fa-clock"></i> ${escapeHtml(c.fecha)}</span>
+                </div>
+                <p class="cmnt-texto">${renderMentions(c.comentario)}</p>
+                ${archivoHtml}
+            </div>
+        </div>`;
+    }).join('');
+
+    lista.scrollTop = lista.scrollHeight;
+}
 
 function renderMentions(text) {
     const safe = escapeHtml(text || '');
@@ -1603,43 +1933,103 @@ function renderMentions(text) {
         email = (email || '').trim().toLowerCase();
         const user = (window.WINTICK_USERS || []).find(u => (u.email || '').toLowerCase() === email);
         const nombre = user?.primerNombre || (user?.Nombre ? user.Nombre.split(/\s+/)[0] : 'usuario');
-        return `<span class="badge bg-primary-subtle text-primary-emphasis">@${escapeHtml(nombre)}</span>`;
+        return `<span class="cmnt-mention-tag">@${escapeHtml(nombre)}</span>`;
     });
 }
 
+function setCmntTipo(tipo, btn) {
+    document.getElementById('tipoComentario').value = tipo;
+    document.querySelectorAll('.cmnt-tab').forEach(t => {
+        t.className = 'cmnt-tab';
+    });
+    if (btn) btn.classList.add('active-' + tipo);
+}
+
+// ── Upload helpers ──────────────────────────────────────────────────────────
+function handleCmntFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const preview   = document.getElementById('cmntUploadPreview');
+    const previewImg = document.getElementById('cmntPreviewImg');
+    const fileIcon  = document.getElementById('cmntFileIconPreview');
+    const fileName  = document.getElementById('cmntFileName');
+    const fileSize  = document.getElementById('cmntFileSize');
+
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    preview.style.display = 'flex';
+
+    const imageTypes = ['image/jpeg','image/png','image/gif','image/webp'];
+    if (imageTypes.includes(file.type)) {
+        const reader = new FileReader();
+        reader.onload = e => { previewImg.src = e.target.result; previewImg.style.display = 'block'; fileIcon.style.display = 'none'; };
+        reader.readAsDataURL(file);
+    } else {
+        previewImg.style.display = 'none';
+        fileIcon.style.display = 'block';
+    }
+}
+
+function removeCmntFile() {
+    const input = document.getElementById('cmntArchivoInput');
+    if (input) input.value = '';
+    document.getElementById('cmntUploadPreview').style.display = 'none';
+    document.getElementById('cmntPreviewImg').src = '';
+}
+
+// ── Lightbox ────────────────────────────────────────────────────────────────
+function openLightbox(src) {
+    document.getElementById('imgLightboxSrc').src = src;
+    document.getElementById('imgLightbox').classList.add('open');
+}
+function closeLightbox() {
+    document.getElementById('imgLightbox').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ── Enviar comentario (multipart para soportar archivo) ─────────────────────
 function agregarComentario() {
-    const ticketId = document.getElementById('ticketIdComentarios').value;
-    const comentarioVisible = document.getElementById('nuevoComentario').value;
-    const comentario = (window.buildCommentPayload ? window.buildCommentPayload(comentarioVisible) : comentarioVisible.trim());
-    const tipo = document.getElementById('tipoComentario').value;
+    const ticketId        = document.getElementById('ticketIdComentarios').value;
+    const comentarioVis   = document.getElementById('nuevoComentario').value;
+    const comentario      = (window.buildCommentPayload ? window.buildCommentPayload(comentarioVis) : comentarioVis.trim());
+    const tipo            = document.getElementById('tipoComentario').value;
+    const archivoInput    = document.getElementById('cmntArchivoInput');
+    const tieneArchivo    = archivoInput && archivoInput.files.length > 0;
 
     if (!comentario || comentario.trim() === '') {
-        alert('Escribe un comentario');
+        alert('Escribe un comentario antes de enviar.');
         return;
     }
 
+    const btn = document.getElementById('btnEnviarComentario');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Enviando...'; }
+
+    const formData = new FormData();
+    formData.append('ticket_id', ticketId);
+    formData.append('comentario', comentario);
+    formData.append('tipo', tipo);
+    if (tieneArchivo) formData.append('archivo', archivoInput.files[0]);
+
     fetch('<?= Url::to(['/tickets/agregar-comentario']) ?>', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-        },
-        body: JSON.stringify({
-            ticket_id: ticketId,
-            comentario: comentario,
-            tipo: tipo
-        })
+        body: formData
     })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 const ta = document.getElementById('nuevoComentario');
                 if (ta) { ta.value = ''; ta._mentions = []; }
+                removeCmntFile();
                 cargarComentarios(ticketId);
                 updateCommentBadge(ticketId);
             } else {
-                alert('Error: ' + data.message);
+                alert('Error: ' + (data.message || JSON.stringify(data.errors)));
             }
+        })
+        .catch(err => alert('Error de conexión: ' + err.message))
+        .finally(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Enviar'; }
         });
 }
 
@@ -1648,17 +2038,13 @@ function closeComentariosModal() {
     modal.classList.remove('show');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
-
     const backdrop = document.getElementById('comentariosBackdrop');
     if (backdrop) backdrop.remove();
+    removeCmntFile();
 }
 
 function getTipoLabel(tipo) {
-    const labels = {
-        'comentario': '💬 Comentario',
-        'nota_interna': '📝 Nota Interna',
-        'solucion': '✅ Solución'
-    };
+    const labels = { comentario:'💬 Comentario', nota_interna:'📝 Nota Interna', solucion:'✅ Solución' };
     return labels[tipo] || tipo;
 }
 
@@ -2227,21 +2613,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!openComments || !ticketId) return;
 
-  // 1) Intentar abrir con tu función si existe
-  if (typeof openCommentsModal === 'function') {
-    openCommentsModal(ticketId);
-    return;
-  }
+  // Abrir modal de comentarios del ticket
+  const btn = document.querySelector(`.comment-btn-${ticketId}`);
+  if (btn) { btn.click(); return; }
 
-  // 2) Si tu modal se abre por un botón, simula el click
-  const btn = document.querySelector(`[data-open-comments="${ticketId}"]`);
-  if (btn) {
-    btn.click();
-    return;
+  // Si el ticket no está en la tabla visible (paginación), llamar directamente
+  if (typeof openComentariosModal === 'function') {
+    openComentariosModal(ticketId, '...');
   }
-
-  // 3) Si lo abres por un ícono con clase, ajusta selector aquí
-  const altBtn = document.querySelector(`.btn-comentarios[data-ticket-id="${ticketId}"]`);
-  if (altBtn) altBtn.click();
 });
 </script>

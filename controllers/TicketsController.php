@@ -39,23 +39,11 @@ class TicketsController extends Controller
             return array_merge(parent::behaviors(), [
                 'access' => [
                     'class' => AccessControl::class,
-                    'only' => ['index','get-tickets','login','logout','error'],
+                    // Sin 'only' → aplica a TODAS las acciones del controlador
                     'rules' => [
                         [
                             'allow' => true,
-                            'actions' => ['login','error'],
-                            'roles' => ['?','@'],
-                        ],
-                        [
-                            'allow' => true,
-                            'actions' => ['logout'],
-                            'roles' => ['@'],
-                        ],
-                        // ✅ Consultores y superiores: pueden ver dashboard y pedir tickets
-                        [
-                            'allow' => true,
-                            'actions' => ['index','get-tickets'],
-                            'roles' => ['verTickets'],
+                            'roles' => ['@'],  // cualquier usuario autenticado
                         ],
                     ],
                 ],
@@ -67,6 +55,33 @@ class TicketsController extends Controller
                 ],
             ]);
         }
+
+    /**
+     * Deshabilita CSRF para endpoints que reciben JSON crudo desde JS.
+     * El resto del controlador mantiene CSRF activo.
+     */
+    public function beforeAction($action)
+    {
+        $jsonActions = [
+            'save-bulk',
+            'update-estado',
+            'get-ticket-data',
+            'save-solution',
+            'marcar-notificacion',
+            'marcar-todas-leidas',
+            'obtener-notificaciones',
+            'get-next-folio',
+            'agregar-comentario',
+            'obtener-comentarios',
+            'contar-comentarios',
+        ];
+
+        if (in_array($action->id, $jsonActions, true)) {
+            $this->enableCsrfValidation = false;
+        }
+
+        return parent::beforeAction($action);
+    }
 
     /**
      * Lists all Tickets models.
@@ -144,6 +159,8 @@ class TicketsController extends Controller
     public function actionCreate()
     {
         $model = new Tickets();
+        // Folio provisional para mostrar en el form (puede colisionar en concurrencia)
+        // El folio definitivo se asigna después del INSERT usando el ID real
         $model->Folio = str_pad(Tickets::find()->max('id') + 1, 4, '0', STR_PAD_LEFT);
 
         // CORRECCIÓN: Seleccionar 'id' y 'Nombre', y mapear id => Nombre
@@ -184,16 +201,10 @@ class TicketsController extends Controller
             
             if ($model->save()) {
 
-            $notif = new \app\models\Notificaciones();
-            $notif->usuario_id = $model->Asignado_a;     // a quién va
-            $notif->ticket_id  = $model->id;
-            $notif->tipo       = 'nuevo_ticket';
-            $notif->titulo     = 'Nuevo ticket asignado';
-            $notif->mensaje    = 'Folio: '.$model->Folio;
-            $notif->leida      = 0;
-            $notif->fecha      = date('Y-m-d H:i:s');
-            $notif->save(false);
-                // ✅ CREAR NOTIFICACIÓN AL CREAR TICKET Y ASIGNAR
+                // Folio definitivo basado en el ID real asignado por la BD (sin race condition)
+                $model->Folio = str_pad($model->id, 4, '0', STR_PAD_LEFT);
+                $model->save(false); // solo actualizar Folio, sin re-validar
+
                 if ($model->Asignado_a) {
                     $this->crearNotificacion(
                         $model->Asignado_a,
@@ -203,7 +214,7 @@ class TicketsController extends Controller
                         $model->id
                     );
                 }
-                
+
                 Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -228,43 +239,57 @@ class TicketsController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-        
-        // Guardar valores anteriores para detectar cambios
-        $asignadoAntes = $model->Asignado_a;
-        $estadoAntes = $model->Estado;
 
-      
+        // Guardar valores originales ANTES del load() para proteger campos y detectar cambios
+        $asignadoAntes  = $model->Asignado_a;
+        $estadoAntes    = $model->Estado;
+        $solucionOrig   = $model->Solucion;
+        $tiempoEfOrig   = $model->TiempoEfectivo;
+        $horaFinOrig    = $model->HoraFinalizo;
+
         $clientes = Clientes::find()->asArray()->all();
         $sistemas = Sistemas::find()->asArray()->all();
         $servicios = Servicios::find()->asArray()->all();
         $usuarios = Usuarios::find()->asArray()->all();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            // ✅ CREAR NOTIFICACIÓN AL ACTUALIZAR
-            
-            // Si cambió la asignación a una nueva persona
-            if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
-                $this->crearNotificacion(
-                    $model->Asignado_a,
-                    'asignado',
-                    'Nuevo ticket asignado',
-                    'Se te ha asignado el ticket: ' . $model->Folio,
-                    $model->id
-                );
+        if ($model->load(Yii::$app->request->post())) {
+            // Bloquear cierre desde esta vista — debe hacerse desde index con el flujo completo
+            if (mb_strtolower(trim($estadoAntes)) !== 'cerrado' &&
+                mb_strtolower(trim($model->Estado)) === 'cerrado') {
+                $model->Estado = $estadoAntes;
+                Yii::$app->session->setFlash('error', 'Para cerrar un ticket debes hacerlo desde la lista de tickets (incluye solución, tiempo efectivo y fecha de cierre).');
             }
-            
-            // Si cambió el estado
-            if ($estadoAntes !== $model->Estado && $model->Asignado_a) {
-                $this->crearNotificacion(
-                    $model->Asignado_a,
-                    'actualizado',
-                    'Estado del ticket actualizado',
-                    'El ticket ' . $model->Folio . ' cambió de estado a: ' . $model->Estado,
-                    $model->id
-                );
+
+            // Los campos de cierre solo se asignan por actionSaveSolution — nunca desde aquí
+            $model->Solucion       = $solucionOrig;
+            $model->TiempoEfectivo = $tiempoEfOrig;
+            $model->HoraFinalizo   = $horaFinOrig;
+
+            if ($model->save()) {
+                // Si cambió la asignación a una nueva persona
+                if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
+                    $this->crearNotificacion(
+                        $model->Asignado_a,
+                        'asignado',
+                        'Nuevo ticket asignado',
+                        'Se te ha asignado el ticket: ' . $model->Folio,
+                        $model->id
+                    );
+                }
+
+                // Si cambió el estado
+                if ($estadoAntes !== $model->Estado && $model->Asignado_a) {
+                    $this->crearNotificacion(
+                        $model->Asignado_a,
+                        'actualizado',
+                        'Estado del ticket actualizado',
+                        'El ticket ' . $model->Folio . ' cambió de estado a: ' . $model->Estado,
+                        $model->id
+                    );
+                }
+
+                return $this->redirect(['view', 'id' => $model->id]);
             }
-            
-            return $this->redirect(['view', 'id' => $model->id]);
         }
 
         return $this->render('update', [
@@ -393,6 +418,10 @@ class TicketsController extends Controller
                     return ['success' => false, 'errors' => $ticket->errors];
                 }
 
+                // Folio definitivo basado en el ID real
+                $ticket->Folio = str_pad($ticket->id, 4, '0', STR_PAD_LEFT);
+                $ticket->save(false);
+
                 // ✅ CREAR NOTIFICACIÓN CUANDO SE ASIGNA
                 if ($ticket->Asignado_a) {
                     $this->crearNotificacion(
@@ -514,16 +543,20 @@ class TicketsController extends Controller
         {
             \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+            $data = json_decode(\Yii::$app->request->getRawBody(), true);
+
+            if (empty($data['id'])) {
+                return ['success' => false, 'message' => 'ID de ticket no recibido'];
+            }
+
+            $db = Yii::$app->db;
+            $transaction = $db->beginTransaction();
+
             try {
-                $data = json_decode(\Yii::$app->request->getRawBody(), true);
-
-                if (empty($data['id'])) {
-                    return ['success' => false, 'message' => 'ID de ticket no recibido'];
-                }
-
                 /** @var Tickets $ticket */
                 $ticket = Tickets::findOne($data['id']);
                 if (!$ticket) {
+                    $transaction->rollBack();
                     return ['success' => false, 'message' => 'Ticket no encontrado'];
                 }
 
@@ -531,13 +564,15 @@ class TicketsController extends Controller
                 $viejoMin = $this->roundUpTo15($this->hmToMinutes($ticket->TiempoEfectivo ?? '0.00'));
                 $nuevoMin = $this->roundUpTo15($this->hmToMinutes($data['tiempoEfectivo'] ?? '0.00'));
 
-                // 2) Setear ticket (GUARDA normalizado a H.MM ya redondeado)
-                $ticket->Solucion = $data['solucion'] ?? null;
+                // 2) Setear campos del ticket
+                $ticket->Solucion       = $data['solucion'] ?? null;
                 $ticket->TiempoEfectivo = $this->minutesToHM($nuevoMin);
+                $ticket->Estado         = 'CERRADO'; // cerrar atómicamente con la solución
 
                 if (!empty($data['horaFinalizo'])) {
                     $timestamp = strtotime($data['horaFinalizo']);
                     if ($timestamp === false) {
+                        $transaction->rollBack();
                         return ['success' => false, 'message' => 'Formato de fecha inválido para horaFinalizo'];
                     }
                     $ticket->HoraFinalizo = date('Y-m-d H:i:s', $timestamp);
@@ -545,58 +580,42 @@ class TicketsController extends Controller
 
                 // 3) Guardar ticket
                 if (!$ticket->save()) {
-                    return [
-                        'success' => false,
-                        'message' => 'Error al guardar ticket',
-                        'errors'  => $ticket->errors,
-                    ];
+                    $transaction->rollBack();
+                    return ['success' => false, 'message' => 'Error al guardar ticket', 'errors' => $ticket->errors];
                 }
 
-                // 4) Delta en MINUTOS
+                // 4) Delta en MINUTOS → actualizar tiempo del cliente
                 $deltaMin = $nuevoMin - $viejoMin;
 
-                // si no cambió, no tocar cliente
-                if ($deltaMin === 0) {
-                    return [
-                        'success' => true,
-                        'message' => 'Solución guardada (sin cambios en tiempo del cliente)',
-                        'ticket_viejo' => $this->minutesToHM($viejoMin),
-                        'ticket_nuevo' => $this->minutesToHM($nuevoMin),
-                        'delta_min' => $deltaMin,
-                    ];
-                }
-
-                // 5) Actualizar cliente (EN EL MISMO FORMATO H.MM)
-                if (!empty($ticket->Cliente_id)) {
+                if ($deltaMin !== 0 && !empty($ticket->Cliente_id)) {
                     $cliente = Clientes::findOne($ticket->Cliente_id);
                     if ($cliente) {
                         $clienteMinAntes = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
-                        $clienteMinDesp  = $clienteMinAntes - $deltaMin;
-
-                        $cliente->Tiempo = $this->minutesToHM($clienteMinDesp);
+                        $cliente->Tiempo = $this->minutesToHM($clienteMinAntes - $deltaMin);
 
                         if (!$cliente->save()) {
+                            $transaction->rollBack();
                             return [
                                 'success' => false,
                                 'message' => 'Ticket guardado, pero falló actualizar tiempo del cliente',
                                 'errors'  => $cliente->errors,
-                                'cliente_antes' => $this->minutesToHM($clienteMinAntes),
-                                'cliente_desp'  => $this->minutesToHM($clienteMinDesp),
-                                'delta_min'     => $deltaMin,
                             ];
                         }
                     }
                 }
 
+                $transaction->commit();
+
                 return [
-                    'success' => true,
-                    'message' => 'Solución guardada y tiempo del cliente ajustado',
+                    'success'      => true,
+                    'message'      => 'Solución guardada y ticket cerrado',
                     'ticket_viejo' => $this->minutesToHM($viejoMin),
                     'ticket_nuevo' => $this->minutesToHM($nuevoMin),
-                    'delta_min' => $deltaMin,
+                    'delta_min'    => $deltaMin,
                 ];
 
             } catch (\Exception $e) {
+                $transaction->rollBack();
                 return ['success' => false, 'message' => 'Error en servidor: ' . $e->getMessage()];
             }
         }
@@ -700,12 +719,14 @@ class TicketsController extends Controller
 
         if ($exists) return;
 
-        $actorEmail = Yii::$app->user->identity->email ?? 'Alguien';
+        $actor = Yii::$app->user->identity;
+        $actorNombre = $actor->Nombre ?? $actor->email ?? 'Alguien';
+        $descripcion = mb_strimwidth($ticket->Descripcion ?? '', 0, 80, '…');
         $this->crearNotificacion(
             $usuarioId,
             'mencion',
-            'Te mencionaron en ticket ' . $ticket->Folio,
-            $actorEmail . ' te mencionó en un comentario',
+            "@{$actorNombre} te mencionó en el ticket {$ticket->Folio}",
+            $descripcion ?: 'Haz clic para ver el comentario',
             $ticket->id
         );
     }
@@ -726,15 +747,11 @@ class TicketsController extends Controller
                 return ['success' => false, 'message' => 'Usuario no autenticado', 'user_id' => null];
             }
 
-            \Yii::error("DEBUG: Buscando notificaciones para usuario_id: $userId");
-
             $notificaciones = Notificaciones::find()
                 ->where(['usuario_id' => $userId])
                 ->orderBy(['fecha_creacion' => SORT_DESC])
                 ->limit(10)
                 ->all();
-
-            \Yii::error("DEBUG: Total de notificaciones encontradas: " . count($notificaciones));
 
             $result = [];
             foreach ($notificaciones as $notif) {
@@ -874,7 +891,7 @@ class TicketsController extends Controller
             $servicioNombre = $ticket->servicio ? $ticket->servicio->Nombre : 'N/A';
             $prioridadColor = $this->getPrioridadColor($ticket->Prioridad);
             $ticketUrl = \yii\helpers\Url::to(['tickets/view', 'id' => $ticket->id], true);
-            $fechaFormateada = date('d M, Y · H:i', strtotime($ticket->HoraInicio));
+            $fechaFormateada = $ticket->HoraInicio ? date('d M, Y · H:i', strtotime($ticket->HoraInicio)) : 'No definida';
 
             $htmlBody = <<<HTML
         <!DOCTYPE html>
@@ -1258,41 +1275,80 @@ class TicketsController extends Controller
 
 
     /**
-     * Agregar comentario a un ticket
+     * Agregar comentario a un ticket (soporta multipart/form-data para adjuntos)
      */
     public function actionAgregarComentario()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $input = Yii::$app->request->getRawBody();
-            $data = json_decode($input, true);
+            $request = Yii::$app->request;
 
-            if (empty($data['ticket_id']) || empty($data['comentario'])) {
+            // Soporte multipart (archivo) y JSON plano
+            if (strpos($request->contentType, 'application/json') !== false) {
+                $data = json_decode($request->getRawBody(), true);
+                $ticketId     = $data['ticket_id'] ?? null;
+                $comentarioTx = $data['comentario'] ?? null;
+                $tipo         = $data['tipo'] ?? 'comentario';
+            } else {
+                $ticketId     = $request->post('ticket_id');
+                $comentarioTx = $request->post('comentario');
+                $tipo         = $request->post('tipo', 'comentario');
+            }
+
+            if (empty($ticketId) || empty($comentarioTx)) {
                 return ['success' => false, 'message' => 'Datos incompletos'];
             }
 
-            $ticket = Tickets::findOne((int)$data['ticket_id']);
+            $ticket = Tickets::findOne((int)$ticketId);
             if (!$ticket) {
                 return ['success' => false, 'message' => 'Ticket no encontrado'];
             }
 
             $comentario = new Comentarios();
-            $comentario->ticket_id = $data['ticket_id'];
+            $comentario->ticket_id  = (int)$ticketId;
             $comentario->usuario_id = \Yii::$app->user->id;
-            $comentario->comentario = $data['comentario'];
-            $comentario->comentario = (string)$data['comentario']; 
-            $comentario->tipo = $data['tipo'] ?? 'comentario';
+            $comentario->comentario = (string)$comentarioTx;
+            $comentario->tipo       = $tipo;
+
+            // ── Manejo de archivo adjunto ──────────────────────────────────
+            $archivoNombre = null;
+            $uploadDir     = \Yii::getAlias('@webroot/uploads/comentarios/');
+            $uploadedFile  = \yii\web\UploadedFile::getInstanceByName('archivo');
+
+            if ($uploadedFile && $uploadedFile->size > 0) {
+                $ext = strtolower($uploadedFile->extension);
+                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'docx', 'xlsx'];
+
+                if (!in_array($ext, $allowed)) {
+                    return ['success' => false, 'message' => 'Tipo de archivo no permitido. Formatos: ' . implode(', ', $allowed)];
+                }
+                if ($uploadedFile->size > 8 * 1024 * 1024) {
+                    return ['success' => false, 'message' => 'El archivo no debe superar 8 MB'];
+                }
+
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $archivoNombre = uniqid('cmnt_', true) . '.' . $ext;
+                if (!$uploadedFile->saveAs($uploadDir . $archivoNombre)) {
+                    return ['success' => false, 'message' => 'Error al guardar el archivo'];
+                }
+                $comentario->archivo = $archivoNombre;
+            }
+            // ───────────────────────────────────────────────────────────────
 
             if (!$comentario->save()) {
-            return ['success' => false, 'errors' => $comentario->errors];
-        }
+                if ($archivoNombre) {
+                    @unlink($uploadDir . $archivoNombre);
+                }
+                return ['success' => false, 'errors' => $comentario->errors];
+            }
 
             $usuarioActualEmail = Yii::$app->user->identity->email ?? '';
 
-            // ============================
-            // (A) Notificación al asignado (tu lógica actual)
-            // ============================
+            // Notificación al asignado
             if ($ticket->Asignado_a && (int)$ticket->Asignado_a !== (int)Yii::$app->user->id) {
                 $this->crearNotificacion(
                     (int)$ticket->Asignado_a,
@@ -1303,35 +1359,34 @@ class TicketsController extends Controller
                 );
             }
 
-            // ============================
-            // (B) ✅ Notificaciones por menciones (1 por cada usuario mencionado)
-            // ============================
+            // Notificaciones por menciones
             $emails = $this->extractMentionEmails($comentario->comentario);
-
             if (!empty($emails)) {
-                // Buscar usuarios por email (tu columna se llama "email")
                 $usuariosMencionados = Usuarios::find()
                     ->where(['lower(email)' => $emails])
                     ->all();
 
                 foreach ($usuariosMencionados as $u) {
                     $uid = (int)$u->id;
-
-                    // evitar auto-mención
                     if ($uid === (int)Yii::$app->user->id) continue;
-
                     $this->crearNotificacionMencion($uid, $ticket, (int)$comentario->id);
                 }
             }
 
+            $archivoUrl = $archivoNombre
+                ? \yii\helpers\Url::to('@web/uploads/comentarios/' . $archivoNombre, true)
+                : null;
+
             return [
                 'success' => true,
                 'comentario' => [
-                    'id' => $comentario->id,
-                    'usuario' => $usuarioActualEmail,
+                    'id'         => $comentario->id,
+                    'usuario'    => $usuarioActualEmail,
                     'comentario' => $comentario->comentario,
-                    'tipo' => $comentario->tipo,
-                    'fecha' => date('d/m/Y H:i', strtotime($comentario->fecha_creacion))
+                    'tipo'       => $comentario->tipo,
+                    'fecha'      => date('d/m/Y H:i'),
+                    'archivo'    => $archivoUrl,
+                    'esImagen'   => $archivoNombre ? in_array(strtolower(pathinfo($archivoNombre, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp']) : false,
                 ]
             ];
 
@@ -1360,14 +1415,25 @@ class TicketsController extends Controller
                 ->orderBy(['fecha_creacion' => SORT_ASC])
                 ->all();
 
+            $imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $result = [];
             foreach ($comentarios as $com) {
+                $archivoUrl = null;
+                $esImagen   = false;
+                if (!empty($com->archivo)) {
+                    $archivoUrl = \yii\helpers\Url::to('@web/uploads/comentarios/' . $com->archivo, true);
+                    $esImagen   = in_array(strtolower(pathinfo($com->archivo, PATHINFO_EXTENSION)), $imageExts);
+                }
+
                 $result[] = [
-                    'id' => $com->id,
-                    'usuario' => $com->usuario->email ?? 'Usuario desconocido',
+                    'id'         => $com->id,
+                    'usuario'    => $com->usuario->email ?? 'Usuario desconocido',
+                    'nombre'     => $com->usuario->Nombre ?? 'Usuario',
                     'comentario' => $com->comentario,
-                    'tipo' => $com->tipo,
-                    'fecha' => date('d/m/Y H:i', strtotime($com->fecha_creacion))
+                    'tipo'       => $com->tipo,
+                    'fecha'      => $com->fecha_creacion ? date('d/m/Y H:i', strtotime($com->fecha_creacion)) : date('d/m/Y H:i'),
+                    'archivo'    => $archivoUrl,
+                    'esImagen'   => $esImagen,
                 ];
             }
 

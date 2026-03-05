@@ -190,8 +190,14 @@ class SiteController extends Controller
         $consultorId = $userId;
     }
 
+    // Solo cargar tickets de los últimos 3 meses y los próximos 2 meses
+    $desde = date('Y-m-d 00:00:00', strtotime('-3 months'));
+    $hasta = date('Y-m-d 23:59:59', strtotime('+2 months'));
+
     $query = \app\models\Tickets::find()
-        ->with(['cliente','sistema','servicio','usuarioAsignado']);
+        ->with(['cliente','sistema','servicio','usuarioAsignado'])
+        ->where(['between', 'Fecha_creacion', $desde, $hasta])
+        ->limit(500);
 
     if (!empty($consultorId)) {
         $query->andWhere(['Asignado_a' => (int)$consultorId]);
@@ -251,11 +257,12 @@ class SiteController extends Controller
             $usuario = Usuarios::findOne(['email' => $email]);
 
             if ($usuario) {
-                // Generar token aleatorio de 6 dígitos
-                $token = sprintf('%06d', mt_rand(100000, 999999));
+                // Token criptográfico seguro de 8 chars (base64url) — ~68 mil millones de combinaciones
+                $token = Yii::$app->security->generateRandomString(8);
 
-                // Guardar token
+                // Guardar token y marcar timestamp para verificar expiración (1 hora)
                 $usuario->password_reset_token = $token;
+                $usuario->updated_at = time();
 
                 if ($usuario->save(false)) {
                     // Enviar email con el token
@@ -322,6 +329,14 @@ class SiteController extends Controller
             $usuario = Usuarios::findOne(['password_reset_token' => $token]);
 
             if ($usuario) {
+                // Verificar expiración del token (1 hora = 3600 segundos desde updated_at)
+                if ($usuario->updated_at + 3600 < time()) {
+                    $usuario->password_reset_token = null;
+                    $usuario->save(false);
+                    Yii::$app->session->setFlash('error', 'El código ha expirado. Solicita uno nuevo.');
+                    return $this->redirect(['site/requestpassword']);
+                }
+
                 // Cambiar la contraseña
                 $usuario->password_hash = Yii::$app->security->generatePasswordHash($newPassword);
 

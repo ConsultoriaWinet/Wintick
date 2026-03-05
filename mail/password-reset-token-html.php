@@ -75,7 +75,7 @@ use yii\helpers\Html;
                 <div class="token"><?= Html::encode($token) ?></div>
             </div>
             
-            <p>Este código es válido y debe ser utilizado lo antes posible.</p>
+            <p>Este código es válido por <strong>1 hora</strong>. Úsalo antes de que expire.</p>
             
             <p><strong>Si no solicitaste este cambio, ignora este correo.</strong></p>
             
