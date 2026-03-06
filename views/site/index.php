@@ -62,9 +62,22 @@ $this->title = 'Dashboard - Tickets por Consultor';
     }
 
     .color-badge {
-        width: 12px;
-        height: 12px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+        border: 2px solid rgba(0,0,0,0.08);
+    }
+
+    .color-badge.sin-avatar {
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
 
     /* CONTENEDOR DEL CALENDARIO */
@@ -103,19 +116,34 @@ $this->title = 'Dashboard - Tickets por Consultor';
 
                 <!-- Ver todos -->
                 <div class="consultor-item active" onclick="filtrarPorConsultor(null)" id="consultor-todos">
-                    <span class="color-badge" style="background: gray;"></span>
+                    <span class="color-badge" style="background: #6b7280;">
+                        <i class="fas fa-users" style="font-size:12px; color:white;"></i>
+                    </span>
                     <span>Todos los consultores</span>
                 </div>
 
                 <!-- Lista de consultores -->
-                <?php foreach ($consultores as $consultor): ?>
+                <?php foreach ($consultores as $consultor):
+                    $color   = $consultor->color ?? '#6c757d';
+                    $avatar  = $consultor->avatar ?? null;
+                    $nombre  = $consultor->Nombre ?? $consultor->email;
+                    $inicial = mb_strtoupper(mb_substr($nombre, 0, 1, 'UTF-8'), 'UTF-8');
+                    // Es foto si empieza con /uploads/
+                    $esFoto  = $avatar && str_starts_with($avatar, '/uploads/');
+                    $fotoUrl = $esFoto ? Yii::getAlias('@web') . $avatar : null;
+                ?>
                     <div class="consultor-item" onclick="filtrarPorConsultor(<?= $consultor->id ?>)"
                         id="consultor-<?= $consultor->id ?>">
-                        <span class="color-badge" style="background-color: <?= $consultor->color ?? '#6c757d' ?>"></span>
-
-                        <span>
-                            <?= Html::encode($consultor->Nombre ?? $consultor->email) ?>
-                        </span>
+                        <?php if ($fotoUrl): ?>
+                            <img src="<?= Html::encode($fotoUrl) ?>"
+                                 style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid <?= Html::encode($color) ?>; flex-shrink:0;"
+                                 alt="<?= Html::encode($nombre) ?>">
+                        <?php else: ?>
+                            <span class="color-badge sin-avatar" style="background-color: <?= Html::encode($color) ?>;">
+                                <?= Html::encode($inicial) ?>
+                            </span>
+                        <?php endif; ?>
+                        <span><?= Html::encode($nombre) ?></span>
                     </div>
                 <?php endforeach; ?>
             </div>

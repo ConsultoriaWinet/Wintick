@@ -942,6 +942,7 @@
 
     .swal-status-abierto   { background:#dbeafe; color:#1e40af; }
     .swal-status-en-proceso{ background:#fef3c7; color:#b45309; }
+    .swal-status-en-espera { background:#f3e8ff; color:#6b21a8; }
     .swal-status-cerrado   { background:#d1fae5; color:#065f46; }
 
     .swal-priority-alta  { background:#fee2e2; color:#991b1b; }

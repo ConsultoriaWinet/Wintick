@@ -497,19 +497,109 @@ $this->registerJsFile(
                 </div>
 
                 <div class="user-dropdown">
-                    <div class="user-dropdown-toggle" onclick="toggleUserMenu()">
-                        <i class="ph ph-user-circle"></i>
-                        <span><?= Html::encode(Yii::$app->user->identity->email) ?></span>
+                    <?php
+                        $currentUser   = Yii::$app->user->identity;
+                        $currentAvatar = $currentUser->avatar ?? null;
+                        $currentColor  = $currentUser->color ?? '#A0BAA5';
+                        $currentNombre = $currentUser->Nombre ?? $currentUser->email;
+                        $currentRol    = $currentUser->rol ?? '';
+                        $inicialUser   = mb_strtoupper(mb_substr($currentNombre, 0, 1, 'UTF-8'), 'UTF-8');
+                        $avatarUrl     = $currentAvatar ? Yii::getAlias('@web') . $currentAvatar : null;
+                    ?>
+                    <div class="user-dropdown-toggle" onclick="toggleUserMenu()" id="userDropdownToggle">
+                        <?php if ($avatarUrl): ?>
+                            <img id="navUserAvatar" src="<?= Html::encode($avatarUrl) ?>"
+                                 style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.6); flex-shrink:0;"
+                                 alt="foto">
+                        <?php else: ?>
+                            <span id="navUserAvatar" style="
+                                width:32px; height:32px; border-radius:50%;
+                                background-color:<?= Html::encode($currentColor) ?>;
+                                display:inline-flex; align-items:center; justify-content:center;
+                                font-size:14px; font-weight:700; color:white; flex-shrink:0;
+                                border:2px solid rgba(255,255,255,0.5);
+                                text-shadow:0 1px 2px rgba(0,0,0,0.3);
+                            "><?= Html::encode($inicialUser) ?></span>
+                        <?php endif; ?>
+                        <span><?= Html::encode($currentNombre) ?></span>
                         <i class="ph ph-chevron-down" style="font-size: 12px;"></i>
                     </div>
 
                     <div class="user-dropdown-menu" id="userDropdownMenu">
-                        <div class="user-dropdown-header">
-                            <i class="ph ph-user">
-                                <strong><?= Html::encode(Yii::$app->user->identity->email) ?></strong>
-                            </i>
-                            <small>Usuario Activo</small>
+                        <!-- Header con foto grande -->
+                        <div class="user-dropdown-header" style="display:flex; align-items:center; gap:14px;">
+                            <div style="position:relative; cursor:pointer;" onclick="document.getElementById('avatarFileInput').click();" title="Cambiar foto">
+                                <?php if ($avatarUrl): ?>
+                                    <img id="navAvatarPreview" src="<?= Html::encode($avatarUrl) ?>"
+                                         style="width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.7);"
+                                         alt="foto">
+                                <?php else: ?>
+                                    <div id="navAvatarPreview" style="
+                                        width:52px; height:52px; border-radius:50%;
+                                        background:rgba(255,255,255,0.25);
+                                        display:flex; align-items:center; justify-content:center;
+                                        font-size:22px; font-weight:700; color:white;
+                                        border:3px solid rgba(255,255,255,0.5);
+                                    "><?= Html::encode($inicialUser) ?></div>
+                                <?php endif; ?>
+                                <!-- Overlay cámara -->
+                                <div style="
+                                    position:absolute; bottom:0; right:0;
+                                    width:20px; height:20px; border-radius:50%;
+                                    background:#1f2937; border:2px solid white;
+                                    display:flex; align-items:center; justify-content:center;
+                                ">
+                                    <i class="fas fa-camera" style="font-size:9px; color:white;"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <strong style="display:block; font-size:15px;"><?= Html::encode($currentNombre) ?></strong>
+                                <small style="opacity:0.85;"><?= Html::encode($currentRol) ?></small>
+                            </div>
                         </div>
+
+                        <!-- Input oculto para subir foto -->
+                        <input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp,image/gif"
+                               style="display:none;" onchange="subirFotoPerfil(this)">
+
+                        <!-- Indicador de carga -->
+                        <div id="avatarUploadStatus" style="display:none; padding:8px 16px; font-size:12px; color:#6b7280; background:#f9fafb; border-bottom:1px solid #e5e7eb;">
+                            <i class="fas fa-spinner fa-spin"></i> Subiendo foto...
+                        </div>
+
+                        <!-- Opción: cambiar foto -->
+                        <div class="user-dropdown-item" onclick="document.getElementById('avatarFileInput').click();" style="cursor:pointer;">
+                            <i class="fas fa-camera" style="color:#A0BAA5;"></i>
+                            <span>Cambiar foto de perfil</span>
+                        </div>
+
+                        <!-- Color picker (solo Consultores) -->
+                        <?php if ($currentRol === 'Consultores'): ?>
+                        <div class="user-dropdown-item" onclick="toggleColorPicker(event)" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:12px; width:100%;">
+                                <span style="width:16px; height:16px; border-radius:50%; background:<?= Html::encode($currentColor) ?>; border:2px solid #e5e7eb; flex-shrink:0;" id="colorPreviewIcon"></span>
+                                <span>Mi Color en calendario</span>
+                            </div>
+                            <div id="colorPickerWrap" style="display:none; width:100%; padding:4px 0;">
+                                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                                    <?php
+                                    $coloresRapidos = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e8c','#607d8b','#795548','#A0BAA5','#ff6b6b','#4ecdc4','#45b7d1','#96ceb4'];
+                                    foreach ($coloresRapidos as $c): ?>
+                                        <span onclick="seleccionarColor(event, '<?= $c ?>')"
+                                              style="width:24px; height:24px; border-radius:50%; background:<?= $c ?>; cursor:pointer; border:2px solid transparent; transition:border 0.15s;"
+                                              onmouseover="this.style.border='2px solid #1f2937'" onmouseout="this.style.border='2px solid transparent'">
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <input type="color" id="colorPickerInput" value="<?= Html::encode($currentColor) ?>"
+                                           style="width:36px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;"
+                                           oninput="seleccionarColor(event, this.value)">
+                                    <span style="font-size:12px; color:#6b7280;">Color personalizado</span>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                         <?= Html::beginForm(['/site/logout'], 'post') ?>
                         <button type="submit" class="user-dropdown-item logout-btn">
@@ -865,7 +955,98 @@ $this->registerJs($js);
     <?php endif; ?>
   });
 
+  // ============================================================
+  //  FOTO DE PERFIL
+  // ============================================================
+  const AVATAR_URL = <?= json_encode(Url::to(['/usuarios/update-avatar'])) ?>;
+  const COLOR_URL  = <?= json_encode(Url::to(['/usuarios/update-color'])) ?>;
+  const CSRF_META  = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+  function subirFotoPerfil(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const status = document.getElementById('avatarUploadStatus');
+    if (status) status.style.display = 'block';
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+    formData.append('_csrf', CSRF_META());
+
+    fetch(AVATAR_URL, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': CSRF_META() },
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (status) status.style.display = 'none';
+      if (data.success) {
+        // Actualizar foto en el toggle del navbar
+        const toggle = document.getElementById('navUserAvatar');
+        if (toggle) {
+          const img = document.createElement('img');
+          img.src = data.url + '?t=' + Date.now();
+          img.style.cssText = 'width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.6);flex-shrink:0;';
+          img.alt = 'foto';
+          toggle.replaceWith(img);
+          img.id = 'navUserAvatar';
+        }
+        // Actualizar preview grande en el header del dropdown
+        const preview = document.getElementById('navAvatarPreview');
+        if (preview) {
+          const img2 = document.createElement('img');
+          img2.src = data.url + '?t=' + Date.now();
+          img2.style.cssText = 'width:52px;height:52px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.7);';
+          img2.alt = 'foto';
+          preview.replaceWith(img2);
+          img2.id = 'navAvatarPreview';
+        }
+      } else {
+        alert(data.message || 'Error al subir la foto.');
+      }
+    })
+    .catch(() => {
+      if (status) status.style.display = 'none';
+      alert('Error de red al subir la foto.');
+    });
+
+    // Reset input para poder subir la misma foto de nuevo si hace falta
+    input.value = '';
+  }
+
+  // ============================================================
+  //  COLOR PICKER (solo Consultores)
+  // ============================================================
+  function toggleColorPicker(e) {
+    e.stopPropagation();
+    const p = document.getElementById('colorPickerWrap');
+    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function seleccionarColor(e, color) {
+    e.stopPropagation();
+    // Actualizar previsualización inmediata
+    const icon = document.getElementById('colorPreviewIcon');
+    if (icon) icon.style.background = color;
+    const navAvatar = document.getElementById('navUserAvatar');
+    if (navAvatar) navAvatar.style.backgroundColor = color;
+    const picker = document.getElementById('colorPickerInput');
+    if (picker) picker.value = color;
+
+    fetch(COLOR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': CSRF_META() },
+      body: new URLSearchParams({ color: color, '_csrf': CSRF_META() })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) {
+        console.warn('No se pudo guardar el color:', data.message);
+      }
+    })
+    .catch(() => {});
+  }
 
 
 </script>

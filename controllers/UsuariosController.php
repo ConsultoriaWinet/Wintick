@@ -34,8 +34,14 @@ class UsuariosController extends Controller
         return array_merge(parent::behaviors(), [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['index', 'view', 'create', 'update', 'delete'],
+                'only' => ['index', 'view', 'create', 'update', 'delete', 'update-color', 'update-avatar'],
                 'rules' => [
+                    // Cualquier usuario autenticado puede cambiar su propio color/avatar
+                    [
+                        'allow'   => true,
+                        'actions' => ['update-color', 'update-avatar'],
+                        'roles'   => ['@'],
+                    ],
                     // Ver usuarios (Administración, Supervisores, Administradores, Desarrolladores)
                     [
                         'allow' => true,
@@ -217,6 +223,88 @@ class UsuariosController extends Controller
 
         Yii::$app->session->setFlash('success', 'Usuario eliminado correctamente.');
         return $this->redirect(['index', 'deleted' => 1]);
+    }
+
+    /**
+     * Actualizar solo el color del usuario autenticado.
+     * Solo disponible para Consultores.
+     */
+    public function actionUpdateColor()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        /** @var \app\models\Usuarios $user */
+        $user = Yii::$app->user->identity;
+
+        if ($user->rol !== 'Consultores') {
+            return ['success' => false, 'message' => 'Solo los consultores pueden cambiar su color.'];
+        }
+
+        $color = Yii::$app->request->post('color');
+        if (!$color || !preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            return ['success' => false, 'message' => 'Color inválido.'];
+        }
+
+        $user->color      = $color;
+        $user->updated_at = time();
+
+        if ($user->save(false)) {
+            return ['success' => true, 'color' => $color];
+        }
+
+        return ['success' => false, 'message' => 'No se pudo guardar el color.'];
+    }
+
+    /**
+     * Subir foto de perfil del usuario autenticado.
+     * Disponible para todos los roles.
+     */
+    public function actionUpdateAvatar()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        /** @var \app\models\Usuarios $user */
+        $user = Yii::$app->user->identity;
+
+        $file = \yii\web\UploadedFile::getInstanceByName('avatar');
+        if (!$file) {
+            return ['success' => false, 'message' => 'No se recibió ningún archivo.'];
+        }
+
+        $permitidos = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (!in_array(strtolower($file->extension), $permitidos, true)) {
+            return ['success' => false, 'message' => 'Formato no permitido. Usa JPG, PNG o WebP.'];
+        }
+
+        if ($file->size > 3 * 1024 * 1024) {
+            return ['success' => false, 'message' => 'La imagen no puede superar 3 MB.'];
+        }
+
+        $uploadDir = Yii::getAlias('@webroot/uploads/avatars/');
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Eliminar foto anterior si existe
+        if ($user->avatar) {
+            $rutaVieja = Yii::getAlias('@webroot') . $user->avatar;
+            if (file_exists($rutaVieja)) {
+                unlink($rutaVieja);
+            }
+        }
+
+        $filename = 'avatar_' . $user->id . '_' . time() . '.' . strtolower($file->extension);
+
+        if ($file->saveAs($uploadDir . $filename)) {
+            $user->avatar     = '/uploads/avatars/' . $filename;
+            $user->updated_at = time();
+            $user->save(false);
+
+            $url = Yii::getAlias('@web') . '/uploads/avatars/' . $filename;
+            return ['success' => true, 'url' => $url];
+        }
+
+        return ['success' => false, 'message' => 'Error al guardar la imagen.'];
     }
 
     /**

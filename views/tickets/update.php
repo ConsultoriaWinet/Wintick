@@ -223,6 +223,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
             <?= $form->field($model, 'Estado')->dropDownList([
                 'ABIERTO'    => 'Abierto',
                 'EN PROCESO' => 'En Proceso',
+                'EN ESPERA'  => 'En Espera',
             ], [
                 'class' => 'form-select'
             ])->label('Estado') ?>

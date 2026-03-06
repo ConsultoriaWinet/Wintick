@@ -381,6 +381,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                                 <option value="">Todos</option>
                                 <option value="ABIERTO" <?= ($_GET['Estado'] ?? '') == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
                                 <option value="EN PROCESO" <?= ($_GET['Estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
+                                <option value="EN ESPERA" <?= ($_GET['Estado'] ?? '') == 'EN ESPERA' ? 'selected' : '' ?>>En Espera</option>
                                 <option value="CERRADO" <?= ($_GET['Estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
                             </select>
                         </div>
@@ -542,6 +543,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <select class="form-select form-select-sm estado">
                             <option value="ABIERTO" selected>Abierto</option>
                             <option value="EN PROCESO">En Proceso</option>
+                            <option value="EN ESPERA">En Espera</option>
                             <option value="CERRADO">Cerrado</option>
                         </select>
                     </td>
@@ -620,16 +622,18 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <td>
                         <?php
                         $estadoClass = match($ticket->Estado) {
-                            'ABIERTO' => 'bg-primary text-white',
+                            'ABIERTO'    => 'bg-primary text-white',
                             'EN PROCESO' => 'bg-info text-dark',
-                            'CERRADO' => 'bg-danger text-white',
-                            default => 'bg-secondary'
+                            'EN ESPERA'  => 'bg-warning text-dark',
+                            'CERRADO'    => 'bg-danger text-white',
+                            default      => 'bg-secondary'
                         };
                         $estadoIcon = match($ticket->Estado) {
-                            'ABIERTO' => 'fa-circle-notch',
+                            'ABIERTO'    => 'fa-circle-notch',
                             'EN PROCESO' => 'fa-spinner',
-                            'CERRADO' => 'fa-check-circle',
-                            default => 'fa-question-circle'
+                            'EN ESPERA'  => 'fa-pause-circle',
+                            'CERRADO'    => 'fa-check-circle',
+                            default      => 'fa-question-circle'
                         };
                         ?>
                         <div class="estado-clickeable <?= $estadoClass ?>" onclick="toggleEstadoSelect(this, <?= $ticket->id ?>)">
@@ -638,6 +642,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display: none; font-size: 12px; margin-top: 5px;">
                             <option value="ABIERTO" <?= $ticket->Estado == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
                             <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
+                            <option value="EN ESPERA" <?= $ticket->Estado == 'EN ESPERA' ? 'selected' : '' ?>>En Espera</option>
                             <option value="CERRADO" <?= $ticket->Estado == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
                         </select>
                     </td>
@@ -1530,18 +1535,20 @@ function toggleEstadoSelect(element, ticketId) {
 
 function getEstadoClass(estado) {
     const classes = {
-        'ABIERTO': 'bg-primary text-white',
+        'ABIERTO':    'bg-primary text-white',
         'EN PROCESO': 'bg-info text-dark',
-        'CERRADO': 'bg-danger text-white'
+        'EN ESPERA':  'bg-warning text-dark',
+        'CERRADO':    'bg-danger text-white'
     };
     return classes[estado] || 'bg-secondary';
 }
 
 function getEstadoIcon(estado) {
     const icons = {
-        'ABIERTO': 'fa-circle-notch',
+        'ABIERTO':    'fa-circle-notch',
         'EN PROCESO': 'fa-spinner',
-        'CERRADO': 'fa-check-circle'
+        'EN ESPERA':  'fa-pause-circle',
+        'CERRADO':    'fa-check-circle'
     };
     return icons[estado] || 'fa-question-circle';
 }
@@ -2202,9 +2209,10 @@ document.addEventListener('DOMContentLoaded', function () {
 // ========================================
 function getStatusClass(estado) {
     const e = (estado || '').toUpperCase();
-    if (e === 'ABIERTO') return 'swal-status-abierto';
+    if (e === 'ABIERTO')    return 'swal-status-abierto';
     if (e === 'EN PROCESO') return 'swal-status-en-proceso';
-    if (e === 'CERRADO') return 'swal-status-cerrado';
+    if (e === 'EN ESPERA')  return 'swal-status-en-espera';
+    if (e === 'CERRADO')    return 'swal-status-cerrado';
     return '';
 }
 

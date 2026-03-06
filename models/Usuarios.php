@@ -17,7 +17,8 @@ use Yii;
  * @property int $created_at
  * @property int $updated_at
  * @property string|null $color
- * 
+ * @property string|null $avatar
+ *
  *
  * @property Comentarios[] $comentarios
  * @property Notificaciones[] $notificaciones
@@ -47,6 +48,7 @@ public $password;
         [['status', 'created_at', 'updated_at'], 'integer'],
         [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
         [['color'], 'string', 'max' => 20],
+        [['avatar'], 'string', 'max' => 255],
         [['failed_attempts'], 'integer'],
         [['lockout_until'], 'safe'],
 
@@ -82,7 +84,8 @@ public $password;
             'rol' => 'Rol',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
-            'color' => 'Color',
+            'color'  => 'Color',
+            'avatar' => 'Avatar',
         ];
     }
 

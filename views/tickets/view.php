@@ -5,6 +5,7 @@ use yii\widgets\DetailView;
 
 /** @var yii\web\View $this */
 /** @var app\models\Tickets $model */
+/** @var app\models\TicketHistorial[]|null $historial */
 
 $this->title = 'Ticket #' . $model->Folio;
 
@@ -121,6 +122,84 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
     .status-cerrado {
         background: #d1fae5;
         color: #065f46;
+    }
+
+    .status-en.espera, .status-en-espera {
+        background: #f3e8ff;
+        color: #6b21a8;
+    }
+
+    .historial-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #6b7280;
+    }
+
+    .historial-section h3 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+    }
+
+    .historial-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 13px;
+    }
+
+    .historial-item:last-child { border-bottom: none; }
+
+    .historial-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 13px;
+        color: #475569;
+    }
+
+    .historial-body { flex: 1; }
+
+    .historial-quién {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .historial-campo {
+        display: inline-block;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        margin: 0 4px;
+    }
+
+    .historial-valor {
+        color: #475569;
+    }
+
+    .historial-valor .de { color: #dc2626; text-decoration: line-through; margin-right: 4px; }
+    .historial-valor .a  { color: #16a34a; margin-left: 4px; }
+
+    .historial-fecha {
+        color: #94a3b8;
+        font-size: 11px;
+        white-space: nowrap;
     }
 
     .priority-badge {
@@ -430,6 +509,75 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
                     <?= Html::encode($model->Solucion) ?>
                 </div>
             </div>
+        <?php endif; ?>
+
+        <!-- Historial de cambios (solo para roles con permiso) -->
+        <?php if ($historial !== null): ?>
+        <div class="historial-section">
+            <h3>
+                <i class="fas fa-history" style="color: #6b7280;"></i> Historial de Cambios
+                <span style="font-size:13px; font-weight:400; color:#94a3b8; margin-left:8px;">
+                    (<?= count($historial) ?> registro<?= count($historial) !== 1 ? 's' : '' ?>)
+                </span>
+            </h3>
+
+            <?php if (empty($historial)): ?>
+                <div style="color:#94a3b8; font-style:italic; font-size:13px;">
+                    <i class="fas fa-info-circle"></i> Sin cambios registrados aún.
+                </div>
+            <?php else: ?>
+                <?php foreach ($historial as $h):
+                    $quien = $h->usuario ? Html::encode($h->usuario->Nombre ?: $h->usuario->email) : 'Sistema';
+                    $label = \app\models\TicketHistorial::labelCampo($h->campo);
+
+                    // Resolver IDs a nombres legibles
+                    $valAntes = Html::encode($h->valor_anterior);
+                    $valNuevo = Html::encode($h->valor_nuevo);
+
+                    if ($h->campo === 'Asignado_a') {
+                        $uA = \app\models\Usuarios::findOne((int)$h->valor_anterior);
+                        $uN = \app\models\Usuarios::findOne((int)$h->valor_nuevo);
+                        $valAntes = $uA ? Html::encode($uA->Nombre ?: $uA->email) : ($h->valor_anterior ? 'ID:'.$h->valor_anterior : '—');
+                        $valNuevo = $uN ? Html::encode($uN->Nombre ?: $uN->email) : ($h->valor_nuevo  ? 'ID:'.$h->valor_nuevo  : '—');
+                    } elseif ($h->campo === 'Cliente_id') {
+                        $cA = \app\models\Clientes::findOne((int)$h->valor_anterior);
+                        $cN = \app\models\Clientes::findOne((int)$h->valor_nuevo);
+                        $valAntes = $cA ? Html::encode($cA->Nombre) : ($h->valor_anterior ?: '—');
+                        $valNuevo = $cN ? Html::encode($cN->Nombre) : ($h->valor_nuevo  ?: '—');
+                    } elseif ($h->campo === 'Sistema_id') {
+                        $sA = \app\models\Sistemas::findOne((int)$h->valor_anterior);
+                        $sN = \app\models\Sistemas::findOne((int)$h->valor_nuevo);
+                        $valAntes = $sA ? Html::encode($sA->Nombre) : ($h->valor_anterior ?: '—');
+                        $valNuevo = $sN ? Html::encode($sN->Nombre) : ($h->valor_nuevo  ?: '—');
+                    } elseif ($h->campo === 'Servicio_id') {
+                        $svA = \app\models\Servicios::findOne((int)$h->valor_anterior);
+                        $svN = \app\models\Servicios::findOne((int)$h->valor_nuevo);
+                        $valAntes = $svA ? Html::encode($svA->Nombre) : ($h->valor_anterior ?: '—');
+                        $valNuevo = $svN ? Html::encode($svN->Nombre) : ($h->valor_nuevo  ?: '—');
+                    } elseif ($h->campo === 'Solucion') {
+                        $valAntes = $h->valor_anterior ? '<em>(con solución previa)</em>' : '—';
+                        $valNuevo = $h->valor_nuevo    ? '<em>(solución guardada)</em>'   : '—';
+                    }
+                ?>
+                <div class="historial-item">
+                    <div class="historial-icon"><i class="fas fa-pen"></i></div>
+                    <div class="historial-body">
+                        <span class="historial-quién"><?= $quien ?></span>
+                        cambió
+                        <span class="historial-campo"><?= Html::encode($label) ?></span>
+                        <span class="historial-valor">
+                            <span class="de"><?= $valAntes ?></span>
+                            <i class="fas fa-arrow-right" style="color:#94a3b8; font-size:10px;"></i>
+                            <span class="a"><?= $valNuevo ?></span>
+                        </span>
+                    </div>
+                    <div class="historial-fecha">
+                        <?= date('d/m/Y H:i', strtotime($h->fecha)) ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
         <?php endif; ?>
 
         <!-- Botones de Acción -->

@@ -146,8 +146,23 @@ class TicketsController extends Controller
      */
     public function actionView($id)
     {
+        $model    = $this->findModel($id);
+        $historial = null;
+
+        if (!Yii::$app->user->isGuest) {
+            $rol = Yii::$app->user->identity->rol;
+            if (in_array($rol, ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'], true)) {
+                $historial = \app\models\TicketHistorial::find()
+                    ->with('usuario')
+                    ->where(['ticket_id' => $id])
+                    ->orderBy(['fecha' => SORT_DESC])
+                    ->all();
+            }
+        }
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model'    => $model,
+            'historial' => $historial,
         ]);
     }
 
@@ -243,6 +258,10 @@ class TicketsController extends Controller
         // Guardar valores originales ANTES del load() para proteger campos y detectar cambios
         $asignadoAntes  = $model->Asignado_a;
         $estadoAntes    = $model->Estado;
+        $prioridadAntes = $model->Prioridad;
+        $clienteAntes   = $model->Cliente_id;
+        $sistemaAntes   = $model->Sistema_id;
+        $servicioAntes  = $model->Servicio_id;
         $solucionOrig   = $model->Solucion;
         $tiempoEfOrig   = $model->TiempoEfectivo;
         $horaFinOrig    = $model->HoraFinalizo;
@@ -266,6 +285,16 @@ class TicketsController extends Controller
             $model->HoraFinalizo   = $horaFinOrig;
 
             if ($model->save()) {
+                $userId = (int)Yii::$app->user->id;
+
+                // Historial de cambios
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Estado',      $estadoAntes,    $model->Estado);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Prioridad',   $prioridadAntes, $model->Prioridad);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Asignado_a',  $asignadoAntes,  $model->Asignado_a);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Cliente_id',  $clienteAntes,   $model->Cliente_id);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Sistema_id',  $sistemaAntes,   $model->Sistema_id);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Servicio_id', $servicioAntes,  $model->Servicio_id);
+
                 // Si cambió la asignación a una nueva persona
                 if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
                     $this->crearNotificacion(
@@ -459,7 +488,9 @@ class TicketsController extends Controller
             return ['success' => false, 'message' => 'No se pudo guardar', 'errors' => $ticket->errors];
         }
 
-      
+        // Historial
+        \app\models\TicketHistorial::registrar($ticket->id, (int)Yii::$app->user->id, 'Estado', $estadoAnterior, $ticket->Estado);
+
         $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
 
      
@@ -603,6 +634,13 @@ class TicketsController extends Controller
                         }
                     }
                 }
+
+                // Historial: registrar cierre
+                $userId = (int)Yii::$app->user->id;
+                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'Estado',          'ABIERTO',                   'CERRADO');
+                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'Solucion',        '',                          $ticket->Solucion ?? '');
+                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'TiempoEfectivo',  $this->minutesToHM($viejoMin), $this->minutesToHM($nuevoMin));
+                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'HoraFinalizo',    '',                          $ticket->HoraFinalizo ?? '');
 
                 $transaction->commit();
 
