@@ -210,15 +210,17 @@ class TicketsController extends Controller
         $model->Estado = 'Abierto';
 
         if ($this->request->isPost && $model->load($this->request->post())) {
-            
-            //  ASEGURAR QUE CREADO_POR SE GUARDE CON EL USUARIO ACTUAL (ANTES DE SAVE)
+
             $model->Creado_por = Yii::$app->user->id;
-            
+            // Folio temporal único para evitar colisión en la restricción UNIQUE
+            // cuando dos peticiones concurrentes traen el mismo folio provisional del form.
+            $model->Folio = 'TMP-' . uniqid();
+
             if ($model->save()) {
 
-                // Folio definitivo basado en el ID real asignado por la BD (sin race condition)
+                // Folio definitivo basado en el AUTO_INCREMENT real — garantiza unicidad
                 $model->Folio = str_pad($model->id, 4, '0', STR_PAD_LEFT);
-                $model->save(false); // solo actualizar Folio, sin re-validar
+                $model->save(false);
 
                 if ($model->Asignado_a) {
                     $this->crearNotificacion(

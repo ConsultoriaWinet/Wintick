@@ -30,42 +30,48 @@ class EstadisticasController extends Controller
 
     public function actionIndex()
     {
-        $mesActual = Yii::$app->request->get('mes', date('Y-m'));
+        $mesActual  = Yii::$app->request->get('mes', date('Y-m'));
         $yearActual = date('Y', strtotime($mesActual . '-01'));
-        
-        // Estadísticas generales
-        $estadisticasTickets = $this->getEstadisticasTickets($mesActual);
-        $ticketsPorEstado = $this->getTicketsPorEstado($mesActual);
-        $ticketsPorPrioridad = $this->getTicketsPorPrioridad($mesActual);
-        $ticketsPorCliente = $this->getTicketsPorCliente($mesActual);
-        $ticketsPorTecnico = $this->getTicketsPorTecnico($mesActual);
-        $tiempoPromedio = $this->getTiempoPromedioResolucion($mesActual);
-        $ticketsPorDia = $this->getTicketsPorDia($mesActual);
-        
-        // ✅ NUEVAS ESTADÍSTICAS DE CONSULTORES
-        $consultoresDelMes = $this->getConsultoresDelMes($mesActual);
+
+        // Rango de fechas calculado UNA sola vez y reutilizado en todos los métodos
+        $inicio = $mesActual . '-01 00:00:00';
+        $fin    = date('Y-m-t 23:59:59', strtotime($inicio));
+
+        // 1 query en vez de 4 para los totales del mes
+        $estadisticasTickets = $this->getEstadisticasTickets($inicio, $fin);
+
+        // tasaResolucion se calcula con los mismos datos — sin query adicional
+        $tasaResolucion = [
+            'total'    => $estadisticasTickets['total'],
+            'cerrados' => $estadisticasTickets['cerrados'],
+            'tasa'     => $estadisticasTickets['total'] > 0
+                ? round($estadisticasTickets['cerrados'] / $estadisticasTickets['total'] * 100, 2)
+                : 0,
+        ];
+
+        $ticketsPorEstado    = $this->getTicketsPorEstado($inicio, $fin);
+        $ticketsPorPrioridad = $this->getTicketsPorPrioridad($inicio, $fin);
+        $ticketsPorCliente   = $this->getTicketsPorCliente($inicio, $fin);
+        $ticketsPorTecnico   = $this->getTicketsPorTecnico($inicio, $fin);
+        $tiempoPromedio      = $this->getTiempoPromedioResolucion($inicio, $fin);
+        $ticketsPorDia       = $this->getTicketsPorDia($inicio, $fin);
+
+        $consultoresDelMes  = $this->getConsultoresDelMes($inicio, $fin);
         $consultoresDelAnio = $this->getConsultoresDelAnio($yearActual);
-        $topConsultoresMes = $this->getTopConsultoresMes($mesActual);
+        $topConsultoresMes  = $this->getTopConsultoresMes($inicio, $fin);
         $topConsultoresAnio = $this->getTopConsultoresAnio($yearActual);
-        
-        // ✅ ESTADÍSTICAS DE CLIENTES
-        $clientesMasAtendidos = $this->getClientesMasAtendidos($mesActual);
+
+        $clientesMasAtendidos     = $this->getClientesMasAtendidos($inicio, $fin);
         $clientesMasAtendidosAnio = $this->getClientesMasAtendidosAnio($yearActual);
-        $ticketsPorSistema = $this->getTicketsPorSistema($mesActual);
-        $ticketsPorServicio = $this->getTicketsPorServicio($mesActual);
-        
-        // ✅ COMPARACIÓN MES vs MES ANTERIOR
-        $comparacionMes = $this->getComparacionMesAnterior($mesActual);
-        
-        // ✅ TICKETS POR HORA DEL DÍA
-        $ticketsPorHora = $this->getTicketsPorHora($mesActual);
-        
-        // ✅ TIEMPO DE RESPUESTA PROMEDIO
-        $tiempoRespuesta = $this->getTiempoRespuestaPromedio($mesActual);
-        
-        // ✅ TASA DE RESOLUCIÓN
-        $tasaResolucion = $this->getTasaResolucion($mesActual);
-        
+        $ticketsPorSistema        = $this->getTicketsPorSistema($inicio, $fin);
+        $ticketsPorServicio       = $this->getTicketsPorServicio($inicio, $fin);
+
+        // 1 query en vez de 2 para comparar mes actual vs anterior
+        $comparacionMes = $this->getComparacionMesAnterior($mesActual, $inicio, $fin);
+
+        $ticketsPorHora  = $this->getTicketsPorHora($inicio, $fin);
+        $tiempoRespuesta = $this->getTiempoRespuestaPromedio($inicio, $fin);
+
         return $this->render('index', [
             'mesActual' => $mesActual,
             'yearActual' => $yearActual,
@@ -92,24 +98,32 @@ class EstadisticasController extends Controller
     }        
     
     
-    private function getEstadisticasTickets($mes)
+    /**
+     * Totales del mes en UNA sola query (antes eran 4 queries separadas).
+     */
+    private function getEstadisticasTickets(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
+        $row = Tickets::find()
+            ->select([
+                'COUNT(*) as total',
+                'SUM(CASE WHEN Estado = "ABIERTO"     THEN 1 ELSE 0 END) as abiertos',
+                'SUM(CASE WHEN Estado = "EN PROCESO"  THEN 1 ELSE 0 END) as en_proceso',
+                'SUM(CASE WHEN Estado = "CERRADO"     THEN 1 ELSE 0 END) as cerrados',
+            ])
+            ->where(['between', 'Fecha_creacion', $inicio, $fin])
+            ->asArray()
+            ->one();
+
         return [
-            'total' => Tickets::find()->where(['between', 'Fecha_creacion', $inicio, $fin])->count(),
-            'abiertos' => Tickets::find()->where(['Estado' => 'ABIERTO'])->andWhere(['between', 'Fecha_creacion', $inicio, $fin])->count(),
-            'enProceso' => Tickets::find()->where(['Estado' => 'EN PROCESO'])->andWhere(['between', 'Fecha_creacion', $inicio, $fin])->count(),
-            'cerrados' => Tickets::find()->where(['Estado' => 'CERRADO'])->andWhere(['between', 'Fecha_creacion', $inicio, $fin])->count(),
+            'total'     => (int)($row['total']      ?? 0),
+            'abiertos'  => (int)($row['abiertos']   ?? 0),
+            'enProceso' => (int)($row['en_proceso']  ?? 0),
+            'cerrados'  => (int)($row['cerrados']    ?? 0),
         ];
     }
     
-    private function getTicketsPorEstado($mes)
+    private function getTicketsPorEstado(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['Estado', 'COUNT(*) as total'])
             ->where(['between', 'Fecha_creacion', $inicio, $fin])
@@ -117,12 +131,9 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getTicketsPorPrioridad($mes)
+
+    private function getTicketsPorPrioridad(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['Prioridad', 'COUNT(*) as total'])
             ->where(['between', 'Fecha_creacion', $inicio, $fin])
@@ -130,12 +141,9 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getTicketsPorCliente($mes)
+
+    private function getTicketsPorCliente(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['clientes.Nombre as cliente', 'COUNT(tickets.id) as total'])
             ->innerJoin('clientes', 'clientes.id = tickets.Cliente_id')
@@ -146,12 +154,9 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getTicketsPorTecnico($mes)
+
+    private function getTicketsPorTecnico(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['usuarios.email as tecnico', 'COUNT(tickets.id) as total'])
             ->innerJoin('usuarios', 'usuarios.id = tickets.Asignado_a')
@@ -162,12 +167,9 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getTiempoPromedioResolucion($mes)
+
+    private function getTiempoPromedioResolucion(string $inicio, string $fin): float
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         $resultado = Tickets::find()
             ->select(['AVG(TIMESTAMPDIFF(HOUR, HoraInicio, HoraFinalizo)) as horas_promedio'])
             ->where(['Estado' => 'CERRADO'])
@@ -176,15 +178,12 @@ class EstadisticasController extends Controller
             ->andWhere(['is not', 'HoraFinalizo', null])
             ->asArray()
             ->one();
-        
+
         return round($resultado['horas_promedio'] ?? 0, 2);
     }
-    
-    private function getTicketsPorDia($mes)
+
+    private function getTicketsPorDia(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['DATE(Fecha_creacion) as fecha', 'COUNT(*) as total'])
             ->where(['between', 'Fecha_creacion', $inicio, $fin])
@@ -196,18 +195,15 @@ class EstadisticasController extends Controller
 
     // ✅ NUEVAS FUNCIONES - ESTADÍSTICAS DE CONSULTORES
     
-    private function getConsultoresDelMes($mes)
+    private function getConsultoresDelMes(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select([
                 'usuarios.email as nombre',
                 'COUNT(tickets.id) as total',
-                'SUM(CASE WHEN tickets.Estado = "CERRADO" THEN 1 ELSE 0 END) as cerrados',
-                'SUM(CASE WHEN tickets.Estado = "ABIERTO" THEN 1 ELSE 0 END) as abiertos',
-                'SUM(CASE WHEN tickets.Estado = "EN PROCESO" THEN 1 ELSE 0 END) as en_proceso'
+                'SUM(CASE WHEN tickets.Estado = "CERRADO"    THEN 1 ELSE 0 END) as cerrados',
+                'SUM(CASE WHEN tickets.Estado = "ABIERTO"    THEN 1 ELSE 0 END) as abiertos',
+                'SUM(CASE WHEN tickets.Estado = "EN PROCESO" THEN 1 ELSE 0 END) as en_proceso',
             ])
             ->innerJoin('usuarios', 'usuarios.id = tickets.Asignado_a')
             ->where(['usuarios.rol' => 'Consultor'])
@@ -239,16 +235,13 @@ class EstadisticasController extends Controller
             ->all();
     }
     
-    private function getTopConsultoresMes($mes)
+    private function getTopConsultoresMes(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select([
                 'usuarios.email as nombre',
                 'COUNT(tickets.id) as total',
-                'SUM(CASE WHEN tickets.Estado = "CERRADO" THEN 1 ELSE 0 END) as cerrados'
+                'SUM(CASE WHEN tickets.Estado = "CERRADO" THEN 1 ELSE 0 END) as cerrados',
             ])
             ->innerJoin('usuarios', 'usuarios.id = tickets.Asignado_a')
             ->where(['usuarios.rol' => 'Consultor'])
@@ -283,17 +276,14 @@ class EstadisticasController extends Controller
     
     // ✅ ESTADÍSTICAS DE CLIENTES
     
-    private function getClientesMasAtendidos($mes)
+    private function getClientesMasAtendidos(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select([
                 'clientes.Nombre as cliente',
                 'COUNT(tickets.id) as total',
                 'SUM(CASE WHEN tickets.Estado = "CERRADO" THEN 1 ELSE 0 END) as cerrados',
-                'AVG(TIMESTAMPDIFF(HOUR, tickets.HoraInicio, tickets.HoraFinalizo)) as tiempo_promedio'
+                'AVG(TIMESTAMPDIFF(HOUR, tickets.HoraInicio, tickets.HoraFinalizo)) as tiempo_promedio',
             ])
             ->innerJoin('clientes', 'clientes.id = tickets.Cliente_id')
             ->where(['between', 'tickets.Fecha_creacion', $inicio, $fin])
@@ -324,11 +314,8 @@ class EstadisticasController extends Controller
             ->all();
     }
     
-    private function getTicketsPorSistema($mes)
+    private function getTicketsPorSistema(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['sistemas.Nombre as sistema', 'COUNT(tickets.id) as total'])
             ->innerJoin('sistemas', 'sistemas.id = tickets.Sistema_id')
@@ -339,12 +326,9 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getTicketsPorServicio($mes)
+
+    private function getTicketsPorServicio(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['servicios.Nombre as servicio', 'COUNT(tickets.id) as total'])
             ->innerJoin('servicios', 'servicios.id = tickets.Servicio_id')
@@ -356,35 +340,45 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getComparacionMesAnterior($mes)
+
+    /**
+     * Comparación mes actual vs anterior en UNA query (antes eran 2).
+     */
+    private function getComparacionMesAnterior(string $mes, string $inicioActual, string $finActual): array
     {
-        $mesAnterior = date('Y-m', strtotime($mes . '-01 -1 month'));
-        
-        $ticketsMesActual = Tickets::find()
-            ->where(['between', 'Fecha_creacion', $mes . '-01 00:00:00', date('Y-m-t 23:59:59', strtotime($mes . '-01'))])
-            ->count();
-            
-        $ticketsMesAnterior = Tickets::find()
-            ->where(['between', 'Fecha_creacion', $mesAnterior . '-01 00:00:00', date('Y-m-t 23:59:59', strtotime($mesAnterior . '-01'))])
-            ->count();
-        
-        $diferencia = $ticketsMesActual - $ticketsMesAnterior;
-        $porcentaje = $ticketsMesAnterior > 0 ? round(($diferencia / $ticketsMesAnterior) * 100, 2) : 0;
-        
+        $mesAnterior  = date('Y-m', strtotime($mes . '-01 -1 month'));
+        $inicioAnterior = $mesAnterior . '-01 00:00:00';
+        $finAnterior    = date('Y-m-t 23:59:59', strtotime($inicioAnterior));
+
+        $rows = Tickets::find()
+            ->select([
+                new Expression("DATE_FORMAT(Fecha_creacion, '%Y-%m') as mes"),
+                new Expression('COUNT(*) as total'),
+            ])
+            ->where(['between', 'Fecha_creacion', $inicioAnterior, $finActual])
+            ->groupBy(new Expression("DATE_FORMAT(Fecha_creacion, '%Y-%m')"))
+            ->asArray()
+            ->all();
+
+        $porMes = [];
+        foreach ($rows as $row) {
+            $porMes[$row['mes']] = (int) $row['total'];
+        }
+
+        $actual   = $porMes[$mes]        ?? 0;
+        $anterior = $porMes[$mesAnterior] ?? 0;
+        $diferencia = $actual - $anterior;
+
         return [
-            'actual' => $ticketsMesActual,
-            'anterior' => $ticketsMesAnterior,
+            'actual'     => $actual,
+            'anterior'   => $anterior,
             'diferencia' => $diferencia,
-            'porcentaje' => $porcentaje
+            'porcentaje' => $anterior > 0 ? round(($diferencia / $anterior) * 100, 2) : 0,
         ];
     }
-    
-    private function getTicketsPorHora($mes)
+
+    private function getTicketsPorHora(string $inicio, string $fin): array
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         return Tickets::find()
             ->select(['HOUR(Fecha_creacion) as hora', 'COUNT(*) as total'])
             ->where(['between', 'Fecha_creacion', $inicio, $fin])
@@ -393,36 +387,16 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
-    private function getTiempoRespuestaPromedio($mes)
+
+    private function getTiempoRespuestaPromedio(string $inicio, string $fin): float
     {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
         $resultado = Tickets::find()
             ->select(['AVG(TIMESTAMPDIFF(MINUTE, Fecha_creacion, HoraInicio)) as minutos_promedio'])
             ->where(['between', 'Fecha_creacion', $inicio, $fin])
             ->andWhere(['is not', 'HoraInicio', null])
             ->asArray()
             ->one();
-        
+
         return round($resultado['minutos_promedio'] ?? 0, 2);
-    }
-    
-    private function getTasaResolucion($mes)
-    {
-        $inicio = $mes . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
-        
-        $total = Tickets::find()->where(['between', 'Fecha_creacion', $inicio, $fin])->count();
-        $cerrados = Tickets::find()->where(['Estado' => 'CERRADO'])->andWhere(['between', 'Fecha_creacion', $inicio, $fin])->count();
-        
-        $tasa = $total > 0 ? round(($cerrados / $total) * 100, 2) : 0;
-        
-        return [
-            'total' => $total,
-            'cerrados' => $cerrados,
-            'tasa' => $tasa
-        ];
     }
 }

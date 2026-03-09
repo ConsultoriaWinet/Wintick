@@ -39,6 +39,16 @@ class Tickets extends \yii\db\ActiveRecord
 {
     public $consultoresList;
 
+    public function behaviors(): array
+    {
+        return [
+            [
+                'class'           => AuditBehavior::class,
+                'camposIgnorados' => ['Fecha_actualizacion'],
+            ],
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */

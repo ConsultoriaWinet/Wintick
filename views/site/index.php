@@ -100,6 +100,42 @@ $this->title = 'Dashboard - Tickets por Consultor';
             padding-bottom: 12px;
         }
     }
+
+    /* Toggle sidebar en móvil */
+    .sidebar-toggle-btn {
+        display: none;
+        width: 100%;
+        padding: 10px 16px;
+        background: #f0f4f1;
+        border: 1px solid #d1dbd3;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        margin-bottom: 8px;
+        text-align: left;
+    }
+    .sidebar-toggle-btn i { margin-right: 8px; }
+
+    .sidebar-lista { display: flex; flex-direction: column; }
+
+    @media (max-width: 767px) {
+        .sidebar-toggle-btn { display: block; }
+        .sidebar-lista.collapsed { display: none; }
+
+        /* Calendario más alto en móvil para compensar el sidebar colapsado */
+        #calendar-container { min-height: 400px; }
+        #calendar { font-size: 12px; }
+
+        /* Reducir padding del dashboard en móvil */
+        .dashboard-container { gap: 12px; margin-top: 10px; }
+
+        /* Botones del header del calendario más pequeños en móvil */
+        .fc .fc-button { padding: 4px 8px !important; font-size: 12px !important; }
+        .fc .fc-toolbar-title { font-size: 16px !important; }
+        .fc .fc-toolbar { flex-wrap: wrap; gap: 6px; }
+    }
 </style>
 
 
@@ -112,7 +148,14 @@ $this->title = 'Dashboard - Tickets por Consultor';
 
             <!-- Sidebar Moderno -->
             <div class="consultores-sidebar">
-                <h3>Consultores</h3>
+                <!-- Botón toggle visible solo en móvil -->
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar(this)">
+                    <i class="fas fa-filter"></i> Filtrar por consultor
+                    <i class="fas fa-chevron-down" style="float:right; margin-top:2px;" id="sidebarChevron"></i>
+                </button>
+
+                <div class="sidebar-lista collapsed" id="sidebarLista">
+                <h3 class="d-none d-md-block">Consultores</h3>
 
                 <!-- Ver todos -->
                 <div class="consultor-item active" onclick="filtrarPorConsultor(null)" id="consultor-todos">
@@ -146,6 +189,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
                         <span><?= Html::encode($nombre) ?></span>
                     </div>
                 <?php endforeach; ?>
+                </div><!-- /.sidebar-lista -->
             </div>
 
             <!-- Calendario Moderno -->
@@ -161,6 +205,13 @@ $this->title = 'Dashboard - Tickets por Consultor';
 <script>
     let calendar;
     let consultorActual = null;
+
+    function toggleSidebar(btn) {
+        const lista = document.getElementById('sidebarLista');
+        const chevron = document.getElementById('sidebarChevron');
+        const isCollapsed = lista.classList.toggle('collapsed');
+        chevron.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         var calendarEl = document.getElementById('calendar');

@@ -417,6 +417,56 @@ $this->registerJsFile(
     .welcome-btn {
         background-color: var(--primary-color) !important;
     }
+
+    /* ========================================
+       MOBILE RESPONSIVE
+       ======================================== */
+
+    /* Ocultar nombre de usuario en pantallas muy pequeñas para ahorrar espacio */
+    @media (max-width: 480px) {
+        .user-dropdown-toggle span { display: none; }
+        .user-dropdown-toggle { padding: 6px 10px; gap: 6px; }
+    }
+
+    /* Notification dropdown: ancho completo en móvil para que no se salga de pantalla */
+    @media (max-width: 600px) {
+        .notification-dropdown {
+            width: calc(100vw - 24px);
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .notification-dropdown.show {
+            animation: slideDown 0.3s ease;
+        }
+    }
+
+    /* User dropdown: ajustar para que no se salga de pantalla */
+    @media (max-width: 400px) {
+        .user-dropdown-menu {
+            right: -30px;
+            min-width: 230px;
+        }
+    }
+
+    /* Navbar: reducir gap en tablets */
+    @media (max-width: 992px) {
+        .navbar-nav { gap: 0.5rem; }
+
+        /* El contenido principal necesita padding cuando el navbar está colapsado */
+        #main { padding-top: 0.5rem; }
+    }
+
+    /* Footer legible en móvil */
+    @media (max-width: 576px) {
+        #footer .row { text-align: center !important; }
+        #footer .col-md-6 { text-align: center !important; }
+    }
+
+    /* Container con padding lateral adecuado en móvil */
+    @media (max-width: 576px) {
+        #main .container { padding-left: 12px; padding-right: 12px; }
+    }
 </style>
 
 <head>
