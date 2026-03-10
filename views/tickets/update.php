@@ -190,7 +190,7 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
             <?= $form->field($model, 'HoraProgramada')->textInput([
                 'class' => 'form-control flatpickr-datetime',
                 'placeholder' => 'Seleccionar fecha y hora'
-            ])->label('Hora Programada') ?>
+            ])->label('Fecha de Reporte') ?>
         </div>
 
         <div class="col-md-6">

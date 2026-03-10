@@ -12,7 +12,9 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'Nombre')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'Nombre', [ 
+          'errorOptions' => ['class' => 'help-block text-danger password-error']
+    ])->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'password', [
         'errorOptions' => ['class' => 'help-block text-danger password-error']
@@ -32,7 +34,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'password_reset_token')->hiddenInput(['maxlength' => true])->label(false) ?>
 
-    <?= $form->field($model, 'email')->textInput(['maxlength' => true, 'type' => 'email']) ?>
+    <?= $form->field($model, 'email', [ 
+          'errorOptions' => ['class' => 'help-block text-danger password-error']
+    ])->textInput(['maxlength' => true, 'type' => 'email']) ?>
 
     <?= $form->field($model, 'status')->dropDownList(['10' => 'Activo','0'=> 'Inactivo']) ?>
 

@@ -87,7 +87,7 @@ class Tickets extends \yii\db\ActiveRecord
             'Estado' => 'Estado',
             'Descripcion' => 'Descripcion',
             'Solucion' => 'Solucion',
-            'HoraProgramada' => 'Hora Programada',
+            'HoraProgramada' => 'Fecha de Reporte',
             'HoraInicio' => 'Hora Inicio',
             'TiempoRestante' => 'Tiempo Restante',
             'HoraFinalizo' => 'Hora Finalizo',
