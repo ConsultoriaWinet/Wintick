@@ -180,8 +180,7 @@ class TicketsController extends Controller
 
         // CORRECCIÓN: Seleccionar 'id' y 'Nombre', y mapear id => Nombre
         $consultores = \app\models\Usuarios::find()
-            ->select(['id', 'Nombre']) 
-            ->where(['rol' => 'Consultores'])
+            ->select(['id', 'Nombre'])
             ->orderBy(['Nombre' => SORT_ASC])
             ->asArray()
             ->all();
