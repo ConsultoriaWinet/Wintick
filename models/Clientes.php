@@ -14,8 +14,8 @@ use Yii;
  * @property string $Correo
  * @property string $Contacto_nombre
  * @property string $Tiempo
- * @property int $Whatsapp_contacto
- * @property int $Telefono
+ * @property string $Whatsapp_contacto
+ * @property string $Telefono
  * @property string $Prioridad
  * @property string $Criticidad
  * @property int $Estado
@@ -43,7 +43,9 @@ class Clientes extends \yii\db\ActiveRecord
             [['RFC'], 'default', 'value' => null],
             [['Estado'], 'default', 'value' => 1],
             [['Nombre', 'Razon_social', 'Correo','Criticidad','Contacto_nombre', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Prioridad', 'created_at', 'updated_at'], 'required'],
-            [['Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
+            [['Estado', 'created_at', 'updated_at'], 'integer'],
+            [['Whatsapp_contacto', 'Telefono'], 'string', 'max' => 20],
+            [['Whatsapp_contacto', 'Telefono'], 'match', 'pattern' => '/^\d{10}$/', 'message' => 'Debe tener exactamente 10 dígitos.'],
             [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre', 'Prioridad'], 'string', 'max' => 255],
             [['RFC'], 'unique'],
         ];

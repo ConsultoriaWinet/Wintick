@@ -34,8 +34,8 @@ class m251118_164345_Clientes extends Migration
             'Correo' => $this->string()->notNull(),         //Correo de la empresa
             'Contacto_nombre' => $this->string()->notNull(),       //Contacto principal de la empresa
             'Tiempo' => $this->decimal()->notNull(),        //Tiempo Comprado de la empresa - OPCIONAL
-            "Whatsapp_contacto" => $this->integer()->notNull(),      //Whatsapp de la empresa
-            "Telefono" => $this->integer()->notNull(),      //Telefono de la empresa
+            "Whatsapp_contacto" => $this->string(20)->notNull(),      //Whatsapp de la empresa
+            "Telefono" => $this->string(20)->notNull(),      //Telefono de la empresa
             'Prioridad' => $this->string()->notNull(), //Prioridad del cliente
             'Tipo_servicio' => $this->string()->notNull(), //Tipo de servicio contratado
             'Estado' => $this->boolean()->notNull()->defaultValue(1),

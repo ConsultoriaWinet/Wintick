@@ -45,6 +45,7 @@ public $password;
         [['status'], 'default', 'value' => 10],
 
         [['Nombre', 'email', 'rol', 'color'], 'required'],
+        [['email'], 'email'],
         [['status', 'created_at', 'updated_at'], 'integer'],
         [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
         [['color'], 'string', 'max' => 20],
