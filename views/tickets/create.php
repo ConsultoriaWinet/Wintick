@@ -10,7 +10,9 @@ use app\models\Usuarios;
 
 /** @var yii\web\View $this */
 /** @var app\models\Tickets $model */
+/** @var bool $desdeCalendario */
 
+$desdeCalendario = $desdeCalendario ?? false;
 $this->title = 'Crear Ticket';
 
 // Obtener datos para los dropdowns
@@ -362,10 +364,14 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
                 </div>
 
                 <div class="form-group">
-                    <?= $form->field($model, 'TiempoEfectivo')->textInput([
-                        'class' => 'form-control',
-                        'placeholder' => 'Ej: 2 horas, 30 minutos'
-                    ])->label('Tiempo Efectivo') ?>
+                    <?php
+                    $tiempoOpts = ['class' => 'form-control', 'placeholder' => 'Ej: 2 horas, 30 minutos'];
+                    if ($desdeCalendario) {
+                        $tiempoOpts['disabled']    = true;
+                        $tiempoOpts['placeholder'] = 'Se completa al cerrar el ticket';
+                    }
+                    echo $form->field($model, 'TiempoEfectivo')->textInput($tiempoOpts)->label('Tiempo Efectivo');
+                    ?>
                 </div>
             </div>
         </div>
@@ -386,11 +392,14 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
                 </div>
 
                 <div class="form-group full-width">
-                    <?= $form->field($model, 'Solucion')->textarea([
-                        'rows' => 3,
-                        'class' => 'form-control',
-                        'placeholder' => 'Describe la solución aplicada (opcional)...'
-                    ])->label('Solución (Opcional)') ?>
+                    <?php
+                    $solucionOpts = ['rows' => 3, 'class' => 'form-control', 'placeholder' => 'Describe la solución aplicada (opcional)...'];
+                    if ($desdeCalendario) {
+                        $solucionOpts['disabled']    = true;
+                        $solucionOpts['placeholder'] = 'Se completa al cerrar el ticket';
+                    }
+                    echo $form->field($model, 'Solucion')->textarea($solucionOpts)->label('Solución (Opcional)');
+                    ?>
                 </div>
             </div>
         </div>

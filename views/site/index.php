@@ -389,7 +389,75 @@ $this->title = 'Dashboard - Tickets por Consultor';
 
             // Arrastrar evento
             eventDrop: function (info) {
-                console.log('Evento movido: ' + info.event.id + ' a ' + info.event.start);
+                const nuevaFecha = info.event.start;
+                const folio      = info.event.title;
+                const estado     = (info.event.extendedProps.estado || '').toUpperCase();
+                const cerrado    = estado === 'CERRADO';
+
+                const fechaStr = nuevaFecha.toLocaleString('es-ES', {
+                    weekday: 'long',
+                    year:    'numeric',
+                    month:   'long',
+                    day:     'numeric',
+                    hour:    '2-digit',
+                    minute:  '2-digit'
+                });
+
+                const config = cerrado ? {
+                    title:              '⚠️ Ticket ya cerrado',
+                    html:               `<p>El ticket <strong>${folio}</strong> ya fue <strong>cerrado con solución registrada</strong>.</p>
+                                         <p>Moverlo podría generar inconsistencias en los registros de tiempo y fechas.</p>
+                                         <p style="color:#6c757d; font-size:14px;">Nueva fecha: <em>${fechaStr}</em></p>`,
+                    icon:               'warning',
+                    showCancelButton:    true,
+                    confirmButtonColor:  '#dc3545',
+                    cancelButtonColor:   '#6c757d',
+                    confirmButtonText:   '<i class="fas fa-exclamation-triangle"></i> Mover de todas formas',
+                    cancelButtonText:    'Cancelar',
+                    focusCancel:         true,
+                } : {
+                    title:              '¿Mover ticket?',
+                    html:               `<p>¿Deseas mover el ticket <strong>${folio}</strong> a:</p>
+                                         <p style="color:#6c757d; font-size:15px;">${fechaStr}</p>`,
+                    icon:               'question',
+                    showCancelButton:    true,
+                    confirmButtonColor:  '#A0BAA5',
+                    cancelButtonColor:   '#6c757d',
+                    confirmButtonText:   '<i class="fas fa-check"></i> Sí, mover',
+                    cancelButtonText:    'Cancelar',
+                };
+
+                Swal.fire(config).then(result => {
+                    if (result.isConfirmed) {
+                        fetch('<?= Url::to(['tickets/update-fecha']) ?>', {
+                            method:  'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body:    JSON.stringify({ id: info.event.id, start: nuevaFecha.toISOString() })
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    toast:    true,
+                                    position: 'top-end',
+                                    icon:     'success',
+                                    title:    'Ticket movido correctamente',
+                                    showConfirmButton: false,
+                                    timer:    2000
+                                });
+                            } else {
+                                info.revert();
+                                Swal.fire('Error', data.message || 'No se pudo mover el ticket', 'error');
+                            }
+                        })
+                        .catch(() => {
+                            info.revert();
+                            Swal.fire('Error', 'Error de conexión al mover el ticket', 'error');
+                        });
+                    } else {
+                        info.revert();
+                    }
+                });
             }
         });
 

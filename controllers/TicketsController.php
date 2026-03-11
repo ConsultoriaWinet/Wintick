@@ -50,7 +50,8 @@ class TicketsController extends Controller
                 'verbs' => [
                     'class' => VerbFilter::class,
                     'actions' => [
-                        'get-tickets' => ['GET'],
+                        'get-tickets'   => ['GET'],
+                        'update-fecha'  => ['POST'],
                     ],
                 ],
             ]);
@@ -74,6 +75,7 @@ class TicketsController extends Controller
             'agregar-comentario',
             'obtener-comentarios',
             'contar-comentarios',
+            'update-fecha',
         ];
 
         if (in_array($action->id, $jsonActions, true)) {
@@ -193,16 +195,21 @@ class TicketsController extends Controller
 
         // Obtener fecha del POST si existe (viene del calendario)
         $fechaSeleccionada = Yii::$app->request->post('fecha_seleccionada');
+        $desdeCalendario = false;
         if ($fechaSeleccionada) {
-            // Convertir fecha del calendario (YYYY-MM-DD) a formato datetime
-            $model->Fecha_creacion = $fechaSeleccionada . ' ' . date('H:i:s');
-            $model->Fecha_actualizacion = $fechaSeleccionada . ' ' . date('H:i:s');
+            // Si trae hora (YYYY-MM-DDTHH:MM o YYYY-MM-DD HH:MM:SS), usarla directamente
+            $fechaDatetime = str_replace('T', ' ', $fechaSeleccionada);
+            if (strlen($fechaDatetime) === 10) {
+                $fechaDatetime .= ' ' . date('H:i:s');
+            }
+            $model->Fecha_creacion      = $fechaDatetime;
+            $model->Fecha_actualizacion = $fechaDatetime;
+            $model->HoraProgramada      = $fechaDatetime;  // Fecha de Reporte
 
-            // Guardar en sesión para mostrar mensaje
             Yii::$app->session->setFlash('fechaDesdeCalendario', $fechaSeleccionada);
+            $desdeCalendario = true;
         } else {
-            // Si no hay fecha en POST, usar fecha actual
-            $model->Fecha_creacion = date('Y-m-d H:i:s');
+            $model->Fecha_creacion      = date('Y-m-d H:i:s');
             $model->Fecha_actualizacion = date('Y-m-d H:i:s');
         }
 
@@ -239,10 +246,48 @@ class TicketsController extends Controller
         }
         
         return $this->render('create', [
-            'model' => $model,
+            'model'           => $model,
             'consultoresList' => $consultoresList,
-
+            'desdeCalendario' => $desdeCalendario,
         ]);
+    }
+
+    /**
+     * Actualiza la fecha/hora de inicio de un ticket desde el drag del calendario.
+     * Recibe JSON: { id, start }
+     */
+    public function actionUpdateFecha()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $body  = Yii::$app->request->rawBody;
+        $data  = json_decode($body, true);
+        $id    = isset($data['id'])    ? (int)$data['id']    : null;
+        $start = isset($data['start']) ? $data['start']      : null;
+
+        if (!$id || !$start) {
+            Yii::$app->response->statusCode = 400;
+            return ['success' => false, 'message' => 'Datos incompletos'];
+        }
+
+        $model = Tickets::findOne($id);
+        if (!$model) {
+            Yii::$app->response->statusCode = 404;
+            return ['success' => false, 'message' => 'Ticket no encontrado'];
+        }
+
+        // Convertir ISO 8601 a formato MySQL (YYYY-MM-DD HH:MM:SS)
+        $fechaDatetime = date('Y-m-d H:i:s', strtotime($start));
+
+        $model->HoraInicio          = $fechaDatetime;
+        $model->Fecha_actualizacion = date('Y-m-d H:i:s');
+
+        if ($model->save(false)) {
+            return ['success' => true, 'nueva_fecha' => $fechaDatetime];
+        }
+
+        Yii::$app->response->statusCode = 500;
+        return ['success' => false, 'message' => 'Error al guardar', 'errors' => $model->errors];
     }
 
     /**
