@@ -79,6 +79,32 @@ $config = [
 
     ],
     'params' => $params,
+
+    // Redirige al rol Monitor a site/index si intenta acceder a cualquier otra ruta
+    'on beforeAction' => function (\yii\base\ActionEvent $event) {
+        $app  = \Yii::$app;
+        $user = $app->user;
+
+        if ($user->isGuest) return;
+
+        $identity = $user->identity;
+        if (!$identity || ($identity->rol ?? '') !== 'Monitor') return;
+
+        $controllerId = $app->controller->id;
+        $actionId     = $app->controller->action->id;
+
+        $permitidas = [
+            'site' => ['index', 'get-tickets', 'check-update', 'logout', 'error'],
+        ];
+
+        $ok = isset($permitidas[$controllerId])
+            && in_array($actionId, $permitidas[$controllerId], true);
+
+        if (!$ok) {
+            $event->isValid = false;
+            $app->response->redirect($app->homeUrl)->send();
+        }
+    },
 ];
 
 if (YII_ENV_DEV) {

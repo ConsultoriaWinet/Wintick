@@ -29,7 +29,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['index', 'logout', 'get-tickets'],
+                        'actions' => ['index', 'logout', 'get-tickets', 'check-update'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -69,14 +69,27 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-
         $consultores = Usuarios::find()
             ->where(['id' => Tickets::find()->select('Asignado_a')->distinct()])
             ->all();
 
+        $esMonitor = !Yii::$app->user->isGuest
+            && Yii::$app->user->identity->rol === 'Monitor';
+
         return $this->render('index', [
             'consultores' => $consultores,
+            'esMonitor'   => $esMonitor,
         ]);
+    }
+
+    /**
+     * Endpoint liviano para el polling del Monitor.
+     * Devuelve el timestamp del último cambio en tickets.
+     */
+    public function actionCheckUpdate()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        return ['lastUpdate' => Tickets::find()->max('Fecha_actualizacion')];
     }
 
     /**

@@ -69,12 +69,15 @@ class RbacController extends Controller
         $supervisores    = $auth->createRole('Supervisores');
         $administradores = $auth->createRole('Administradores');
         $desarrolladores = $auth->createRole('Desarrolladores');
+        $monitor         = $auth->createRole('Monitor');
+        $monitor->description = 'Pantalla de visualización — solo lectura del calendario';
 
         $auth->add($consultores);
         $auth->add($administracion);
         $auth->add($supervisores);
         $auth->add($administradores);
         $auth->add($desarrolladores);
+        $auth->add($monitor);
 
 
         /* =========================================================
@@ -106,7 +109,9 @@ class RbacController extends Controller
         $auth->addChild($desarrolladores, $administradores);
 
 
-        echo "✔ RBAC inicializado correctamente con permisos, 5 roles y jerarquías.\n";
+        // Monitor: sin permisos — solo puede ver el calendario (index es accesible a '@')
+
+        echo "✔ RBAC inicializado correctamente con permisos, 6 roles y jerarquías.\n";
 
         return ExitCode::OK;
     }

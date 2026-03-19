@@ -527,8 +527,15 @@ class TicketsController extends Controller
             return ['success' => false, 'message' => 'Ticket no encontrado'];
         }
 
+        $nuevoEstado = (string)($data['estado'] ?? $ticket->Estado);
+
+        // CERRADO solo se procesa vía actionSaveSolution (incluye solución + notificaciones).
+        if (mb_strtolower(trim($nuevoEstado)) === 'cerrado') {
+            return ['success' => false, 'message' => 'Para cerrar un ticket usa el modal de solución.'];
+        }
+
         $estadoAnterior = (string)$ticket->Estado;
-        $ticket->Estado = (string)($data['estado'] ?? $ticket->Estado);
+        $ticket->Estado = $nuevoEstado;
 
         if (!$ticket->save()) {
             return ['success' => false, 'message' => 'No se pudo guardar', 'errors' => $ticket->errors];
@@ -537,34 +544,15 @@ class TicketsController extends Controller
         // Historial
         \app\models\TicketHistorial::registrar($ticket->id, (int)Yii::$app->user->id, 'Estado', $estadoAnterior, $ticket->Estado);
 
-        $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
-
-     
+        // Notificar cambio de estado al consultor asignado
         if ($estadoAnterior !== $ticket->Estado && $ticket->Asignado_a) {
+            $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
             $this->crearNotificacion(
                 (int)$ticket->Asignado_a,
                 'estado_cambio',
                 'Cambio de estado: ' . $ticket->Folio,
                 $usuarioActualEmail . ' cambió el estado a ' . $ticket->Estado,
                 $ticket->id
-            );
-        }
-
-      
-        $estadoNormalizado = mb_strtolower(trim($ticket->Estado));
-        if ($estadoAnterior !== $ticket->Estado && $estadoNormalizado === 'cerrado') {
-
-            $skip = [];
-            if (!empty($ticket->Asignado_a)) $skip[] = (int)$ticket->Asignado_a;
-            if (!Yii::$app->user->isGuest) $skip[] = (int)Yii::$app->user->id;
-
-            $this->notificarRoles(
-                ['Administracion', 'Administradores', 'Desarrolladores'],
-                'ticket_cerrado',
-                'Ticket cerrado: ' . $ticket->Folio,
-                $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
-                $ticket->id,
-                $skip
             );
         }
 
@@ -689,6 +677,34 @@ class TicketsController extends Controller
                 \app\models\TicketHistorial::registrar($ticket->id, $userId, 'HoraFinalizo',    '',                          $ticket->HoraFinalizo ?? '');
 
                 $transaction->commit();
+
+                // Notificaciones — se envían DESPUÉS del commit, cuando la solución ya está guardada
+                $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
+
+                // 1) Notificar al consultor asignado del cambio de estado a CERRADO
+                if ($ticket->Asignado_a) {
+                    $this->crearNotificacion(
+                        (int)$ticket->Asignado_a,
+                        'estado_cambio',
+                        'Ticket cerrado: ' . $ticket->Folio,
+                        $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio . ' con solución.',
+                        $ticket->id
+                    );
+                }
+
+                // 2) Notificar a roles administrativos
+                $skip = [];
+                if (!empty($ticket->Asignado_a)) $skip[] = (int)$ticket->Asignado_a;
+                if (!Yii::$app->user->isGuest)    $skip[] = (int)Yii::$app->user->id;
+
+                $this->notificarRoles(
+                    ['Administracion', 'Administradores', 'Desarrolladores'],
+                    'ticket_cerrado',
+                    'Ticket cerrado: ' . $ticket->Folio,
+                    $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
+                    $ticket->id,
+                    $skip
+                );
 
                 return [
                     'success'      => true,

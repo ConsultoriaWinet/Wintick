@@ -1183,6 +1183,7 @@ let tieneTiempoGuardado = false;
 let tiempoEditadoManualmente = false;
 let solutionOpenedFromEstadoChange = false;
 let lastTicketIdSolution = null;
+let lastEstadoAnterior = null;
 
 // ========================================
 // FOLIO
@@ -1487,10 +1488,25 @@ function updateEstado(selectElement, ticketId) {
     const estado = selectElement.value;
     const div = selectElement.previousElementSibling;
 
+    // Capturar estado anterior ANTES de modificar el div
+    const estadoAnterior = div.textContent.trim();
+
     div.className = 'estado-clickeable ' + getEstadoClass(estado);
     div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
     div.style.display = 'inline-flex';
     selectElement.style.display = 'none';
+
+    // Si se selecciona CERRADO, abrir el modal de solución SIN llamar al backend todavía.
+    // La notificación y el cierre real ocurren solo cuando se guarda la solución.
+    if (estado === 'CERRADO') {
+        lastEstadoAnterior        = estadoAnterior;
+        solutionOpenedFromEstadoChange = true;
+        lastTicketIdSolution      = ticketId;
+
+        const folio = selectElement.closest('tr')?.dataset.folio || '';
+        openSolutionModal(ticketId, folio, true);
+        return;
+    }
 
     fetch('<?= Url::to(['update-estado']) ?>', {
         method: 'POST',
@@ -1502,19 +1518,7 @@ function updateEstado(selectElement, ticketId) {
     })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                buildRowsCache();
-
-                if (estado === 'CERRADO') {
-                    const row = selectElement.closest('tr');
-                    const folio = row.dataset.folio || '';
-
-                    solutionOpenedFromEstadoChange = true;
-                    lastTicketIdSolution = ticketId;
-
-                    openSolutionModal(ticketId, folio, true);
-                }
-            }
+            if (data.success) buildRowsCache();
         })
         .catch(error => console.error('Error:', error));
 }
@@ -1764,6 +1768,7 @@ function saveSolution() {
                     position: 'top-end'
               })
                 closeModal();
+                sessionStorage.setItem('notifNoSuprimir', '1');
                 location.reload();
             } else {
                 let msg = data.message || 'Error desconocido';
@@ -1793,33 +1798,24 @@ function closeModal() {
     if (solutionOpenedFromEstadoChange && lastTicketIdSolution) {
         const select = document.querySelector('.estado-' + lastTicketIdSolution);
         if (select) {
-            const nuevoEstado = 'ABIERTO';
-            select.value = nuevoEstado;
+            // Revertir al estado que tenía antes de seleccionar CERRADO.
+            // No se llama al backend porque nunca se guardó CERRADO — solo se cambió la UI.
+            const estadoRevertir = lastEstadoAnterior || 'ABIERTO';
+            select.value = estadoRevertir;
 
             const div = select.previousElementSibling;
             if (div) {
-                div.className = 'estado-clickeable ' + getEstadoClass(nuevoEstado);
-                div.innerHTML = '<i class="fas ' + getEstadoIcon(nuevoEstado) + '"></i> ' + nuevoEstado;
+                div.className = 'estado-clickeable ' + getEstadoClass(estadoRevertir);
+                div.innerHTML = '<i class="fas ' + getEstadoIcon(estadoRevertir) + '"></i> ' + estadoRevertir;
                 div.style.display = 'inline-flex';
                 select.style.display = 'none';
             }
-
-            fetch('<?= Url::to(['update-estado']) ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-                },
-                body: JSON.stringify({ id: lastTicketIdSolution, estado: nuevoEstado })
-            })
-                .then(r => r.json())
-                .then(data => { if (data.success) buildRowsCache(); })
-                .catch(err => console.error('Error reverting status:', err));
         }
     }
 
     solutionOpenedFromEstadoChange = false;
     lastTicketIdSolution = null;
+    lastEstadoAnterior   = null;
 }
 
 // ========================================

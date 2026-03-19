@@ -22,6 +22,7 @@ class UsuariosController extends Controller
         'Supervisores',
         'Administradores',
         'Desarrolladores',
+        'Monitor',
     ];
 
     /**

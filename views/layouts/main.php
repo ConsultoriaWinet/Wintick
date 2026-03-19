@@ -754,7 +754,9 @@ $this->registerJs($js);
   // ===== WEB NOTIFICATIONS =====
   let notificationCheckInterval = null;
   let lastNotifsSeen = new Set();
-  let firstLoad = true;
+  // Si el reload fue tras guardar una solución, mostrar las nuevas notificaciones sin suprimirlas
+  let firstLoad = !sessionStorage.getItem('notifNoSuprimir');
+  sessionStorage.removeItem('notifNoSuprimir');
 
   async function ensureNotificationPermission() {
     if (!("Notification" in window)) return;

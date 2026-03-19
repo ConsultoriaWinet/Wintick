@@ -64,6 +64,7 @@ class Tickets extends \yii\db\ActiveRecord
     {
         return [
             [['Solucion', 'HoraProgramada', 'HoraInicio', 'TiempoRestante', 'HoraFinalizo', 'TiempoEfectivo'], 'default', 'value' => null],
+            [['Prioridad'], 'default', 'value' => 'MEDIA'],
             [['Folio', 'Usuario_reporta', 'Asignado_a', 'Estado', 'Descripcion', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'required'],
             [['Asignado_a', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
             [['Descripcion', 'Solucion'], 'string'],

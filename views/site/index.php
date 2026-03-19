@@ -1,9 +1,12 @@
 <?php
 /** @var yii\web\View $this */
 /** @var app\models\Usuarios[] $consultores */
+/** @var bool $esMonitor */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
+
+$esMonitor = $esMonitor ?? false;
 
 $this->title = 'Dashboard - Tickets por Consultor';
 ?>
@@ -144,6 +147,28 @@ $this->title = 'Dashboard - Tickets por Consultor';
     <div class="body-content">
         <h1 class="text-center mb-4">Calendario de Tickets</h1>
 
+        <?php if ($esMonitor): ?>
+        <div style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0f4f1;
+            border: 1px solid #c8d9cb;
+            border-left: 4px solid #A0BAA5;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: #4b5563;
+        ">
+            <i class="fas fa-tv" style="color:#A0BAA5; font-size:16px; flex-shrink:0;"></i>
+            <span><strong style="color:#2d3748;">Modo visualización</strong> — Solo lectura. El calendario se actualiza automáticamente.</span>
+            <span id="monitor-pulse" title="En línea"
+                style="margin-left:auto; width:9px; height:9px; border-radius:50%; background:#22c55e; flex-shrink:0;
+                       box-shadow: 0 0 0 3px rgba(34,197,94,0.25);"></span>
+        </div>
+        <?php endif; ?>
+
         <div class="dashboard-container">
 
             <!-- Sidebar Moderno -->
@@ -158,7 +183,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
                 <h3 class="d-none d-md-block">Consultores</h3>
 
                 <!-- Ver todos -->
-                <div class="consultor-item active" onclick="filtrarPorConsultor(null)" id="consultor-todos">
+                <div class="consultor-item active" onclick="<?= $esMonitor ? 'void(0)' : 'filtrarPorConsultor(null)' ?>" id="consultor-todos">
                     <span class="color-badge" style="background: #6b7280;">
                         <i class="fas fa-users" style="font-size:12px; color:white;"></i>
                     </span>
@@ -175,7 +200,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
                     $esFoto  = $avatar && str_starts_with($avatar, '/uploads/');
                     $fotoUrl = $esFoto ? Yii::getAlias('@web') . $avatar : null;
                 ?>
-                    <div class="consultor-item" onclick="filtrarPorConsultor(<?= $consultor->id ?>)"
+                    <div class="consultor-item" onclick="<?= $esMonitor ? 'void(0)' : 'filtrarPorConsultor(' . $consultor->id . ')' ?>"
                         id="consultor-<?= $consultor->id ?>">
                         <?php if ($fotoUrl): ?>
                             <img src="<?= Html::encode($fotoUrl) ?>"
@@ -203,6 +228,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
 
 
 <script>
+    const ES_MONITOR = <?= $esMonitor ? 'true' : 'false' ?>;
     let calendar;
     let consultorActual = null;
 
@@ -243,10 +269,10 @@ $this->title = 'Dashboard - Tickets por Consultor';
             height: 'auto',
             expandRows: true,
 
-            // Habilitar arrastrar y redimensionar
-            editable: true,
-            selectable: true,
-            selectMirror: true,
+            // Interactividad — bloqueada en modo Monitor
+            editable:     !ES_MONITOR,
+            selectable:   !ES_MONITOR,
+            selectMirror: !ES_MONITOR,
             dayMaxEvents: true,
 
             // Cargar eventos desde el servidor (tickets)
@@ -332,11 +358,13 @@ $this->title = 'Dashboard - Tickets por Consultor';
                     </div>
                 `,
                     icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonColor: info.event.backgroundColor, // ✅ USAR COLOR DEL CONSULTOR
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="fas fa-eye"></i> Ver detalles',
-                    cancelButtonText: 'Cerrar',
+                    showCancelButton:   !ES_MONITOR,
+                    showConfirmButton:  !ES_MONITOR,
+                    confirmButtonColor: info.event.backgroundColor,
+                    cancelButtonColor:  '#6c757d',
+                    confirmButtonText:  '<i class="fas fa-eye"></i> Ver detalles',
+                    cancelButtonText:   'Cerrar',
+                    ...(ES_MONITOR ? { footer: '<span style="color:#94a3b8;font-size:12px;">Modo solo lectura</span>' } : {}),
                     width: '500px',
                     customClass: {
                         popup: 'ticket-popup'
@@ -348,8 +376,9 @@ $this->title = 'Dashboard - Tickets por Consultor';
                 });
             },
 
-            // Seleccionar rango de fechas
+            // Seleccionar rango de fechas (deshabilitado en Monitor)
             select: function (info) {
+                if (ES_MONITOR) { calendar.unselect(); return; }
                 Swal.fire({
                     title: '¿Crear nuevo ticket?',
                     text: 'Para la fecha: ' + info.startStr,
@@ -462,6 +491,34 @@ $this->title = 'Dashboard - Tickets por Consultor';
         });
 
         calendar.render();
+
+        // ── Polling inteligente para rol Monitor ──────────────────────
+        if (ES_MONITOR) {
+            let lastUpdate = null;
+            const pulse    = document.getElementById('monitor-pulse');
+
+            setInterval(function () {
+                fetch('<?= Url::to(['site/check-update']) ?>')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (lastUpdate === null) {
+                            lastUpdate = data.lastUpdate;  // primera lectura: guardar sin recargar
+                        } else if (data.lastUpdate !== lastUpdate) {
+                            lastUpdate = data.lastUpdate;
+                            calendar.refetchEvents();      // solo recarga si cambió algo
+
+                            // Parpadeo visual del indicador
+                            if (pulse) {
+                                pulse.style.background = '#f59e0b';
+                                setTimeout(() => { pulse.style.background = '#22c55e'; }, 600);
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        if (pulse) pulse.style.background = '#ef4444';  // error de red
+                    });
+            }, 5000);
+        }
     });
 
     // Función para filtrar por consultor

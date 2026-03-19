@@ -40,12 +40,13 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'status')->dropDownList(['10' => 'Activo','0'=> 'Inactivo']) ?>
 
-    <?= $form->field($model, 'rol')->dropDownList([   
-    'Consultores'=> 'Consultores',
-    'Administracion' => 'Administracion',
-    'Administradores'=> 'Administradores',
-    'Desarrolladores'=> 'Desarrolladores',
-    'Supervisores'=> 'Supervisores',
+    <?= $form->field($model, 'rol')->dropDownList([
+        'Consultores'    => 'Consultores',
+        'Administracion' => 'Administracion',
+        'Supervisores'   => 'Supervisores',
+        'Administradores'=> 'Administradores',
+        'Desarrolladores'=> 'Desarrolladores',
+        'Monitor'        => 'Monitor (solo visualización)',
     ]) ?>
 
     <?= $form->field($model, 'created_at')->hiddenInput()->label(false) ?>
