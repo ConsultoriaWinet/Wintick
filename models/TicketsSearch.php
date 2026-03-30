@@ -46,7 +46,8 @@ class TicketsSearch extends Tickets
      */
     public function search($params, $formName = null)
     {
-        $query = Tickets::find();
+        $query = Tickets::find()
+            ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado', 'comentarios']);
 
         // add conditions that should always apply here
 

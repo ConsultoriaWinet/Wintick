@@ -720,13 +720,14 @@ $this->registerJs($js);
   // ==========================================================
 
   // URLs desde Yii
-  const NOTIF_SOUND_URL = <?= json_encode(Yii::getAlias('@web/sounds/notify.mp3')) ?>;
+  const NOTIF_SOUND_URL  = <?= json_encode(Yii::getAlias('@web/sounds/notify.mp3')) ?>;
 
-  const NOTIFS_URL      = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
-  const MARK_ONE_URL    = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
-  const MARK_ALL_URL    = <?= json_encode(Url::to(['/tickets/marcar-todas-leidas'])) ?>;
-  const TICKET_INDEX_URL= <?= json_encode(Url::to(['/tickets/index'])) ?>;
-  const TICKET_VIEW_URL = <?= json_encode(Url::to(['/tickets/view'])) ?>;
+  const NOTIFS_URL       = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
+  const NOTIFS_STREAM_URL= <?= json_encode(Url::to(['/tickets/notificaciones-stream'])) ?>;
+  const MARK_ONE_URL     = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
+  const MARK_ALL_URL     = <?= json_encode(Url::to(['/tickets/marcar-todas-leidas'])) ?>;
+  const TICKET_INDEX_URL = <?= json_encode(Url::to(['/tickets/index'])) ?>;
+  const TICKET_VIEW_URL  = <?= json_encode(Url::to(['/tickets/view'])) ?>;
 
   const NOTIF_ICON      = <?= json_encode(Yii::getAlias('@web/LOGOWINTICKICO.ico')) ?>;
 
@@ -752,7 +753,7 @@ $this->registerJs($js);
   window.testSound = () => { playNotifSound(); console.log('🔊 Probando sonido:', NOTIF_SOUND_URL); };
 
   // ===== WEB NOTIFICATIONS =====
-  let notificationCheckInterval = null;
+  let sseSource = null;
   let lastNotifsSeen = new Set();
   // Si el reload fue tras guardar una solución, mostrar las nuevas notificaciones sin suprimirlas
   let firstLoad = !sessionStorage.getItem('notifNoSuprimir');
@@ -766,14 +767,14 @@ $this->registerJs($js);
 
   function inicializarNotificaciones() {
     ensureNotificationPermission();
-    if (notificationCheckInterval) clearInterval(notificationCheckInterval);
-    notificationCheckInterval = setInterval(cargarNotificaciones, 8000);
-    cargarNotificaciones();
+    // Cargar notificaciones existentes al abrir la pagina
+    cargarNotificacionesIniciales();
+    // Conectar SSE para recibir nuevas en tiempo real
+    conectarSSE();
   }
 
-  function cargarNotificaciones() {
+  function cargarNotificacionesIniciales() {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
     fetch(NOTIFS_URL, {
       method: 'POST',
       headers: { 'X-CSRF-Token': token, 'Content-Type': 'application/json' }
@@ -784,7 +785,66 @@ $this->registerJs($js);
           mostrarNotificaciones(Array.isArray(data.notificaciones) ? data.notificaciones : []);
         }
       })
-      .catch(err => console.error('Error cargando notificaciones:', err));
+      .catch(err => console.error('Error cargando notificaciones iniciales:', err));
+  }
+
+  function conectarSSE() {
+    if (sseSource) {
+      sseSource.close();
+    }
+
+    sseSource = new EventSource(NOTIFS_STREAM_URL);
+
+    sseSource.addEventListener('notificacion', function(e) {
+      try {
+        const nuevas = JSON.parse(e.data);
+        if (Array.isArray(nuevas) && nuevas.length > 0) {
+          // Recargar lista completa para mostrar el estado actualizado
+          cargarNotificacionesIniciales();
+          // Disparar alertas solo de las realmente nuevas
+          dispararAlertas(nuevas);
+        }
+      } catch(err) {
+        console.error('SSE parse error:', err);
+      }
+    });
+
+    sseSource.onerror = function() {
+      // Si la conexion cae, esperar 5s y reconectar automaticamente
+      sseSource.close();
+      setTimeout(conectarSSE, 5000);
+    };
+  }
+
+  function dispararAlertas(notificaciones) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (firstLoad) {
+      notificaciones.forEach(n => lastNotifsSeen.add(String(n.id)));
+      firstLoad = false;
+      return;
+    }
+    notificaciones
+      .filter(n => !lastNotifsSeen.has(String(n.id)))
+      .forEach(n => {
+        lastNotifsSeen.add(String(n.id));
+        playNotifSound();
+        const sysNotif = new Notification(n.titulo || 'WinTick', {
+          body: n.mensaje || '',
+          icon: NOTIF_ICON,
+          tag: 'wintick-' + n.id,
+          renotify: false
+        });
+        sysNotif.onclick = () => {
+          window.focus();
+          if (n.ticket_id) {
+            if (n.tipo === 'mencion') {
+              window.location.href = `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(n.ticket_id)}&notif_id=${encodeURIComponent(n.id)}`;
+            } else {
+              window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(n.ticket_id)}`;
+            }
+          }
+        };
+      });
   }
 
   function actualizarBannerPermiso() {
@@ -856,44 +916,6 @@ $this->registerJs($js);
         </div>
       `;
     }).join('');
-
-    // Web Notifications
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-
-    if (firstLoad) {
-      notificaciones.forEach(n => lastNotifsSeen.add(String(n.id)));
-      firstLoad = false;
-      return;
-    }
-
-    notificaciones
-      .filter(n => !n.leida)
-      .filter(n => !lastNotifsSeen.has(String(n.id)))
-      .forEach(n => {
-        lastNotifsSeen.add(String(n.id));
-
-        // suena para cualquier notificación nueva
-        playNotifSound();
-
-        const sysNotif = new Notification(n.titulo || "WinTick", {
-          body: n.mensaje || "",
-          icon: NOTIF_ICON,
-          tag: "wintick-" + n.id,
-          renotify: false
-        });
-
-        sysNotif.onclick = () => {
-          window.focus();
-          if (n.ticket_id) {
-            if (n.tipo === 'mencion') {
-              window.location.href = `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(n.ticket_id)}&notif_id=${encodeURIComponent(n.id)}`;
-            } else {
-              window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(n.ticket_id)}`;
-            }
-          }
-        };
-      });
   }
 
   function abrirNotificacion(event, notifId, ticketId, tipo) {
@@ -950,7 +972,7 @@ $this->registerJs($js);
     })
       .then(r => r.json())
       .then(data => {
-        if (data && data.success) cargarNotificaciones();
+        if (data && data.success) cargarNotificacionesIniciales();
       })
       .catch(err => console.error('❌ Error:', err));
   }
@@ -966,7 +988,7 @@ $this->registerJs($js);
     })
       .then(r => r.json())
       .then(data => {
-        if (data && data.success) cargarNotificaciones();
+        if (data && data.success) cargarNotificacionesIniciales();
       })
       .catch(err => console.error('❌ Error:', err));
   }

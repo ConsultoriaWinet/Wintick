@@ -138,7 +138,11 @@ class SiteController extends Controller
                 'email' => $usuario->email,
             ]);
 
-            return $this->goBack();
+            // Monitor va al calendario, el resto directo a tickets
+            if ($rolBD === 'Monitor') {
+                return $this->goHome();
+            }
+            return $this->redirect(['/tickets/index']);
         }
 
         // Limpia password del formulario

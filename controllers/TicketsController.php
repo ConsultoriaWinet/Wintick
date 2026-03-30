@@ -76,6 +76,7 @@ class TicketsController extends Controller
             'obtener-comentarios',
             'contar-comentarios',
             'update-fecha',
+            'notificaciones-stream',
         ];
 
         if (in_array($action->id, $jsonActions, true)) {
@@ -312,10 +313,10 @@ class TicketsController extends Controller
         $tiempoEfOrig   = $model->TiempoEfectivo;
         $horaFinOrig    = $model->HoraFinalizo;
 
-        $clientes = Clientes::find()->asArray()->all();
-        $sistemas = Sistemas::find()->asArray()->all();
-        $servicios = Servicios::find()->asArray()->all();
-        $usuarios = Usuarios::find()->asArray()->all();
+        $clientes  = Clientes::find()->select(['id', 'Nombre'])->asArray()->all();
+        $sistemas  = Sistemas::find()->select(['id', 'Nombre'])->asArray()->all();
+        $servicios = Servicios::find()->select(['id', 'Nombre'])->asArray()->all();
+        $usuarios  = Usuarios::find()->select(['id', 'Nombre', 'email'])->asArray()->all();
 
         if ($model->load(Yii::$app->request->post())) {
             // Bloquear cierre desde esta vista — debe hacerse desde index con el flujo completo
@@ -931,6 +932,107 @@ class TicketsController extends Controller
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Stream de notificaciones en tiempo real via Server-Sent Events (SSE).
+     * El navegador se conecta una vez y recibe eventos cada vez que hay notificaciones nuevas.
+     */
+    public function actionNotificacionesStream()
+    {
+        if (\Yii::$app->user->isGuest) {
+            header('HTTP/1.1 401 Unauthorized');
+            exit;
+        }
+
+        $userId = \Yii::$app->user->id;
+
+        // Deshabilitar el manejo de respuesta de Yii, tomamos control directo
+        \Yii::$app->response->isSent = true;
+
+        // CRÍTICO: liberar el lock de sesión PHP antes del loop.
+        // Sin esto, el SSE bloquea la sesión indefinidamente y cualquier
+        // otro click del usuario queda esperando → se congela la app.
+        \Yii::$app->session->close();
+
+        // Headers SSE
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('X-Accel-Buffering: no'); // necesario en nginx/proxies
+
+        // Deshabilitar timeout y buffering de PHP
+        set_time_limit(0);
+        ini_set('output_buffering', 'off');
+        ini_set('zlib.output_compression', false);
+        if (function_exists('apache_setenv')) {
+            apache_setenv('no-gzip', '1');
+        }
+
+        $ultimoIdVisto = 0;
+
+        // Enviar un comentario inicial para confirmar conexión
+        echo ": conectado\n\n";
+        flush();
+
+        while (true) {
+            // Verificar que el cliente sigue conectado
+            if (connection_aborted()) {
+                break;
+            }
+
+            // Buscar notificaciones nuevas no leidas desde el último id visto
+            $query = Notificaciones::find()
+                ->where(['usuario_id' => $userId, 'leida' => 0])
+                ->orderBy(['id' => SORT_DESC])
+                ->limit(10);
+
+            if ($ultimoIdVisto > 0) {
+                $query->andWhere(['>', 'id', $ultimoIdVisto]);
+            }
+
+            $notificaciones = $query->all();
+
+            if (!empty($notificaciones)) {
+                $data = [];
+                foreach ($notificaciones as $notif) {
+                    $data[] = [
+                        'id'        => $notif->id,
+                        'tipo'      => $notif->tipo ?? 'asignado',
+                        'titulo'    => $notif->titulo,
+                        'mensaje'   => $notif->mensaje,
+                        'leida'     => false,
+                        'fecha'     => date('d/m H:i', strtotime($notif->fecha_creacion)),
+                        'ticket_id' => $notif->ticket_id,
+                        'url'       => \yii\helpers\Url::to([
+                            'tickets/index',
+                            'openComments' => 1,
+                            'ticket_id'    => $notif->ticket_id,
+                            'notif_id'     => $notif->id,
+                        ]),
+                    ];
+                    // Actualizar el id mas alto visto
+                    if ($notif->id > $ultimoIdVisto) {
+                        $ultimoIdVisto = $notif->id;
+                    }
+                }
+
+                echo "event: notificacion\n";
+                echo "data: " . json_encode($data) . "\n\n";
+                flush();
+            } else {
+                // Heartbeat para mantener la conexion viva (evita timeout del navegador)
+                echo ": heartbeat\n\n";
+                flush();
+            }
+
+            // Cerrar conexion BD para no tenerla abierta durante el sleep
+            \Yii::$app->db->close();
+            sleep(4);
+            // Reabrir para la siguiente iteracion
+            \Yii::$app->db->open();
+        }
+
+        exit;
     }
 
     /**

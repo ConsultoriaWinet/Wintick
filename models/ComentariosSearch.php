@@ -41,7 +41,8 @@ class ComentariosSearch extends Comentarios
      */
     public function search($params, $formName = null)
     {
-        $query = Comentarios::find();
+        $query = Comentarios::find()
+            ->with(['usuario', 'ticket']);
 
         // add conditions that should always apply here
 

@@ -3,7 +3,10 @@
     "allow": [
       "Bash(php:*)",
       "Bash(xargs php:*)",
-      "Bash(php yii:*)"
+      "Bash(php yii:*)",
+      "Bash(grep -r \"TODO\\\\|FIXME\\\\|XXX\\\\|HACK\\\\|BUG\" /c/laragon/www/Wintick --include=*.php)",
+      "Bash(grep -r \"var_dump\\\\|print_r\\\\|die\\\\\\(\" /c/laragon/www/Wintick --include=*.php)",
+      "Bash(grep -r \"SELECT \\\\|INSERT \\\\|UPDATE \\\\|DELETE \" /c/laragon/www/Wintick/models --include=*.php)"
     ]
   }
 }

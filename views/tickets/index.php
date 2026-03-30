@@ -650,10 +650,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <?php
                        
 
-                       //cuenta los comentarios para asi mostrarlos en el front 
-                        $comentarioCount = \app\models\Comentarios::find()
-                            ->where(['ticket_id' => $ticket->id])
-                            ->count();
+                       //cuenta los comentarios para asi mostrarlos en el front
+                        $comentarioCount = count($ticket->comentarios);
                         ?>
                         <div style="position: relative; display: inline-block;">
                             <button class="btn btn-sm btn-outline-info comment-btn-<?= $ticket->id ?>" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">

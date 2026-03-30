@@ -41,7 +41,8 @@ class NotificacionesSearch extends Notificaciones
      */
     public function search($params, $formName = null)
     {
-        $query = Notificaciones::find();
+        $query = Notificaciones::find()
+            ->with(['usuario', 'ticket']);
 
         // add conditions that should always apply here
 
