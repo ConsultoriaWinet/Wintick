@@ -306,7 +306,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </div>
                         
                         <div class="filter-section-notice">
-                            💡 Selecciona UNO: mes O rango de fechas (inicio-fin)
+                             Selecciona UN: mes O rango de fechas (inicio-fin)
                         </div>
                         <div class="compact-filter-group">
                             <label>Mes</label>
