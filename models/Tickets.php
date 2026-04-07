@@ -181,4 +181,18 @@ class Tickets extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Usuarios::class, ['id' => 'Creado_por']);
     }
+
+    public function beforeSave($insert)
+    {
+        if ($this->Descripcion !== null) {
+            $this->Descripcion = mb_strtoupper($this->Descripcion, 'UTF-8');
+        }
+        if ($this->Solucion !== null) {
+            $this->Solucion = mb_strtoupper($this->Solucion, 'UTF-8');
+        }
+        if ($this->Usuario_reporta !== null) {
+            $this->Usuario_reporta = mb_strtoupper($this->Usuario_reporta, 'UTF-8');
+        }
+        return parent::beforeSave($insert);
+    }
 }

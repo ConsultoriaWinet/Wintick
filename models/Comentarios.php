@@ -84,4 +84,12 @@ class Comentarios extends \yii\db\ActiveRecord
         return $this->hasOne(Usuarios::class, ['id' => 'usuario_id']);
     }
 
+    public function beforeSave($insert)
+    {
+        if ($this->comentario !== null) {
+            $this->comentario = mb_strtoupper($this->comentario, 'UTF-8');
+        }
+        return parent::beforeSave($insert);
+    }
+
 }
