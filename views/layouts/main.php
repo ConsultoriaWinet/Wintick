@@ -651,6 +651,14 @@ $this->registerJsFile(
                         </div>
                         <?php endif; ?>
 
+                        <?php if ($currentRol === 'Desarrolladores'): ?>
+                        <?= Html::a(
+                            '<i class="bi bi-terminal-fill" style="color:#8BA590;"></i> <span>Dev Logs</span>',
+                            ['/logs/index'],
+                            ['class' => 'user-dropdown-item', 'encode' => false]
+                        ) ?>
+                        <?php endif; ?>
+
                         <?= Html::beginForm(['/site/logout'], 'post') ?>
                         <button type="submit" class="user-dropdown-item logout-btn">
                             <i class="ph ph-sign-out"></i>

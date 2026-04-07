@@ -5,6 +5,7 @@ namespace app\controllers;
 use Yii;
 use app\models\Clientes;
 use app\models\ClientesSearch;
+use app\models\DevLog;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -99,6 +100,21 @@ class ClientesController extends Controller
                 $model->updated_at = $time;
 
                 if ($model->save()) {
+                    DevLog::log(
+                        DevLog::TIPO_CREAR,
+                        "Cliente [{$model->Nombre}] creado — RFC: {$model->RFC} | tipo: {$model->Tipo_servicio} | prioridad: {$model->Prioridad}",
+                        [
+                            'nombre'        => $model->Nombre,
+                            'razon_social'  => $model->Razon_social,
+                            'rfc'           => $model->RFC,
+                            'correo'        => $model->Correo,
+                            'tipo_servicio' => $model->Tipo_servicio,
+                            'prioridad'     => $model->Prioridad,
+                            'criticidad'    => $model->Criticidad,
+                            'tiempo_sla'    => $model->Tiempo,
+                        ],
+                        'clientes', $model->id, 'Clientes'
+                    );
                     Yii::$app->session->setFlash('success', 'Cliente creado correctamente');
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
@@ -125,7 +141,20 @@ class ClientesController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-             $model->updated_at = date('Y-m-d H:i:s');
+            $model->updated_at = date('Y-m-d H:i:s');
+            DevLog::log(
+                DevLog::TIPO_ACTUALIZAR,
+                "Cliente [{$model->Nombre}] actualizado — RFC: {$model->RFC}",
+                [
+                    'nombre'        => $model->Nombre,
+                    'rfc'           => $model->RFC,
+                    'tipo_servicio' => $model->Tipo_servicio,
+                    'prioridad'     => $model->Prioridad,
+                    'estado'        => $model->Estado,
+                    'tiempo_sla'    => $model->Tiempo,
+                ],
+                'clientes', $model->id, 'Clientes'
+            );
             return $this->redirect(['index']);
         }
 
@@ -150,7 +179,17 @@ class ClientesController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        $nombre = $model->Nombre;
+        $rfc    = $model->RFC;
+        $model->delete();
+
+        DevLog::log(
+            DevLog::TIPO_ELIMINAR,
+            "Cliente [{$nombre}] ELIMINADO — RFC: {$rfc} | ID #{$id}",
+            ['nombre' => $nombre, 'rfc' => $rfc, 'id' => $id],
+            'clientes', $id, 'Clientes'
+        );
 
         return $this->redirect(['index']);
     }

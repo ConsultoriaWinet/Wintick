@@ -4,6 +4,7 @@ namespace app\models;
 
 use Yii;
 use yii\base\Model;
+use app\models\DevLog;
 
 /**
  * Login con protección anti-brute force.
@@ -132,7 +133,16 @@ class LoginForm extends Model
         // Auditoría
         LoginAttempts::record($this->email ?? '', false);
 
-        if (!$user) return; // email inexistente — no revelar cuál de los dos falló
+        if (!$user) {
+            // Email inexistente — no revelar cuál de los dos falló, pero sí loguearlo
+            DevLog::log(
+                DevLog::TIPO_ERROR,
+                "Intento de login fallido — email inexistente [{$this->email}] desde IP [{$ip}]",
+                ['email_intentado' => $this->email, 'ip' => $ip],
+                'site'
+            );
+            return;
+        }
 
         $user->failed_attempts = ($user->failed_attempts ?? 0) + 1;
 
@@ -144,6 +154,33 @@ class LoginForm extends Model
                 "Cuenta bloqueada por brute force: {$user->email} | IP: {$ip} | " .
                 "Intentos: {$user->failed_attempts} | Hasta: {$until}",
                 'security'
+            );
+            // LOG: cuenta bloqueada
+            DevLog::log(
+                DevLog::TIPO_ERROR,
+                "CUENTA BLOQUEADA por brute force — usuario [{$user->email}] | IP [{$ip}] | {$user->failed_attempts} intentos | Hasta: {$until}",
+                [
+                    'email'            => $user->email,
+                    'intentos'         => $user->failed_attempts,
+                    'ip'               => $ip,
+                    'bloqueado_hasta'  => $until,
+                    'user_agent'       => Yii::$app->request->userAgent,
+                ],
+                'site'
+            );
+        } else {
+            // LOG: intento fallido sin bloqueo
+            DevLog::log(
+                DevLog::TIPO_ERROR,
+                "Login fallido — usuario [{$user->email}] intento #{$user->failed_attempts} desde IP [{$ip}]",
+                [
+                    'email'             => $user->email,
+                    'intento_numero'    => $user->failed_attempts,
+                    'max_intentos'      => $this->maxAttempts(),
+                    'ip'                => $ip,
+                    'user_agent'        => Yii::$app->request->userAgent,
+                ],
+                'site'
             );
         }
 

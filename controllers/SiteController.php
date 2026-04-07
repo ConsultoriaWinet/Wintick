@@ -11,6 +11,7 @@ use app\models\LoginForm;
 use app\models\ContactForm;
 use app\models\Tickets;
 use app\models\Usuarios;
+use app\models\DevLog;
 
 
 class SiteController extends Controller
@@ -138,6 +139,20 @@ class SiteController extends Controller
                 'email' => $usuario->email,
             ]);
 
+            // ── LOG: inicio de sesión exitoso ──
+            DevLog::log(
+                DevLog::TIPO_LOGIN,
+                "Inicio de sesión exitoso — usuario [{$nombre}] con rol [{$rolBD}] desde " . Yii::$app->request->userIP,
+                [
+                    'usuario_id'    => $usuario->id,
+                    'usuario_email' => $usuario->email,
+                    'rol'           => $rolBD,
+                    'user_agent'    => Yii::$app->request->userAgent,
+                    'remember_me'   => (bool)Yii::$app->request->post('LoginForm')['rememberMe'] ?? false,
+                ],
+                'site'
+            );
+
             // Monitor va al calendario, el resto directo a tickets
             if ($rolBD === 'Monitor') {
                 return $this->goHome();
@@ -160,6 +175,21 @@ class SiteController extends Controller
      */
     public function actionLogout()
     {
+        // ── LOG: cierre de sesión (antes de hacer logout para tener identidad) ──
+        if (!Yii::$app->user->isGuest) {
+            $identity = Yii::$app->user->identity;
+            DevLog::log(
+                DevLog::TIPO_LOGOUT,
+                "Cierre de sesión — usuario [{$identity->Nombre}] con rol [{$identity->rol}]",
+                [
+                    'usuario_id'    => $identity->id,
+                    'usuario_email' => $identity->email,
+                    'rol'           => $identity->rol,
+                ],
+                'site'
+            );
+        }
+
         Yii::$app->user->logout();
 
         return $this->goHome();

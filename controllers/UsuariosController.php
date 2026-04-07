@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\models\Usuarios;
 use app\models\UsuariosSearch;
+use app\models\DevLog;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -146,6 +147,19 @@ class UsuariosController extends Controller
                 // 4) Sincronizar RBAC: asignar rol al usuario en auth_assignment
                 $this->syncRbacAssignment($model->id, $model->rol);
 
+                DevLog::log(
+                    DevLog::TIPO_CREAR,
+                    "Usuario [{$model->Nombre}] creado — email: {$model->email} | rol: {$model->rol}",
+                    [
+                        'usuario_id'    => $model->id,
+                        'nombre'        => $model->Nombre,
+                        'email'         => $model->email,
+                        'rol'           => $model->rol,
+                        'creado_por_id' => Yii::$app->user->id,
+                    ],
+                    'usuarios', $model->id, 'Usuarios'
+                );
+
                 Yii::$app->session->setFlash('success', 'Usuario creado correctamente.');
                 return $this->redirect(['index', 'created' => 1]);
             }
@@ -195,6 +209,21 @@ class UsuariosController extends Controller
                 if ($rolAnterior !== $model->rol) {
                     $this->syncRbacAssignment($model->id, $model->rol);
                 }
+
+                DevLog::log(
+                    DevLog::TIPO_ACTUALIZAR,
+                    "Usuario [{$model->Nombre}] actualizado — email: {$model->email} | rol: [{$rolAnterior}→{$model->rol}]",
+                    [
+                        'usuario_id'   => $model->id,
+                        'nombre'       => $model->Nombre,
+                        'email'        => $model->email,
+                        'rol_antes'    => $rolAnterior,
+                        'rol_despues'  => $model->rol,
+                        'cambio_rol'   => $rolAnterior !== $model->rol,
+                    ],
+                    'usuarios', $model->id, 'Usuarios'
+                );
+
                 Yii::$app->session->setFlash('success', 'Usuario actualizado correctamente.');
                 return $this->redirect(['index', 'updated' => 1]);
             }
@@ -216,11 +245,28 @@ class UsuariosController extends Controller
     {
         $model = $this->findModel($id);
 
+        $nombreBorrado = $model->Nombre;
+        $emailBorrado  = $model->email;
+        $rolBorrado    = $model->rol;
+
         // Limpieza RBAC antes de borrar (por orden/consistencia)
         $auth = Yii::$app->authManager;
         $auth->revokeAll($model->id);
 
         $model->delete();
+
+        DevLog::log(
+            DevLog::TIPO_ELIMINAR,
+            "Usuario [{$nombreBorrado}] ELIMINADO — email: {$emailBorrado} | rol: {$rolBorrado} | ID #{$id}",
+            [
+                'usuario_eliminado_id'     => $id,
+                'usuario_eliminado_nombre' => $nombreBorrado,
+                'usuario_eliminado_email'  => $emailBorrado,
+                'usuario_eliminado_rol'    => $rolBorrado,
+                'eliminado_por_id'         => Yii::$app->user->id,
+            ],
+            'usuarios', $id, 'Usuarios'
+        );
 
         Yii::$app->session->setFlash('success', 'Usuario eliminado correctamente.');
         return $this->redirect(['index', 'deleted' => 1]);

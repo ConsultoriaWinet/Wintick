@@ -10,6 +10,7 @@ use app\models\Servicios;
 use app\models\Usuarios;
 use app\models\Notificaciones;
 use app\models\Comentarios;
+use app\models\DevLog;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -239,6 +240,22 @@ class TicketsController extends Controller
                     );
                 }
 
+                DevLog::log(
+                    DevLog::TIPO_CREAR,
+                    "Ticket [{$model->Folio}] creado — cliente ID {$model->Cliente_id} | sistema ID {$model->Sistema_id} | asignado a usuario ID {$model->Asignado_a}",
+                    [
+                        'folio'       => $model->Folio,
+                        'estado'      => $model->Estado,
+                        'prioridad'   => $model->Prioridad,
+                        'cliente_id'  => $model->Cliente_id,
+                        'sistema_id'  => $model->Sistema_id,
+                        'servicio_id' => $model->Servicio_id,
+                        'asignado_a'  => $model->Asignado_a,
+                        'descripcion' => mb_substr($model->Descripcion ?? '', 0, 300),
+                    ],
+                    'tickets', $model->id, 'Tickets'
+                );
+
                 Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -364,6 +381,23 @@ class TicketsController extends Controller
                     );
                 }
 
+                DevLog::log(
+                    DevLog::TIPO_ACTUALIZAR,
+                    "Ticket [{$model->Folio}] actualizado — estado: [{$estadoAntes}→{$model->Estado}] | prioridad: [{$prioridadAntes}→{$model->Prioridad}] | asignado: [{$asignadoAntes}→{$model->Asignado_a}]",
+                    [
+                        'folio'             => $model->Folio,
+                        'estado_antes'      => $estadoAntes,
+                        'estado_despues'    => $model->Estado,
+                        'prioridad_antes'   => $prioridadAntes,
+                        'prioridad_despues' => $model->Prioridad,
+                        'asignado_antes'    => $asignadoAntes,
+                        'asignado_despues'  => $model->Asignado_a,
+                        'cliente_antes'     => $clienteAntes,
+                        'cliente_despues'   => $model->Cliente_id,
+                    ],
+                    'tickets', $model->id, 'Tickets'
+                );
+
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
@@ -392,6 +426,19 @@ class TicketsController extends Controller
             $asignadoA = $model->Asignado_a; // Guardar quién estaba asignado
 
             if ($model->delete()) {
+                DevLog::log(
+                    DevLog::TIPO_ELIMINAR,
+                    "Ticket [{$folio}] ELIMINADO — ID #{$id} | asignado a usuario ID {$asignadoA}",
+                    [
+                        'ticket_id'   => $id,
+                        'folio'       => $folio,
+                        'asignado_a'  => $asignadoA,
+                        'estado'      => $model->Estado,
+                        'cliente_id'  => $model->Cliente_id,
+                    ],
+                    'tickets', $id, 'Tickets'
+                );
+
                 // ✅ CREAR NOTIFICACIÓN AL ELIMINAR
                 if ($asignadoA) {
                     $this->crearNotificacion(
@@ -1451,13 +1498,13 @@ class TicketsController extends Controller
             $sheet->setCellValue("C$row", $t->sistema->Nombre ?? '');
             $sheet->setCellValue("D$row", $t->servicio->Nombre ?? '');
             $sheet->setCellValue("E$row", $t->Usuario_reporta ?? '');
-            $sheet->setCellValue("F$row", $t->usuarioAsignado->email ?? '');
-            $sheet->setCellValue("G$row", $t->HoraProgramada ? date('d/m/Y H:i', strtotime($t->HoraProgramada)) : '');
-            $sheet->setCellValue("H$row", $t->HoraInicio ? date('d/m/Y H:i', strtotime($t->HoraInicio)) : '');
+            $sheet->setCellValue("F$row", $t->usuarioAsignado->Asignado_a ?? '');
+            $sheet->setCellValue("G$row", $t->HoraProgramada ? date('H:i', strtotime($t->HoraProgramada)) : '');
+            $sheet->setCellValue("H$row", $t->HoraInicio ? date('H:i', strtotime($t->HoraInicio)) : '');
             $sheet->setCellValue("I$row", $t->Prioridad);
             $sheet->setCellValue("J$row", $t->Estado);
             $sheet->setCellValue("K$row", $t->Descripcion);
-            $sheet->setCellValue("L$row", date('d/m/Y H:i', strtotime($t->Fecha_creacion)));
+            $sheet->setCellValue("L$row", date('H:i', strtotime($t->Fecha_creacion)));
 
             // --- Colorear filas según Estado ---
             $estado = strtolower($t->Estado);

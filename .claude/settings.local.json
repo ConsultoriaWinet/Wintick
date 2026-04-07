@@ -7,7 +7,12 @@
       "Bash(grep -r \"TODO\\\\|FIXME\\\\|XXX\\\\|HACK\\\\|BUG\" /c/laragon/www/Wintick --include=*.php)",
       "Bash(grep -r \"var_dump\\\\|print_r\\\\|die\\\\\\(\" /c/laragon/www/Wintick --include=*.php)",
       "Bash(grep -r \"SELECT \\\\|INSERT \\\\|UPDATE \\\\|DELETE \" /c/laragon/www/Wintick/models --include=*.php)",
-      "Bash(find /c/laragon/www/Wintick/web -name *.js -type f -not -path */assets/*)"
+      "Bash(find /c/laragon/www/Wintick/web -name *.js -type f -not -path */assets/*)",
+      "Bash(php -r \":*)",
+      "Bash(ls -la /c/laragon/www/Wintick/*.sql)",
+      "Read(//c/Users/Consultoria/**)",
+      "Bash(find /c/laragon -name *.sql -maxdepth 4)",
+      "Bash(ls -la /c/Users/Consultoria/Downloads/*.sql)"
     ]
   }
 }
