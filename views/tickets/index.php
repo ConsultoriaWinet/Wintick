@@ -577,7 +577,16 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                 data-estado="<?= Html::encode($ticket->Estado) ?>"
                 data-descripcion="<?= Html::encode($ticket->Descripcion) ?>"
                 data-hora-finalizo="<?= Html::encode($ticket->HoraFinalizo ? date('d/m/Y H:i', strtotime($ticket->HoraFinalizo)) : '-') ?>"
-                data-tiempo-efectivo="<?= Html::encode($ticket->TiempoEfectivo ?: '-') ?>" >
+                data-hora-inicio-raw="<?= Html::encode($ticket->HoraInicio ? date('Y-m-d\TH:i', strtotime($ticket->HoraInicio)) : '') ?>"
+                data-hora-programada-raw="<?= Html::encode($ticket->HoraProgramada ? date('Y-m-d\TH:i', strtotime($ticket->HoraProgramada)) : '') ?>"
+                data-cliente-id="<?= (int)$ticket->Cliente_id ?>"
+                data-sistema-id="<?= (int)$ticket->Sistema_id ?>"
+                data-servicio-id="<?= (int)$ticket->Servicio_id ?>"
+                data-asignado-id="<?= (int)$ticket->Asignado_a ?>"
+                data-solucion="<?= Html::encode($ticket->Solucion ?: '') ?>"
+                data-tiene-solucion="<?= $ticket->Solucion ? '1' : '0' ?>"
+                data-tiempo-efectivo="<?= Html::encode($ticket->TiempoEfectivo ?: '-') ?>"
+                data-id="<?= $ticket->id ?>" >
                     <td><strong><?= Html::encode($ticket->Folio) ?></strong></td>
                     <td><?= $ticket->cliente ? Html::encode($ticket->cliente->Nombre) : '-' ?></td>
                     <td><?= $ticket->sistema ? Html::encode($ticket->sistema->Nombre) : '-' ?></td>
@@ -661,16 +670,10 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                                 <span class="badge bg-danger badge-count-<?= $ticket->id ?>" style="position: absolute; top: -8px; right: -8px; font-size: 11px; padding: 3px 6px; min-width: 24px; text-align: center; border-radius: 50%; font-weight: bold;"><?= $comentarioCount ?></span>
                             <?php endif; ?>
                         </div>
-                                <button class="btn btn-sm btn-outline-primary" title="Agregar solución"
-                                    onclick="openSolutionModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                                <i class="fas fa-lightbulb"></i>
-                            </button>
-                        <?= Html::a('<i class="fas fa-edit"></i>', ['update', 'id' => $ticket->id], ['class' => 'btn btn-sm btn-outline-secondary', 'title' => 'Editar']) ?>
-                        <?= ''/* Html::a('<i class="fas fa-trash"></i>', '#', [
-                            'class' => 'btn btn-sm btn-outline-danger',
-                            'title' => 'Eliminar',
-                            'onclick' => "confirmarEliminar({$ticket->id}, '{$ticket->Folio}')",
-                        ]) */?>
+                        <button class="btn btn-sm btn-outline-danger" title="Eliminar ticket"
+                            onclick="confirmarEliminar(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>', <?= $ticket->Estado === 'CERRADO' && $ticket->Solucion ? 'true' : 'false' ?>)">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -1164,6 +1167,10 @@ window.WINTICK_USERS = <?= json_encode(array_map(function($u){
         'primerNombre' => preg_split('/\s+/', trim($u['Nombre'] ?? ''))[0] ?? ''
     ];
 }, $Usuarios), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.WINTICK_CLIENTES = <?= json_encode(array_map(fn($c) => ['id' => (int)$c['id'], 'nombre' => $c['Nombre']], $clientes), JSON_UNESCAPED_UNICODE) ?>;
+window.WINTICK_SISTEMAS = <?= json_encode(array_map(fn($s) => ['id' => (int)$s['id'], 'nombre' => $s['Nombre']], $sistemas), JSON_UNESCAPED_UNICODE) ?>;
+window.WINTICK_SERVICIOS = <?= json_encode(array_map(fn($s) => ['id' => (int)$s['id'], 'nombre' => $s['Nombre']], $servicios), JSON_UNESCAPED_UNICODE) ?>;
+window.URL_QUICK_UPDATE = '<?= \yii\helpers\Url::to(['/tickets/quick-update']) ?>';
 </script>
 <script>
 /**
@@ -1259,60 +1266,58 @@ function buildRowsCache() {
     });
 }
 
-function confirmarEliminar(ticketId, folio) {
+function confirmarEliminar(ticketId, folio, tieneDevolucion = false) {
+    const extraText = tieneDevolucion
+        ? '<br><span style="color:#15803d;font-size:13px;"><i class="fas fa-undo"></i> El tiempo efectivo será devuelto al saldo del cliente.</span>'
+        : '';
+
     Swal.fire({
-        title: '¿Estás seguro?',
-        text: `Se eliminará el ticket ${folio} permanentemente`,
+        title: '¿Eliminar ticket ' + folio + '?',
+        html: `<span style="color:#64748b;">Esta acción no se puede deshacer.</span>${extraText}`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
         cancelButtonColor: '#6b7280',
         confirmButtonText: '<i class="fas fa-trash"></i> Sí, eliminar',
-        cancelButtonText: '<i class="fas fa-times"></i> Cancelar',
+        cancelButtonText: 'Cancelar',
         reverseButtons: true
     }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire({
-                title: 'Eliminando...',
-                text: 'Por favor espera',
-                icon: 'info',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => Swal.showLoading()
-            });
+        if (!result.isConfirmed) return;
 
-            fetch('<?= Url::to(['delete']) ?>?id=' + ticketId, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
-                },
-                body: '<?= Yii::$app->request->csrfParam ?>=<?= Yii::$app->request->getCsrfToken() ?>'
-            })
-                .then(response => {
-                    if (response.ok || response.status === 302) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Eliminado!',
-                            text: `Ticket ${folio} eliminado correctamente`,
-                            showConfirmButton: false,
-                            timer: 2000,
-                            timerProgressBar: true
-                        }).then(() => location.reload());
-                    } else {
-                        throw new Error('Error del servidor: ' + response.status);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error completo:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'No se pudo eliminar el ticket: ' + error.message,
-                        confirmButtonColor: '#ef4444'
-                    });
-                });
-        }
+        Swal.fire({
+            title: 'Eliminando...',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        fetch('<?= Url::to(['delete']) ?>?id=' + ticketId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>'
+            },
+            body: '<?= Yii::$app->request->csrfParam ?>=<?= Yii::$app->request->getCsrfToken() ?>'
+        })
+        .then(response => {
+            if (response.ok || response.status === 302) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Eliminado!',
+                    text: tieneDevolucion
+                        ? `Ticket ${folio} eliminado y tiempo devuelto al cliente.`
+                        : `Ticket ${folio} eliminado correctamente.`,
+                    showConfirmButton: false,
+                    timer: 2200,
+                    timerProgressBar: true
+                }).then(() => location.reload());
+            } else {
+                throw new Error('Error del servidor: ' + response.status);
+            }
+        })
+        .catch(error => {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo eliminar: ' + error.message, confirmButtonColor: '#ef4444' });
+        });
     });
 }
 
@@ -2226,6 +2231,18 @@ function getCriticidadClass(criticidad) {
     return '';
 }
 
+// ── Helpers para el popup de doble-click ──────────────────────────────────────
+function buildSelectOptions(list, selectedId) {
+    return list.map(item =>
+        `<option value="${item.id}" ${item.id == selectedId ? 'selected' : ''}>${escapeHtml(item.nombre)}</option>`
+    ).join('');
+}
+function buildUserOptions(selectedId) {
+    return window.WINTICK_USERS.map(u =>
+        `<option value="${u.id}" ${u.id == selectedId ? 'selected' : ''}>${escapeHtml(u.nombre)} (${escapeHtml(u.email)})</option>`
+    ).join('');
+}
+
 document.querySelectorAll('tr.existing-row').forEach(row => {
     row.addEventListener('dblclick', function (e) {
         if (e.target.closest('button, a, select, input, textarea')) return;
@@ -2235,10 +2252,73 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
         const estadoClass = getStatusClass(d.estado);
         const prioridadClass = getPriorityClass(d.prioridad);
         const criticidadClass = getCriticidadClass(d.criticidad);
+        const sinSolucion = d.tieneSolucion !== '1';
 
         const html = `
+<style>
+.swal-header-actions { position:absolute; top:12px; right:62px; display:flex; gap:10px; z-index:10; }
+.swal-icon-btn {
+    width:34px; height:34px; border-radius:8px; border:none;
+    background:rgba(255,255,255,0.22); color:rgba(255,255,255,0.9); cursor:pointer; display:flex;
+    align-items:center; justify-content:center; font-size:14px; transition:all 0.2s;
+}
+.swal-icon-btn:hover { background:rgba(255,255,255,0.38); transform:translateY(-1px); }
+.swal2-actions { display:none!important; }
+.swal2-close { display:none!important; }
+.swal-icon-btn-sol { border-color:rgba(255,220,100,0.8); color:#fde68a; }
+.swal-icon-btn-sol:hover { background:rgba(253,230,138,0.25); }
+.swal-mode-bar {
+    display:flex; gap:10px; align-items:center; justify-content:flex-end;
+    padding:14px 20px 0; border-top:1px solid #e2e8f0; margin-top:16px;
+}
+.swal-mode-bar .btn-cancel-mode {
+    padding:8px 18px; border-radius:7px; border:1px solid #cbd5e0; background:#fff;
+    color:#475569; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s;
+}
+.swal-mode-bar .btn-cancel-mode:hover { background:#f1f5f9; }
+.swal-mode-bar .btn-save-mode {
+    padding:8px 20px; border-radius:7px; border:none;
+    background:linear-gradient(135deg,#A0BAA5,#8BA590); color:#fff;
+    cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s;
+    display:flex; align-items:center; gap:6px;
+}
+.swal-mode-bar .btn-save-mode:hover { opacity:0.88; transform:translateY(-1px); }
+.swal-mode-bar .btn-save-mode:disabled { opacity:0.55; cursor:not-allowed; transform:none; }
+.edit-field-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px 0 8px; }
+.edit-field-group { display:flex; flex-direction:column; gap:5px; }
+.edit-field-group.full { grid-column:1/-1; }
+.edit-field-group label { font-size:12px; font-weight:600; color:#64748b; }
+.edit-field-group select,
+.edit-field-group input,
+.edit-field-group textarea {
+    font-size:13px; padding:7px 10px; border:1px solid #dce8de; border-radius:7px;
+    background:#f7fbf8; color:#1e293b; transition:border-color 0.2s;
+}
+.edit-field-group select:focus,
+.edit-field-group input:focus,
+.edit-field-group textarea:focus { outline:none; border-color:#A0BAA5; background:#fff; }
+.sol-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.sol-tiempo-card {
+    background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px;
+    font-size:13px; display:flex; flex-direction:column; gap:6px;
+}
+.sol-tiempo-card .sol-tiempo-label { color:#64748b; font-size:11px; font-weight:600; }
+.sol-tiempo-card .sol-tiempo-val { font-weight:700; color:#1e293b; }
+.sol-badge-tiempo {
+    display:inline-block; background:#dcfce7; color:#15803d; padding:4px 10px;
+    border-radius:20px; font-size:12px; font-weight:700; margin-top:4px;
+}
+</style>
             <div class="swal-ticket-card">
-                <div class="swal-ticket-header">
+                <div class="swal-ticket-header" style="position:relative">
+                    <div class="swal-header-actions">
+                        <button class="swal-icon-btn" id="swal-btn-edit" title="Editar ticket">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        ${sinSolucion ? `<button class="swal-icon-btn swal-icon-btn-sol" id="swal-btn-sol" title="Registrar solución">
+                            <i class="fas fa-check-double"></i>
+                        </button>` : ''}
+                    </div>
                     <div class="swal-ticket-title">
                         <i class="fas fa-ticket-alt"></i>
                         Ticket #${escapeHtml(d.folio || '')}
@@ -2247,7 +2327,9 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                         Cliente: ${escapeHtml(d.cliente || 'No asignado')}
                     </p>
                 </div>
-                <div class="swal-ticket-body">
+
+                <!-- ── MODO VISTA ────────────────────────────── -->
+                <div id="swal-mode-view" class="swal-ticket-body">
                     <div class="swal-ticket-grid">
                         <div class="swal-info-card">
                             <h3><i class="fas fa-info-circle"></i> Información General</h3>
@@ -2342,17 +2424,258 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                             ${d.descripcion ? escapeHtml(d.descripcion) : '<span class="swal-empty">No hay descripción disponible</span>'}
                         </div>
                     </div>
+                    ${d.solucion ? `<div class="swal-description" style="border-left:4px solid #A0BAA5; margin-top:10px;">
+                        <div class="swal-section-title"><i class="fas fa-lightbulb"></i> Solución aplicada</div>
+                        <div class="swal-description-text">${escapeHtml(d.solucion)}</div>
+                    </div>` : ''}
+                    <div style="display:flex;justify-content:center;padding:18px 0 4px;">
+                        <button id="swal-view-close" style="padding:9px 32px;border-radius:8px;border:1px solid #dce8de;background:#f7fbf8;color:#5a7a60;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.2s;">
+                            <i class="fas fa-times"></i> Cerrar
+                        </button>
+                    </div>
                 </div>
+
+                <!-- ── MODO EDICIÓN ─────────────────────────── -->
+                <div id="swal-mode-edit" style="display:none" class="swal-ticket-body">
+                    <div class="edit-field-grid">
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-circle-notch"></i> Estado</label>
+                            <select id="edit-Estado">
+                                <option value="ABIERTO" ${d.estado==='ABIERTO'?'selected':''}>Abierto</option>
+                                <option value="EN PROCESO" ${d.estado==='EN PROCESO'?'selected':''}>En Proceso</option>
+                                <option value="EN ESPERA" ${d.estado==='EN ESPERA'?'selected':''}>En Espera</option>
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-exclamation-circle"></i> Prioridad</label>
+                            <select id="edit-Prioridad">
+                                <option value="ALTA" ${d.prioridad==='ALTA'?'selected':''}>Alta</option>
+                                <option value="MEDIA" ${d.prioridad==='MEDIA'?'selected':''}>Media</option>
+                                <option value="BAJA" ${d.prioridad==='BAJA'?'selected':''}>Baja</option>
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-user"></i> Asignado a</label>
+                            <select id="edit-Asignado_a">
+                                <option value="">Sin asignar</option>
+                                ${buildUserOptions(d.asignadoId)}
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-user-tag"></i> Usuario reporta</label>
+                            <input type="text" id="edit-Usuario_reporta" value="${escapeHtml(d.usuarioReporta||'')}">
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-building"></i> Cliente</label>
+                            <select id="edit-Cliente_id">
+                                <option value="">Sin cliente</option>
+                                ${buildSelectOptions(window.WINTICK_CLIENTES, d.clienteId)}
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-desktop"></i> Sistema</label>
+                            <select id="edit-Sistema_id">
+                                <option value="">Sin sistema</option>
+                                ${buildSelectOptions(window.WINTICK_SISTEMAS, d.sistemaId)}
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-cogs"></i> Servicio</label>
+                            <select id="edit-Servicio_id">
+                                <option value="">Sin servicio</option>
+                                ${buildSelectOptions(window.WINTICK_SERVICIOS, d.servicioId)}
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-calendar-alt"></i> Hora programada</label>
+                            <input type="datetime-local" id="edit-HoraProgramada" value="${d.horaProgramadaRaw||''}">
+                        </div>
+                        <div class="edit-field-group">
+                            <label><i class="fas fa-play-circle"></i> Hora inicio</label>
+                            <input type="datetime-local" id="edit-HoraInicio" value="${d.horaInicioRaw||''}">
+                        </div>
+                        <div class="edit-field-group full">
+                            <label><i class="fas fa-file-alt"></i> Descripción</label>
+                            <textarea id="edit-Descripcion" rows="3">${escapeHtml(d.descripcion||'')}</textarea>
+                        </div>
+                    </div>
+                    <div class="swal-mode-bar">
+                        <button class="btn-cancel-mode" id="edit-cancel"><i class="fas fa-times"></i> Cancelar</button>
+                        <button class="btn-save-mode" id="edit-save"><i class="fas fa-save"></i> Guardar cambios</button>
+                    </div>
+                </div>
+
+                <!-- ── MODO SOLUCIÓN ─────────────────────────── -->
+                <div id="swal-mode-sol" style="display:none" class="swal-ticket-body">
+                    <div class="sol-grid">
+                        <div class="sol-tiempo-card">
+                            <div>
+                                <div class="sol-tiempo-label">Hora de inicio</div>
+                                <div class="sol-tiempo-val" id="sol-label-inicio">${escapeHtml(d.horaInicio||'-')}</div>
+                            </div>
+                            <div>
+                                <div class="sol-tiempo-label">Hora de finalización</div>
+                                <div class="sol-tiempo-val" id="sol-label-fin">—</div>
+                            </div>
+                            <div>
+                                <div class="sol-tiempo-label">Tiempo efectivo</div>
+                                <span class="sol-badge-tiempo" id="sol-badge-tiempo">Sin calcular</span>
+                            </div>
+                            <small style="color:#94a3b8;font-size:11px;">Se calcula automáticamente al elegir hora de finalización.</small>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <div class="edit-field-group">
+                                <label><i class="fas fa-clock"></i> Hora de finalización</label>
+                                <input type="datetime-local" id="sol-HoraFinalizo">
+                            </div>
+                            <div class="edit-field-group">
+                                <label><i class="fas fa-hourglass-end"></i> Tiempo efectivo</label>
+                                <input type="text" id="sol-TiempoEfectivo" placeholder="Auto-calculado...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edit-field-group" style="margin-top:12px;">
+                        <label><i class="fas fa-lightbulb"></i> Solución aplicada</label>
+                        <textarea id="sol-Solucion" rows="4" placeholder="Describe la causa del problema y lo que hiciste para resolverlo..."></textarea>
+                    </div>
+                    <div class="swal-mode-bar">
+                        <button class="btn-cancel-mode" id="sol-cancel"><i class="fas fa-times"></i> Cancelar</button>
+                        <button class="btn-save-mode" id="sol-save"><i class="fas fa-check-circle"></i> Guardar solución</button>
+                    </div>
+                </div>
+
             </div>
         `;
 
         Swal.fire({
             html: html,
-            width: 800,
-            showConfirmButton: true,
-            confirmButtonText: 'Cerrar',
-            showCloseButton: true,
-            focusConfirm: false
+            width: 860,
+            showConfirmButton: false,
+            showCloseButton: false,
+            focusConfirm: false,
+            padding: 0,
+            didOpen: (popup) => {
+                const closeBtn = popup.querySelector('#swal-view-close');
+                if (closeBtn) closeBtn.addEventListener('click', () => Swal.close());
+                closeBtn && (closeBtn.onmouseenter = () => { closeBtn.style.background='#edf7ee'; closeBtn.style.borderColor='#A0BAA5'; });
+                closeBtn && (closeBtn.onmouseleave = () => { closeBtn.style.background='#f7fbf8'; closeBtn.style.borderColor='#dce8de'; });
+                const ticketId = d.id;
+
+                // — Botón Editar —
+                const btnEdit = popup.querySelector('#swal-btn-edit');
+                const modeView = popup.querySelector('#swal-mode-view');
+                const modeEdit = popup.querySelector('#swal-mode-edit');
+                const modeSol  = popup.querySelector('#swal-mode-sol');
+
+                function showView()  { modeView.style.display=''; modeEdit.style.display='none'; if(modeSol) modeSol.style.display='none'; }
+                function showEdit()  { modeView.style.display='none'; modeEdit.style.display=''; if(modeSol) modeSol.style.display='none'; }
+                function showSol()   { modeView.style.display='none'; if(modeEdit) modeEdit.style.display='none'; modeSol.style.display=''; }
+
+                if (btnEdit) btnEdit.addEventListener('click', showEdit);
+
+                popup.querySelector('#edit-cancel').addEventListener('click', showView);
+                popup.querySelector('#edit-save').addEventListener('click', async function() {
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                    const payload = {
+                        id: ticketId,
+                        Estado:          popup.querySelector('#edit-Estado').value,
+                        Prioridad:       popup.querySelector('#edit-Prioridad').value,
+                        Asignado_a:      popup.querySelector('#edit-Asignado_a').value || null,
+                        Usuario_reporta: popup.querySelector('#edit-Usuario_reporta').value,
+                        Cliente_id:      popup.querySelector('#edit-Cliente_id').value || null,
+                        Sistema_id:      popup.querySelector('#edit-Sistema_id').value || null,
+                        Servicio_id:     popup.querySelector('#edit-Servicio_id').value || null,
+                        HoraProgramada:  popup.querySelector('#edit-HoraProgramada').value || null,
+                        HoraInicio:      popup.querySelector('#edit-HoraInicio').value || null,
+                        Descripcion:     popup.querySelector('#edit-Descripcion').value,
+                    };
+
+                    try {
+                        const res = await fetch(window.URL_QUICK_UPDATE, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>' },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            Swal.fire({ icon:'success', title:'¡Guardado!', toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+                            setTimeout(() => location.reload(), 1200);
+                        } else {
+                            Swal.fire({ icon:'error', title:'Error al guardar', text: JSON.stringify(data.errors || data.message), confirmButtonColor:'#8BA590' });
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+                        }
+                    } catch(err) {
+                        Swal.fire({ icon:'error', title:'Error de conexión', confirmButtonColor:'#8BA590' });
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+                    }
+                });
+
+                // — Botón Solución —
+                const btnSol = popup.querySelector('#swal-btn-sol');
+                if (btnSol && modeSol) {
+                    btnSol.addEventListener('click', showSol);
+
+                    // Calcular tiempo al cambiar hora finalización
+                    popup.querySelector('#sol-HoraFinalizo').addEventListener('change', function() {
+                        const fin = new Date(this.value);
+                        const iniRaw = d.horaInicioRaw;
+                        popup.querySelector('#sol-label-fin').textContent = this.value ? fin.toLocaleString('es-MX') : '—';
+                        if (iniRaw && this.value) {
+                            const ini = new Date(iniRaw);
+                            const diffMin = Math.round((fin - ini) / 60000);
+                            if (diffMin > 0) {
+                                const h = Math.floor(diffMin / 60);
+                                const m = diffMin % 60;
+                                const te = h + '.' + String(m).padStart(2,'0');
+                                popup.querySelector('#sol-TiempoEfectivo').value = te;
+                                popup.querySelector('#sol-badge-tiempo').textContent = h + 'h ' + m + 'min';
+                            }
+                        }
+                    });
+
+                    popup.querySelector('#sol-cancel').addEventListener('click', showView);
+                    popup.querySelector('#sol-save').addEventListener('click', async function() {
+                        const btn = this;
+                        const solucion    = popup.querySelector('#sol-Solucion').value.trim();
+                        const horaFin     = popup.querySelector('#sol-HoraFinalizo').value;
+                        const tiempoEf    = popup.querySelector('#sol-TiempoEfectivo').value.trim();
+
+                        if (!solucion || !horaFin || !tiempoEf) {
+                            Swal.fire({ icon:'warning', title:'Faltan datos', text:'Completa todos los campos antes de guardar.', confirmButtonColor:'#8BA590' });
+                            return;
+                        }
+
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                        try {
+                            const res = await fetch('<?= \yii\helpers\Url::to(['/tickets/save-solution']) ?>', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': '<?= Yii::$app->request->getCsrfToken() ?>' },
+                                body: JSON.stringify({ id: ticketId, solucion, horaFinalizo: horaFin, tiempoEfectivo: tiempoEf })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                Swal.fire({ icon:'success', title:'¡Solución guardada!', toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+                                setTimeout(() => location.reload(), 1200);
+                            } else {
+                                Swal.fire({ icon:'error', title:'Error', text: data.message || 'No se pudo guardar.', confirmButtonColor:'#8BA590' });
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="fas fa-check-circle"></i> Guardar solución';
+                            }
+                        } catch(err) {
+                            Swal.fire({ icon:'error', title:'Error de conexión', confirmButtonColor:'#8BA590' });
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-check-circle"></i> Guardar solución';
+                        }
+                    });
+                }
+            }
         });
     });
 });

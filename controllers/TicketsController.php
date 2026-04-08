@@ -422,10 +422,23 @@ class TicketsController extends Controller
     {
         try {
             $model = $this->findModel($id);
-            $folio = $model->Folio; // Guardar el folio antes de eliminar
-            $asignadoA = $model->Asignado_a; // Guardar quién estaba asignado
+            $folio     = $model->Folio;
+            $asignadoA = $model->Asignado_a;
+            $estado    = $model->Estado;
+            $solucion  = $model->Solucion;
+            $tiempoEf  = $model->TiempoEfectivo;
+            $clienteId = $model->Cliente_id;
 
             if ($model->delete()) {
+                // Si el ticket estaba cerrado con solución, devolver el tiempo al cliente
+                if ($estado === 'CERRADO' && $solucion && $tiempoEf && $clienteId) {
+                    $cliente = Clientes::findOne($clienteId);
+                    if ($cliente) {
+                        $minTicket  = $this->roundUpTo15($this->hmToMinutes($tiempoEf));
+                        $minCliente = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
+                        $cliente->updateAttributes(['Tiempo' => $this->minutesToHM($minCliente + $minTicket)]);
+                    }
+                }
                 DevLog::log(
                     DevLog::TIPO_ELIMINAR,
                     "Ticket [{$folio}] ELIMINADO — ID #{$id} | asignado a usuario ID {$asignadoA}",
@@ -607,6 +620,77 @@ class TicketsController extends Controller
         return ['success' => true];
     }
 
+    public function actionQuickUpdate()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Método no permitido'];
+        }
+
+        $data = json_decode(\Yii::$app->request->rawBody, true);
+        if (!$data || empty($data['id'])) {
+            return ['success' => false, 'message' => 'Datos inválidos'];
+        }
+
+        $model = Tickets::findOne((int)$data['id']);
+        if (!$model) {
+            return ['success' => false, 'message' => 'Ticket no encontrado'];
+        }
+
+        // Guardar originales antes de modificar
+        $estadoAntes    = $model->Estado;
+        $prioridadAntes = $model->Prioridad;
+        $asignadoAntes  = $model->Asignado_a;
+        $clienteAntes   = $model->Cliente_id;
+        $sistemaAntes   = $model->Sistema_id;
+        $servicioAntes  = $model->Servicio_id;
+        $solucionOrig   = $model->Solucion;
+        $tiempoEfOrig   = $model->TiempoEfectivo;
+        $horaFinOrig    = $model->HoraFinalizo;
+
+        // Aplicar campos permitidos
+        $camposPermitidos = ['Estado', 'Prioridad', 'Asignado_a', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Usuario_reporta', 'HoraProgramada', 'HoraInicio', 'Descripcion'];
+        foreach ($camposPermitidos as $campo) {
+            if (array_key_exists($campo, $data)) {
+                $model->$campo = ($data[$campo] !== '' && $data[$campo] !== null) ? $data[$campo] : null;
+            }
+        }
+
+        // Bloquear cierre desde aquí — debe hacerse vía save-solution
+        if ($estadoAntes !== 'CERRADO' && $model->Estado === 'CERRADO') {
+            $model->Estado = $estadoAntes;
+        }
+
+        // Proteger campos de cierre
+        $model->Solucion       = $solucionOrig;
+        $model->TiempoEfectivo = $tiempoEfOrig;
+        $model->HoraFinalizo   = $horaFinOrig;
+
+        if (!$model->save()) {
+            return ['success' => false, 'errors' => $model->errors];
+        }
+
+        $userId = (int)Yii::$app->user->id;
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Estado',      $estadoAntes,    $model->Estado);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Prioridad',   $prioridadAntes, $model->Prioridad);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Asignado_a',  $asignadoAntes,  $model->Asignado_a);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Cliente_id',  $clienteAntes,   $model->Cliente_id);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Sistema_id',  $sistemaAntes,   $model->Sistema_id);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Servicio_id', $servicioAntes,  $model->Servicio_id);
+
+        if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
+            $this->crearNotificacion((int)$model->Asignado_a, 'asignado', 'Nuevo ticket asignado', 'Se te ha asignado el ticket: ' . $model->Folio, $model->id);
+        }
+        if ($estadoAntes !== $model->Estado && $model->Asignado_a) {
+            $this->crearNotificacion((int)$model->Asignado_a, 'actualizado', 'Estado del ticket actualizado', 'El ticket ' . $model->Folio . ' cambió de estado a: ' . $model->Estado, $model->id);
+        }
+
+        DevLog::log(DevLog::TIPO_ACTUALIZAR, "Ticket [{$model->Folio}] actualizado rápido", ['folio' => $model->Folio, 'estado' => $model->Estado, 'prioridad' => $model->Prioridad], 'tickets', $model->id, 'Tickets');
+
+        return ['success' => true, 'message' => 'Ticket actualizado correctamente'];
+    }
+
 
         public function actionGetTicketData()
         {
@@ -706,7 +790,7 @@ class TicketsController extends Controller
                         $clienteMinAntes = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
                         $cliente->Tiempo = $this->minutesToHM($clienteMinAntes - $deltaMin);
 
-                        if (!$cliente->save()) {
+                        if (!$cliente->updateAttributes(['Tiempo' => $cliente->Tiempo])) {
                             $transaction->rollBack();
                             return [
                                 'success' => false,

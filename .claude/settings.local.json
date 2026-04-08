@@ -12,7 +12,8 @@
       "Bash(ls -la /c/laragon/www/Wintick/*.sql)",
       "Read(//c/Users/Consultoria/**)",
       "Bash(find /c/laragon -name *.sql -maxdepth 4)",
-      "Bash(ls -la /c/Users/Consultoria/Downloads/*.sql)"
+      "Bash(ls -la /c/Users/Consultoria/Downloads/*.sql)",
+      "Bash(grep -n '$clientes\\\\|$sistemas\\\\|$servicios\\\\|$Clientes\\\\|$Sistemas\\\\|$Servicios' /c/laragon/www/Wintick/views/tickets/index.php)"
     ]
   }
 }
