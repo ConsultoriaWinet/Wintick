@@ -218,15 +218,33 @@ class DevLog extends ActiveRecord
         return $stats;
     }
 
-    /** Últimos N minutos de actividad única de usuarios */
+    /**
+     * Usuarios con sesión activa actualmente.
+     * Un usuario se considera activo si su último evento de login/logout es un LOGIN.
+     * (Si el último fue LOGOUT, ya no está activo.)
+     */
     public static function usuariosActivos(int $minutos = 30): int
     {
-        $desde = date('Y-m-d H:i:s', strtotime("-{$minutos} minutes"));
-        return (int) self::find()
-            ->select('usuario_id')
-            ->distinct()
-            ->where(['>=', 'created_at', $desde])
-            ->andWhere(['IS NOT', 'usuario_id', null])
-            ->count();
+        // Para cada usuario, obtener su último evento de tipo login o logout
+        // y contar solo los que terminaron en login (no han hecho logout después)
+        $db = Yii::$app->db;
+
+        $sql = "
+            SELECT COUNT(*) FROM (
+                SELECT usuario_id,
+                       (SELECT tipo FROM dev_log d2
+                        WHERE d2.usuario_id = d1.usuario_id
+                          AND d2.tipo IN ('login','logout')
+                        ORDER BY d2.created_at DESC
+                        LIMIT 1) AS ultimo_tipo
+                FROM dev_log d1
+                WHERE d1.tipo = 'login'
+                  AND d1.usuario_id IS NOT NULL
+                GROUP BY d1.usuario_id
+            ) activos
+            WHERE ultimo_tipo = 'login'
+        ";
+
+        return (int) $db->createCommand($sql)->queryScalar();
     }
 }

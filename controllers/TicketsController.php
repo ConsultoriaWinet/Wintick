@@ -301,6 +301,7 @@ class TicketsController extends Controller
         $model->Fecha_actualizacion = date('Y-m-d H:i:s');
 
         if ($model->save(false)) {
+            DevLog::log(DevLog::TIPO_ACTUALIZAR, "Ticket [{$model->Folio}] hora inicio movida a {$fechaDatetime}", ['folio' => $model->Folio, 'hora_inicio' => $fechaDatetime], 'tickets', $model->id, 'Tickets');
             return ['success' => true, 'nueva_fecha' => $fechaDatetime];
         }
 
@@ -570,6 +571,7 @@ class TicketsController extends Controller
                 }
             }
 
+            DevLog::log(DevLog::TIPO_CREAR, count($tickets) . ' ticket(s) creados en lote', ['total' => count($tickets)], 'tickets', null, 'Tickets');
             return ['success' => true];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -604,6 +606,8 @@ class TicketsController extends Controller
 
         // Historial
         \app\models\TicketHistorial::registrar($ticket->id, (int)Yii::$app->user->id, 'Estado', $estadoAnterior, $ticket->Estado);
+
+        DevLog::log(DevLog::TIPO_ACTUALIZAR, "Ticket [{$ticket->Folio}] estado cambiado: {$estadoAnterior} → {$ticket->Estado}", ['folio' => $ticket->Folio, 'estado_antes' => $estadoAnterior, 'estado_nuevo' => $ticket->Estado], 'tickets', $ticket->id, 'Tickets');
 
         // Notificar cambio de estado al consultor asignado
         if ($estadoAnterior !== $ticket->Estado && $ticket->Asignado_a) {
@@ -836,6 +840,20 @@ class TicketsController extends Controller
                     $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
                     $ticket->id,
                     $skip
+                );
+
+                DevLog::log(
+                    DevLog::TIPO_ACTUALIZAR,
+                    "Ticket [{$ticket->Folio}] CERRADO con solución — tiempo efectivo: {$ticket->TiempoEfectivo}",
+                    [
+                        'folio'           => $ticket->Folio,
+                        'solucion'        => mb_substr($ticket->Solucion ?? '', 0, 300),
+                        'hora_finalizo'   => $ticket->HoraFinalizo,
+                        'tiempo_efectivo' => $ticket->TiempoEfectivo,
+                        'delta_minutos'   => $deltaMin,
+                        'cliente_id'      => $ticket->Cliente_id,
+                    ],
+                    'tickets', $ticket->id, 'Tickets'
                 );
 
                 return [
@@ -1751,6 +1769,13 @@ class TicketsController extends Controller
                     $this->crearNotificacionMencion($uid, $ticket, (int)$comentario->id);
                 }
             }
+
+            DevLog::log(
+                DevLog::TIPO_CREAR,
+                "Comentario [{$comentario->tipo}] en ticket [{$ticket->Folio}]",
+                ['folio' => $ticket->Folio, 'tipo' => $comentario->tipo, 'tiene_archivo' => (bool)$archivoNombre, 'preview' => mb_substr($comentario->comentario, 0, 150)],
+                'tickets', $ticket->id, 'Comentarios'
+            );
 
             $archivoUrl = $archivoNombre
                 ? \yii\helpers\Url::to('@web/uploads/comentarios/' . $archivoNombre, true)
