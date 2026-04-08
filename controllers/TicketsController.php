@@ -1474,87 +1474,45 @@ class TicketsController extends Controller
      */
     public function actionExportar()
     {
-        $query = Tickets::find()
-            ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado']);
+        // Mismo TicketsSearch que el index — respeta todos los filtros activos incluyendo asignado_a por defecto
+        $searchModel  = new TicketsSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->pagination = false;
 
-        // --- Filtros ---
-        if (!empty($_GET['folio'])) {
-            $query->andWhere(['like', 'Folio', $_GET['folio']]);
-        }
-        if (!empty($_GET['Cliente_id'])) {
-            $query->andWhere(['Cliente_id' => $_GET['Cliente_id']]);
-        }
-        if (!empty($_GET['Sistema_id'])) {
-            $query->andWhere(['Sistema_id' => $_GET['Sistema_id']]);
-        }
-        if (!empty($_GET['Servicio_id'])) {
-            $query->andWhere(['Servicio_id' => $_GET['Servicio_id']]);
-        }
-        if (!empty($_GET['Asignado_a'])) {
-            $query->andWhere(['Asignado_a' => $_GET['Asignado_a']]);
-        }
-        if (!empty($_GET['Prioridad'])) {
-            $query->andWhere(['Prioridad' => $_GET['Prioridad']]);
-        }
-        if (!empty($_GET['Estado'])) {
-            $query->andWhere(['Estado' => $_GET['Estado']]);
-        }
+        $tickets = $dataProvider->getModels();
 
-        // ✅ FILTROS DE FECHA (HoraProgramada)
-        // Filtro por mes
-        if (!empty($_GET['mes'])) {
-            $mes = $_GET['mes'];
-            $primerDia = $mes . '-01 00:00:00';
-            $ultimoDia = date('Y-m-t 23:59:59', strtotime($mes . '-01'));
-            $query->andWhere(['>=', 'HoraProgramada', $primerDia])
-                  ->andWhere(['<=', 'HoraProgramada', $ultimoDia]);
-        }
-
-        // Filtro por rango de fechas (DESDE - HASTA)
-        if (!empty($_GET['fecha_inicio'])) {
-            $fechaInicio = strtotime($_GET['fecha_inicio']);
-            if ($fechaInicio) {
-                $query->andWhere(['>=', 'HoraProgramada', date('Y-m-d 00:00:00', $fechaInicio)]);
-            }
-        }
-
-        if (!empty($_GET['fecha_fin'])) {
-            $fechaFin = strtotime($_GET['fecha_fin']);
-            if ($fechaFin) {
-                $query->andWhere(['<=', 'HoraProgramada', date('Y-m-d 23:59:59', $fechaFin)]);
-            }
-        }
-
-        $tickets = $query->orderBy(['id' => SORT_DESC])->all();
-
-        // --- Crear Excel ---
+       // --- Crear Excel ---
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-
+ 
         // Encabezados
         $headers = [
             'Folio',
             'Cliente',
-            'Sistema',
-            'Servicio',
             'Usuario Reporta',
-            'Asignado A',
-            'Hora Programada',
-            'Hora Inicio',
-            'Prioridad',
+            'Sistema',
+            'Esquema',
+            'Fecha de Finalizacion',
             'Estado',
-            'Descripción',
-            'Fecha Creación'
+            'Hora Inicio',
+            'Hora Finalizacion',
+            'Tiempo Efectivo',
+            'Servicio',
+            'Descripcion',
+            'Solucion',
+            'Asignado a',
         ];
-
+ 
         $sheet->fromArray($headers, null, 'A1');
-
+ 
+        // Función color
         function hexToARGB($hex)
         {
             $hex = str_replace('#', '', $hex);
-            return 'FF' . strtoupper($hex); // FF = 100% opaco
+            return 'FF' . strtoupper($hex);
         }
-        // --- Estilos encabezados ---
+ 
+        // --- Estilo encabezado ---
         $headerStyle = [
             'font' => [
                 'bold' => true,
@@ -1565,47 +1523,135 @@ class TicketsController extends Controller
                 'color' => ['argb' => hexToARGB('A0BAA5')]
             ]
         ];
-
-
-        $sheet->getStyle('A1:L1')->applyFromArray($headerStyle);
-
-        // Autosize columnas
-        foreach (range('A', 'L') as $col) {
-            $spreadsheet->getActiveSheet()->getColumnDimension($col)->setAutoSize(true);
+ 
+        $sheet->getStyle('A1:N1')->applyFromArray($headerStyle);
+ 
+        // --- CONFIGURACIÓN GENERAL (FUERA DEL FOREACH) ---
+        $sheet->freezePane('A2');
+        $sheet->setAutoFilter('A1:N1');
+        $sheet->getStyle('A1:N1')->getAlignment()->setHorizontal('center');
+        $sheet->getRowDimension(1)->setRowHeight(25);
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Calibri')->setSize(11);
+ 
+        // Columnas largas
+        $sheet->getColumnDimension('L')->setWidth(50);
+        $sheet->getColumnDimension('M')->setWidth(50);
+        $sheet->getStyle('L:M')->getAlignment()->setWrapText(true);
+        $sheet->getStyle('L:M')->getAlignment()->setVertical(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP
+        );
+ 
+        // Autosize (excepto columnas largas)
+        foreach (range('A', 'N') as $col) {
+            if (!in_array($col, ['L', 'M'])) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
         }
-
-        // --- Datos ---
+ 
+        // Centrar columnas
+        $sheet->getStyle('A:A')->getAlignment()->setHorizontal('center');
+        $sheet->getStyle('F:F')->getAlignment()->setHorizontal('center');
+        $sheet->getStyle('G:G')->getAlignment()->setHorizontal('center');
+        $sheet->getStyle('H:I')->getAlignment()->setHorizontal('center');
+        $sheet->getStyle('J:J')->getAlignment()->setHorizontal('center');
+ 
+        // --- DATOS ---
         $row = 2;
+ 
+        $meses = [
+            '01' => 'Enero',
+            '02' => 'Febrero',
+            '03' => 'Marzo',
+            '04' => 'Abril',
+            '05' => 'Mayo',
+            '06' => 'Junio',
+            '07' => 'Julio',
+            '08' => 'Agosto',
+            '09' => 'Septiembre',
+            '10' => 'Octubre',
+            '11' => 'Noviembre',
+            '12' => 'Diciembre'
+        ];
+ 
         foreach ($tickets as $t) {
+ 
             $sheet->setCellValue("A$row", $t->Folio);
             $sheet->setCellValue("B$row", $t->cliente->Nombre ?? '');
-            $sheet->setCellValue("C$row", $t->sistema->Nombre ?? '');
-            $sheet->setCellValue("D$row", $t->servicio->Nombre ?? '');
-            $sheet->setCellValue("E$row", $t->Usuario_reporta ?? '');
-            $sheet->setCellValue("F$row", $t->usuarioAsignado->Asignado_a ?? '');
-            $sheet->setCellValue("G$row", $t->HoraProgramada ? date('H:i', strtotime($t->HoraProgramada)) : '');
+            $sheet->setCellValue("C$row", $t->Usuario_reporta ?? '');
+            $sheet->setCellValue("D$row", $t->sistema->Nombre ?? '');
+            $sheet->setCellValue("E$row", $t->cliente->Tipo_servicio ?? '');
+ 
+            // Fecha bonita
+            if ($t->HoraFinalizo) {
+                $fecha = strtotime($t->HoraFinalizo);
+                $fechaFormateada = date('d', $fecha) . ' de ' . $meses[date('m', $fecha)] . ' del ' . date('Y', $fecha);
+            } else {
+                $fechaFormateada = '';
+            }
+ 
+            $sheet->setCellValue("F$row", $fechaFormateada);
+            $sheet->setCellValue("G$row", $t->Estado);
             $sheet->setCellValue("H$row", $t->HoraInicio ? date('H:i', strtotime($t->HoraInicio)) : '');
-            $sheet->setCellValue("I$row", $t->Prioridad);
-            $sheet->setCellValue("J$row", $t->Estado);
-            $sheet->setCellValue("K$row", $t->Descripcion);
-            $sheet->setCellValue("L$row", date('H:i', strtotime($t->Fecha_creacion)));
+            $sheet->setCellValue("I$row", $t->HoraFinalizo ? date('H:i', strtotime($t->HoraFinalizo)) : '');
+            $sheet->setCellValue("J$row", $t->TiempoEfectivo ?? '');
+            $sheet->setCellValue("K$row", $t->servicio->Nombre ?? '');
+            $sheet->setCellValue("L$row", $t->Descripcion);
+            $sheet->setCellValue("M$row", $t->Solucion);
+            $sheet->setCellValue("N$row", $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? '');
 
-            // --- Colorear filas según Estado ---
+            // Colores por estado
             $estado = strtolower($t->Estado);
+            $color = null;
 
+            if ($estado == 'abierto')
+                $color = 'FFF4D262';
+            elseif ($estado == 'en proceso')
+                $color = 'FFFDE68A';
+ 
+            // Zebra + estado (prioridad al estado)
+            if ($color) {
+                $sheet->getStyle("A$row:N$row")->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'color' => ['argb' => $color]
+                    ]
+                ]);
+            } elseif ($row % 2 == 0) {
+                $sheet->getStyle("A$row:N$row")->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'color' => ['argb' => 'FFF7F9F7']
+                    ]
+                ]);
+            }
+ 
+            // Ajuste altura automática
+            $sheet->getRowDimension($row)->setRowHeight(-1);
+ 
             $row++;
         }
-
-        // --- Descargar XLSX ---
+ 
+        // Bordes (AL FINAL)
+        $lastRow = $row - 1;
+ 
+        $sheet->getStyle("A1:N$lastRow")->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FFCCCCCC']
+                ]
+            ]
+        ]);
+ 
+        // --- Descargar ---
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="tickets_' . date('Y-m-d_His') . '.xlsx"');
+        header('Content-Disposition: attachment; filename="Bitacora_' . date('d-m-Y_His') . '.xlsx"');
         header('Cache-Control: max-age=0');
-
+ 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
     }
-
 
     /**
      * Agregar comentario a un ticket (soporta multipart/form-data para adjuntos)
