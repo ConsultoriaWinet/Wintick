@@ -13,7 +13,21 @@
       "Read(//c/Users/Consultoria/**)",
       "Bash(find /c/laragon -name *.sql -maxdepth 4)",
       "Bash(ls -la /c/Users/Consultoria/Downloads/*.sql)",
-      "Bash(grep -n '$clientes\\\\|$sistemas\\\\|$servicios\\\\|$Clientes\\\\|$Sistemas\\\\|$Servicios' /c/laragon/www/Wintick/views/tickets/index.php)"
+      "Bash(grep -n '$clientes\\\\|$sistemas\\\\|$servicios\\\\|$Clientes\\\\|$Sistemas\\\\|$Servicios' /c/laragon/www/Wintick/views/tickets/index.php)",
+      "Bash(grep -r 'renderContent\\\\|html_entity_decode\\\\|$_GET\\\\|$_POST\\\\|$_REQUEST' /c/laragon/www/Wintick/views '--include=*.php')",
+      "Bash(mysql -u root --port=3307 -e \"USE wintickc; SELECT id, Nombre, rol FROM usuarios; SELECT id, Nombre FROM clientes LIMIT 20; SELECT COUNT\\(*\\) as total_tickets FROM tickets; SELECT id FROM sistemas LIMIT 5; SELECT id FROM servicios LIMIT 5;\")",
+      "Bash(mysql -u root --port=3306 -e \"USE wintickc; SELECT id, Nombre, rol FROM usuarios; SELECT id, Nombre FROM clientes LIMIT 20; SELECT COUNT\\(*\\) as total_tickets FROM tickets; SELECT id FROM sistemas LIMIT 5; SELECT id FROM servicios LIMIT 5;\")",
+      "Bash(\"/c/laragon/bin/mysql/mysql-8.0.30-winx64/bin/mysql.exe\" -u root --port=3307 -e \"USE wintickc; SELECT id, Nombre, rol FROM usuarios; SELECT id, Nombre FROM clientes LIMIT 20; SELECT COUNT\\(*\\) as total_tickets FROM tickets;\")",
+      "Read(//c/laragon/bin/mysql//**)",
+      "Read(//mnt/c/laragon/bin/**)",
+      "Bash(find /c /mnt/c -name \"mysql.exe\")",
+      "Bash(/c/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysql.exe -u root --port=3307 -e \"USE wintickc; SELECT id, Nombre, rol FROM usuarios; SELECT id, Nombre FROM clientes LIMIT 20; SELECT COUNT\\(*\\) as total_tickets FROM tickets; SELECT MIN\\(id\\), MAX\\(id\\) FROM sistemas; SELECT MIN\\(id\\), MAX\\(id\\) FROM servicios;\")",
+      "Bash(/c/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysql.exe -u root --port=3307 -e \"USE wintickc; SELECT MAX\\(id\\), MAX\\(Folio\\) FROM tickets; SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA='wintickc' AND TABLE_NAME='tickets';\")",
+      "Bash(/c/laragon/bin/php/php8.3.14/php.exe seed_tickets.php)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe seed_tickets.php)",
+      "Bash(/c/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysql.exe -u root --port=3307 -e ':*)",
+      "Bash(grep -n \"'\\);$\\\\|'\\);\" /c/laragon/www/Wintick/views/tickets/index.php)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/views/tickets/index.php)"
     ]
   }
 }

@@ -265,7 +265,53 @@ $this->registerCss('
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Flatpickr: reloj visible a la DERECHA del calendario
+   ───────────────────────────────────────────────────────────── */
+.flatpickr-calendar.hasTime:not(.noCalendar) {
+    width: auto !important;
+    display: grid;
+    grid-template-columns: auto 88px;
+    grid-template-rows: auto auto;
+}
+.flatpickr-calendar.hasTime:not(.noCalendar) .flatpickr-months {
+    grid-column: 1 / -1;
+}
+.flatpickr-calendar.hasTime:not(.noCalendar) .flatpickr-innerContainer {
+    grid-column: 1;
+    grid-row: 2;
+}
+.flatpickr-calendar.hasTime:not(.noCalendar) .flatpickr-time {
+    grid-column: 2;
+    grid-row: 2;
+    border-top: none;
+    border-left: 1px solid #e2e8f0;
+    flex-direction: column;
+    height: auto;
+    padding: 14px 6px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.flatpickr-calendar.hasTime:not(.noCalendar) .flatpickr-time .numInputWrapper {
+    width: 62px;
+    text-align: center;
+}
+.flatpickr-calendar.hasTime:not(.noCalendar) .flatpickr-time-separator {
+    display: none;
+}
+/* Input visible al usuario (altInput) */
+.flatpickr-input.flatpickr-alt-input {
+    background: #fff !important;
+    cursor: text !important;
+}
+.flatpickr-input.flatpickr-alt-input::placeholder {
+    color: #adb5bd;
+    font-size: 12px;
+}
+
 ');
+
 
 // Obtener mes y año actual si no hay filtro
 $mesActual = Yii::$app->request->get('mes', date('Y-m'));
@@ -381,7 +427,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                                 <option value="">Todos</option>
                                 <option value="ABIERTO" <?= ($_GET['Estado'] ?? '') == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
                                 <option value="EN PROCESO" <?= ($_GET['Estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
-                                <option value="EN ESPERA" <?= ($_GET['Estado'] ?? '') == 'EN ESPERA' ? 'selected' : '' ?>>En Espera</option>
+                                <option value="CONTPAQi" <?= ($_GET['Estado'] ?? '') == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi </option>
                                 <option value="CERRADO" <?= ($_GET['Estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
                             </select>
                         </div>
@@ -459,7 +505,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <th class="text-primary-emphasis">Usuario Reporta</th>
                     <th class="text-primary-emphasis">Asignado A</th>
                     <th class="text-primary-emphasis">Fecha de reporte</th>
-                    <th class="text-primary-emphasis">Hora Inicio</th>
+                    <th class="text-primary-emphasis">Fecha/Hora Programada</th>
                     <th class="text-primary-emphasis">Descripción</th>
                     <th class="text-primary-emphasis">Prioridad</th>
                     <th class="text-primary-emphasis">Estado</th>
@@ -520,15 +566,11 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
     </select>
 </td>
-                    <td>
-                        <div class="datetime-wrapper">
-                            <input type="text" class="form-control form-control-sm hora-programada flatpickr-datetime" placeholder="Seleccionar fecha">
-                        </div>
+                    <td style="width:155px;min-width:155px">
+                        <input type="datetime-local" class="form-control form-control-sm hora-programada" style="width:150px;font-size:11px;padding:3px 4px">
                     </td>
-                    <td>
-                        <div class="datetime-wrapper">
-                            <input type="text" class="form-control form-control-sm hora-inicio flatpickr-datetime" placeholder="Seleccionar fecha">
-                        </div>
+                    <td style="width:155px;min-width:155px">
+                        <input type="datetime-local" class="form-control form-control-sm hora-inicio" style="width:150px;font-size:11px;padding:3px 4px">
                     </td>
                     <td><textarea class="form-control form-control-sm descripcion" rows="1" placeholder="Descripción" style="font-size: 12px;"></textarea></td>
                     <td>
@@ -543,7 +585,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <select class="form-select form-select-sm estado">
                             <option value="ABIERTO" selected>Abierto</option>
                             <option value="EN PROCESO">En Proceso</option>
-                            <option value="EN ESPERA">En Espera</option>
+                            <option value="CONTPAQi">CONTPAQi</option>
                             <option value="CERRADO">Cerrado</option>
                         </select>
                     </td>
@@ -633,14 +675,14 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         $estadoClass = match($ticket->Estado) {
                             'ABIERTO'    => 'bg-primary text-white',
                             'EN PROCESO' => 'bg-info text-dark',
-                            'EN ESPERA'  => 'bg-warning text-dark',
+                            'CONTPAQi'  => 'bg-warning text-dark',
                             'CERRADO'    => 'bg-danger text-white',
                             default      => 'bg-secondary'
                         };
                         $estadoIcon = match($ticket->Estado) {
                             'ABIERTO'    => 'fa-circle-notch',
                             'EN PROCESO' => 'fa-spinner',
-                            'EN ESPERA'  => 'fa-pause-circle',
+                            'CONTPAQi'  => 'fa-pause-circle',
                             'CERRADO'    => 'fa-check-circle',
                             default      => 'fa-question-circle'
                         };
@@ -651,7 +693,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display: none; font-size: 12px; margin-top: 5px;">
                             <option value="ABIERTO" <?= $ticket->Estado == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
                             <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
-                            <option value="EN ESPERA" <?= $ticket->Estado == 'EN ESPERA' ? 'selected' : '' ?>>En Espera</option>
+                            <option value="CONTPAQi" <?= $ticket->Estado == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi</option>
                             <option value="CERRADO" <?= $ticket->Estado == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
                         </select>
                     </td>
@@ -1378,15 +1420,46 @@ const debouncedSearch = debounce(performSearch, 150);
 function initializeFlatpickr(element) {
     flatpickr(element, {
         enableTime: true,
-        dateFormat: "Y-m-d H:i",
+        dateFormat: "Y-m-d H:i",   // formato que va al servidor (oculto)
+        altInput: true,             // muestra un input amigable al usuario
+        altFormat: "d/m/Y H:i",    // formato visible: DD/MM/AAAA HH:MM
         time_24hr: true,
         locale: "es",
         minuteIncrement: 15,
         defaultHour: 9,
         defaultMinute: 0,
-        allowInput: true,
+        allowInput: true,           // permite escribir directo sin abrir el picker
         clickOpens: true,
-        theme: "airbnb"
+        onReady: function(_, __, instance) {
+            if (!instance.altInput) return;
+            const inp = instance.altInput;
+            inp.placeholder = 'DD/MM/AAAA  HH:MM';
+            inp.classList.add('form-control', 'form-control-sm');
+
+            // ── Máscara: inserta / espacio : automáticamente al escribir ──
+            inp.addEventListener('keydown', function(e) {
+                // Backspace: si el último carácter es separador, bórralo también
+                if (e.key === 'Backspace') {
+                    const v = inp.value;
+                    if (v.endsWith('/') || v.endsWith(' ') || v.endsWith(':')) {
+                        inp.value = v.slice(0, -1);
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            inp.addEventListener('input', function() {
+                // Solo dígitos, máx 12 (DDMMAAAAhhmm)
+                let d = inp.value.replace(/\D/g, '').substring(0, 12);
+                let out = '';
+                if (d.length > 0)  out  = d.substring(0, Math.min(2, d.length));
+                if (d.length > 2)  out += '/' + d.substring(2, Math.min(4,  d.length));
+                if (d.length > 4)  out += '/' + d.substring(4, Math.min(8,  d.length));
+                if (d.length > 8)  out += ' ' + d.substring(8, Math.min(10, d.length));
+                if (d.length > 10) out += ':' + d.substring(10, 12);
+                inp.value = out;
+            });
+        }
     });
 }
 
@@ -1404,8 +1477,8 @@ function saveTicket(row) {
         Descripcion: row.querySelector('.descripcion').value,
         Prioridad: row.querySelector('.prioridad').value,
         Estado: row.querySelector('.estado').value,
-        HoraProgramada: row.querySelector('.hora-programada').value,
-        HoraInicio: row.querySelector('.hora-inicio').value,
+        HoraProgramada: (row.querySelector('.hora-programada').value || '').replace('T', ' ') || null,
+        HoraInicio:     (row.querySelector('.hora-inicio').value     || '').replace('T', ' ') || null,
     };
 
     if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
@@ -1544,7 +1617,7 @@ function getEstadoClass(estado) {
     const classes = {
         'ABIERTO':    'bg-primary text-white',
         'EN PROCESO': 'bg-info text-dark',
-        'EN ESPERA':  'bg-warning text-dark',
+        'CONTPAQi':  'bg-warning text-dark',
         'CERRADO':    'bg-danger text-white'
     };
     return classes[estado] || 'bg-secondary';
@@ -1554,7 +1627,7 @@ function getEstadoIcon(estado) {
     const icons = {
         'ABIERTO':    'fa-circle-notch',
         'EN PROCESO': 'fa-spinner',
-        'EN ESPERA':  'fa-pause-circle',
+        'CONTPAQi':  'fa-pause-circle',
         'CERRADO':    'fa-check-circle'
     };
     return icons[estado] || 'fa-question-circle';
@@ -2210,7 +2283,7 @@ function getStatusClass(estado) {
     const e = (estado || '').toUpperCase();
     if (e === 'ABIERTO')    return 'swal-status-abierto';
     if (e === 'EN PROCESO') return 'swal-status-en-proceso';
-    if (e === 'EN ESPERA')  return 'swal-status-en-espera';
+    if (e === 'CONTPAQi')  return 'swal-status-contpaqi';
     if (e === 'CERRADO')    return 'swal-status-cerrado';
     return '';
 }
@@ -2443,7 +2516,7 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                             <select id="edit-Estado">
                                 <option value="ABIERTO" ${d.estado==='ABIERTO'?'selected':''}>Abierto</option>
                                 <option value="EN PROCESO" ${d.estado==='EN PROCESO'?'selected':''}>En Proceso</option>
-                                <option value="EN ESPERA" ${d.estado==='EN ESPERA'?'selected':''}>En Espera</option>
+                                <option value="CONTPAQi" ${d.estado==='CONTPAQi'?'selected':''}>CONTPAQi</option>
                             </select>
                         </div>
                         <div class="edit-field-group">

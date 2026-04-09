@@ -232,6 +232,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
             },
+           
 
             // Botones personalizados
             buttonText: {
@@ -240,8 +241,31 @@ $this->title = 'Dashboard - Tickets por Consultor';
                 week: 'Semana',
                 day: 'Día',
                 list: 'Lista'
-            },
-
+                },
+                //desactivacion los tooltip de los botones personalizados 
+                customButtons: {
+                    dayGridMonth: {
+                        text: 'Mes',
+                        click: function() { calendar.changeView('dayGridMonth'); },
+                        title: 'Vista mensual'
+                    },
+                    timeGridWeek: {
+                        text: 'SemHora Inicioana',
+                        click: function() { calendar.changeView('timeGridWeek'); },
+                        title: 'Vista semanal'
+                    },
+                    timeGridDay: {
+                        text: 'Día',
+                        click: function() { calendar.changeView('timeGridDay'); },
+                        title: 'Vista diaria'
+                    },
+                    listWeek: {
+                        text: 'Lista',
+                        click: function() { calendar.changeView('listWeek'); },
+                        title: 'Vista de lista'
+                    }
+                },
+               
             // Configuración de horario
             slotMinTime: '08:00:00',
             slotMaxTime: '20:00:00',
