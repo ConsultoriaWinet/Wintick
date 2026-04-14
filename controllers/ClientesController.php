@@ -7,6 +7,7 @@ use app\models\Clientes;
 use app\models\ClientesSearch;
 use app\models\DevLog;
 use yii\web\Controller;
+use yii\helpers\Html;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -22,12 +23,12 @@ class ClientesController extends Controller
     return array_merge(parent::behaviors(), [
         'access' => [
             'class' => AccessControl::class,
-            'only' => ['index','view','create','update','delete'],
+            'only' => ['index','view','create','update','delete','historial'],
             'rules' => [
                 // ✅ Ver clientes (Admin, Supervisores, Administracion, etc.)
                 [
                     'allow' => true,
-                    'actions' => ['index','view'],
+                    'actions' => ['index','view','historial'],
                     'roles' => ['verClientes'],
                 ],
                 // ✅ Administrar clientes (Supervisores y arriba)
@@ -192,6 +193,28 @@ class ClientesController extends Controller
         );
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Devuelve en JSON los tickets asociados a un cliente (para el modal de historial).
+     */
+    public function actionHistorial($id)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $cliente = $this->findModel($id);
+
+        $tickets = \app\models\Tickets::find()
+            ->select(['id', 'Folio', 'Fecha_creacion', 'TiempoEfectivo', 'Estado'])
+            ->where(['Cliente_id' => $id])
+            ->orderBy(['Fecha_creacion' => SORT_DESC])
+            ->asArray()
+            ->all();
+
+        return [
+            'cliente' => Html::encode($cliente->Nombre),
+            'tickets' => $tickets,
+        ];
     }
 
     /**

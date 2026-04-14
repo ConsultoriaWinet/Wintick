@@ -27,7 +27,28 @@
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe seed_tickets.php)",
       "Bash(/c/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysql.exe -u root --port=3307 -e ':*)",
       "Bash(grep -n \"'\\);$\\\\|'\\);\" /c/laragon/www/Wintick/views/tickets/index.php)",
-      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/views/tickets/index.php)"
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/views/tickets/index.php)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://localhost/tickets/view?id=1\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://localhost/tickets/view?id=9999\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://localhost/usuarios/index\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://localhost/clientes/index\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://127.0.0.1:80/wintick/tickets/view?id=1\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://wintick.test/tickets/view?id=1\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" \"http://127.0.0.1/\")",
+      "Bash(/c/laragon/bin/mysql/mysql-8.4.3-winx64/bin/mysql.exe -u root --port=3307 -e \"SELECT 1\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -L --max-redirs 3 http://Wintick.test__TRACKED_VAR__)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -L --max-redirs 3 'http://Wintick.test/tickets/view?id=__TRACKED_VAR__')",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X POST http://Wintick.test/tickets/__TRACKED_VAR__ -H 'Content-Type: application/json' -d '{\"id\":1}')",
+      "Read(//c/Windows/System32/drivers/etc/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --resolve \"Wintick.test:80:127.0.0.1\" \"http://Wintick.test/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --resolve \"Wintick.test:80:127.0.0.1\" \"http://Wintick.test/site/login\")",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -r ':*)",
+      "Bash(head -10 cat /c/laragon/etc/apache2/alias/*.conf)",
+      "Bash(/c/Windows/System32/netstat.exe -an)",
+      "Bash(grep -n '$_GET\\\\[' /c/laragon/www/Wintick/views/tickets/index.php)",
+      "Bash(grep -rn '$_GET\\\\[' /c/laragon/www/Wintick/views/)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/views/clientes/index.php)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/controllers/ClientesController.php)"
     ]
   }
 }

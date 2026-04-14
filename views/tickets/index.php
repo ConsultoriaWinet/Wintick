@@ -1527,7 +1527,7 @@ function saveTicket(row) {
                     title: '¡Éxito!',
                     text: 'Ticket guardado: ' + ticket.Folio,
                     showConfirmButton: false,
-                    timer: 1000,
+                    timer: 100,
                     timerProgressBar: true,
                     toast: true,
                     position: 'top-end'
