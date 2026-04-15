@@ -48,7 +48,9 @@
       "Bash(grep -n '$_GET\\\\[' /c/laragon/www/Wintick/views/tickets/index.php)",
       "Bash(grep -rn '$_GET\\\\[' /c/laragon/www/Wintick/views/)",
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/views/clientes/index.php)",
-      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/controllers/ClientesController.php)"
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/controllers/ClientesController.php)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/views/layouts/main.php)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/controllers/TicketsController.php)"
     ]
   }
 }

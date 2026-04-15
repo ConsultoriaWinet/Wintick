@@ -1117,6 +1117,12 @@ class TicketsController extends Controller
             apache_setenv('no-gzip', '1');
         }
 
+        // Vaciar cualquier buffer activo de Yii / PHP antes de entrar al loop SSE
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_implicit_flush(true);
+
         $ultimoIdVisto = 0;
 
         // Enviar un comentario inicial para confirmar conexión
@@ -1129,56 +1135,67 @@ class TicketsController extends Controller
                 break;
             }
 
-            // Buscar notificaciones nuevas no leidas desde el último id visto
-            $query = Notificaciones::find()
-                ->where(['usuario_id' => $userId, 'leida' => 0])
-                ->orderBy(['id' => SORT_DESC])
-                ->limit(10);
-
-            if ($ultimoIdVisto > 0) {
-                $query->andWhere(['>', 'id', $ultimoIdVisto]);
-            }
-
-            $notificaciones = $query->all();
-
-            if (!empty($notificaciones)) {
-                $data = [];
-                foreach ($notificaciones as $notif) {
-                    $data[] = [
-                        'id'        => $notif->id,
-                        'tipo'      => $notif->tipo ?? 'asignado',
-                        'titulo'    => $notif->titulo,
-                        'mensaje'   => $notif->mensaje,
-                        'leida'     => false,
-                        'fecha'     => date('d/m H:i', strtotime($notif->fecha_creacion)),
-                        'ticket_id' => $notif->ticket_id,
-                        'url'       => \yii\helpers\Url::to([
-                            'tickets/index',
-                            'openComments' => 1,
-                            'ticket_id'    => $notif->ticket_id,
-                            'notif_id'     => $notif->id,
-                        ]),
-                    ];
-                    // Actualizar el id mas alto visto
-                    if ($notif->id > $ultimoIdVisto) {
-                        $ultimoIdVisto = $notif->id;
-                    }
+            try {
+                // Asegurar conexión activa (puede haberse cerrado en iteración anterior)
+                if (!\Yii::$app->db->isActive) {
+                    \Yii::$app->db->open();
                 }
 
-                echo "event: notificacion\n";
-                echo "data: " . json_encode($data) . "\n\n";
+                // Buscar notificaciones nuevas no leídas desde el último id visto
+                $query = Notificaciones::find()
+                    ->where(['usuario_id' => $userId, 'leida' => 0])
+                    ->orderBy(['id' => SORT_ASC])   // ASC: las más antiguas primero, correcta
+                    ->limit(20);
+
+                if ($ultimoIdVisto > 0) {
+                    $query->andWhere(['>', 'id', $ultimoIdVisto]);
+                }
+
+                $notificaciones = $query->all();
+
+                if (!empty($notificaciones)) {
+                    $data = [];
+                    foreach ($notificaciones as $notif) {
+                        $data[] = [
+                            'id'        => $notif->id,
+                            'tipo'      => $notif->tipo ?? 'asignado',
+                            'titulo'    => $notif->titulo,
+                            'mensaje'   => $notif->mensaje,
+                            'leida'     => false,
+                            'fecha'     => date('d/m H:i', strtotime($notif->fecha_creacion)),
+                            'ticket_id' => $notif->ticket_id,
+                            'url'       => \yii\helpers\Url::to([
+                                'tickets/index',
+                                'openComments' => 1,
+                                'ticket_id'    => $notif->ticket_id,
+                                'notif_id'     => $notif->id,
+                            ]),
+                        ];
+                        if ($notif->id > $ultimoIdVisto) {
+                            $ultimoIdVisto = $notif->id;
+                        }
+                    }
+
+                    echo "event: notificacion\n";
+                    echo "data: " . json_encode($data) . "\n\n";
+                    flush();
+                } else {
+                    // Heartbeat para mantener la conexion viva (evita timeout del navegador)
+                    echo ": heartbeat\n\n";
+                    flush();
+                }
+
+                // Cerrar conexion BD para no tenerla abierta durante el sleep
+                \Yii::$app->db->close();
+
+            } catch (\Exception $e) {
+                // Si algo falla, mandar heartbeat y continuar en la siguiente iteración
+                echo ": error-retry\n\n";
                 flush();
-            } else {
-                // Heartbeat para mantener la conexion viva (evita timeout del navegador)
-                echo ": heartbeat\n\n";
-                flush();
+                try { \Yii::$app->db->close(); } catch (\Exception $_) {}
             }
 
-            // Cerrar conexion BD para no tenerla abierta durante el sleep
-            \Yii::$app->db->close();
-            sleep(4);
-            // Reabrir para la siguiente iteracion
-            \Yii::$app->db->open();
+            sleep(3);
         }
 
         exit;

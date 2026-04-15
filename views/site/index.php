@@ -250,7 +250,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
                         title: 'Vista mensual'
                     },
                     timeGridWeek: {
-                        text: 'SemHora Inicioana',
+                        text: 'Semana',
                         click: function() { calendar.changeView('timeGridWeek'); },
                         title: 'Vista semanal'
                     },

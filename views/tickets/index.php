@@ -29,31 +29,72 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 $this->registerJsFile('@web/js/tickets-filters.js', ['position' => \yii\web\View::POS_END]);
 
 $this->registerCss('
+    /* ── Paginación ── */
     .pagination {
-        gap: 5px;
+        gap: 4px;
+        flex-wrap: wrap;
     }
-    
-    .pagination .page-link {
-        color: #8BA590;
-        border: 1px solid #ddd;
-        padding: 8px 12px;
+    .pagination .page-item .page-link {
+        min-width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px !important;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #4b5563;
         font-size: 13px;
+        font-weight: 500;
+        padding: 0 10px;
+        transition: background .15s, color .15s, border-color .15s;
+        text-decoration: none;
     }
-    
-    .pagination .page-link:hover {
-        background-color: #f0f0f0;
-        color: #7a9582;
+    .pagination .page-item .page-link:hover {
+        background: #f0f4f0;
+        border-color: #8BA590;
+        color: #4a7c59;
     }
-    
-    .pagination .page-link.active {
-        background-color: #8BA590;
+    /* Página activa — verde suave */
+    .pagination .page-item.active .page-link {
+        background: #8BA590;
+        border-color: #8BA590;
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 2px 6px rgba(139,165,144,.35);
+    }
+    /* Anterior / Siguiente deshabilitados */
+    .pagination .page-item.disabled .page-link {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+        color: #d1d5db;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    /* Selector de rango */
+    .page-size-selector {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #6b7280;
+    }
+    .page-size-selector select {
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: #374151;
+        background: #fff;
+        cursor: pointer;
+    }
+    .page-size-selector select:focus {
+        outline: none;
         border-color: #8BA590;
     }
-    
-    .pagination .page-link.disabled {
-        color: #ccc;
-        cursor: not-allowed;
-    }
+    /* Sin scroll horizontal */
+    body { overflow-x: hidden; }
+    .table-container { overflow-x: hidden; }
     
     .table-container > div:first-child {
         display: flex;
@@ -321,8 +362,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 <div class="tickets-index">
     <!-- Header Principal con Buscador Universal  -->
     <div class="tickets-header">
-        <h1><i class="fas fa-ticket-alt"></i> <?= Html::encode($this->title) ?></h1>
-        
+        <h1><i class="fas fa-ticket-alt"></i> <?= Html::encode($this->title) ?></h1> 
+       
         <!-- BUSCADOR UNIVERSAL + FILTRO AVANZADO COMPACTO -->
         <div class="search-filter-wrapper">
             <!-- Buscador Universal Instantáneo -->
@@ -475,24 +516,56 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     <?php if (!empty($_GET['mes'])): ?>
     <div class="mes-actual">
         <i class="fas fa-calendar-alt"></i>
-        <strong><?= Html::encode(strftime('%B de %Y', strtotime($_GET['mes'] . '-01'))) ?></strong>
+        <?php
+            $mesesEs = [
+                1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',
+                5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',
+                9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'
+            ];
+            $ts  = strtotime($_GET['mes'] . '-01');
+            $mes = $mesesEs[(int)date('n', $ts)] . ' de ' . date('Y', $ts);
+        ?>
+        <strong><?= Html::encode($mes) ?></strong>
+        
     </div>
     <?php else: ?>
    
     <?php endif; ?>
 
     <!-- Stats Bar -->
-    <div class="stats-bar">
+    <div class="stats-bar d-flex align-items-center justify-content-between">
         <h5 class="tickets-count">
             <i class="fas fa-list"></i> Total de Tickets: <strong id="totalTickets"><?= $dataProvider->getTotalCount() ?></strong>
             <span id="filteredCount" style="display: none; margin-left: 10px; color: #667eea;"></span>
         </h5>
+        <!------Boton para actualizar pagina-------->
+        <button class="btn btn-sm btn-outline-secondary mx-4" id="refreshPage"
+                title="Actualizar página" onclick="refreshPage()">
+            <i class="fas fa-sync-alt" id="refreshIcon"></i>
+        </button>
     </div>
 
     <!-- Tabla -->
     <div class="table-container">
-        <div style="margin-bottom: 15px; font-size: 12px; color: #666;">
-            <strong>Mostrando:</strong> <?= count($dataProvider->getModels()) ?> de <?= $dataProvider->getTotalCount() ?> tickets
+        <div style="margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <span style="font-size:12px;color:#666;">
+                <strong>Mostrando:</strong>
+                <?= count($dataProvider->getModels()) ?> de <?= $dataProvider->getTotalCount() ?> tickets
+            </span>
+            <?php
+                $perPageActual = (int)Yii::$app->request->get('per-page', 20);
+                $urlBase = Yii::$app->request->queryParams;
+            ?>
+            <div class="page-size-selector">
+                <label for="perPageSelect">Tickets por página:</label>
+                <select id="perPageSelect" onchange="cambiarPorPagina(this.value)">
+                    <?php foreach ([10, 20, 30, 50, 100] as $op): ?>
+                        <option value="<?= $op ?>" <?= $perPageActual === $op ? 'selected' : '' ?>>
+                            <?= $op ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
         
         <table class="table table-hover table-sm" id="ticketsTable">
@@ -734,10 +807,17 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         <!-- ✅ PAGINADOR -->
         <nav aria-label="Paginación">
             <?= LinkPager::widget([
-                'pagination' => $dataProvider->pagination,
-                'options' => ['class' => 'pagination justify-content-center mt-4'],
-                'linkOptions' => ['class' => 'page-link'],
-                'disabledListItemSubTagOptions' => ['tag' => 'span', 'class' => 'page-link disabled'],
+                'pagination'                    => $dataProvider->pagination,
+                'options'                       => ['class' => 'pagination justify-content-center mt-3 mb-1'],
+                'linkOptions'                   => ['class' => 'page-link'],
+                'activePageCssClass'            => 'active',
+                'disabledPageCssClass'          => 'disabled',
+                'disabledListItemSubTagOptions' => ['tag' => 'span', 'class' => 'page-link'],
+                'firstPageLabel'                => '«',
+                'lastPageLabel'                 => '»',
+                'prevPageLabel'                 => '‹',
+                'nextPageLabel'                 => '›',
+                'maxButtonCount'                => 7,
             ]) ?>
         </nav>
     </div>
@@ -1215,6 +1295,37 @@ window.WINTICK_SERVICIOS = <?= json_encode(array_map(fn($s) => ['id' => (int)$s[
 window.URL_QUICK_UPDATE = '<?= \yii\helpers\Url::to(['/tickets/quick-update']) ?>';
 </script>
 <script>
+
+/**
+ * Funcion para poder actualizar toda la pagina sin perder el estado de busqueda, filtros, ordenamiento, etc.
+ * 
+ */
+function refreshPage() {
+    // Animación de spin mientras carga
+    const icon = document.getElementById('refreshIcon');
+    const btn  = document.getElementById('refreshPage');
+    if (icon) icon.classList.add('fa-spin');
+    if (btn)  btn.disabled = true;
+
+    // Recargar conservando los filtros actuales pero sin acumular el param ?refresh
+    const url = new URL(window.location.href);
+    url.searchParams.delete('refresh');          // limpiar si ya existía
+    url.searchParams.set('_r', Date.now());      // forzar petición nueva al servidor
+    window.location.href = url.toString();
+}
+
+/**
+ * Cambia el número de tickets por página preservando todos los filtros activos.
+ * Siempre resetea a la primera página para evitar páginas vacías.
+ */
+function cambiarPorPagina(valor) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per-page', valor);
+    url.searchParams.delete('page');   // volver a la página 1
+    url.searchParams.delete('_r');     // limpiar param de refresh si existía
+    window.location.href = url.toString();
+}
+
 /**
  * =========================================================
  *
@@ -3020,4 +3131,72 @@ document.addEventListener('DOMContentLoaded', () => {
     openComentariosModal(ticketId, '...');
   }
 });
+
+// ─── Auto-refresh cuando llega notificación de ticket vía SSE ─────────────────
+(function () {
+    // IDs de tickets ya notificados en esta sesión (evita duplicar el banner)
+    const ticketsNotificados = new Set();
+    let bannerEl = null;
+
+    function mostrarBanner(notifs) {
+        // Filtrar solo tickets realmente nuevos no mostrados aún
+        const nuevos = notifs.filter(n => n.ticket_id && !ticketsNotificados.has(n.ticket_id));
+        if (nuevos.length === 0) return;
+        nuevos.forEach(n => ticketsNotificados.add(n.ticket_id));
+
+        // Crear contenedor banner si no existe
+        if (!bannerEl) {
+            bannerEl = document.createElement('div');
+            bannerEl.id = 'tickets-nuevos-banner';
+            bannerEl.style.cssText = [
+                'position:fixed', 'bottom:24px', 'right:24px', 'z-index:9999',
+                'display:flex', 'flex-direction:column', 'gap:8px',
+                'max-width:320px'
+            ].join(';');
+            document.body.appendChild(bannerEl);
+        }
+
+        nuevos.forEach(function(n) {
+            const pill = document.createElement('div');
+            pill.style.cssText = [
+                'background:#0f172a', 'color:#f1f5f9', 'border-radius:12px',
+                'padding:11px 16px', 'font-size:13px',
+                'box-shadow:0 4px 20px rgba(0,0,0,.4)',
+                'display:flex', 'align-items:center', 'gap:10px',
+                'animation:slideInRight .3s ease'
+            ].join(';');
+
+            const ticketUrl = <?= json_encode(\yii\helpers\Url::to(['tickets/view'])) ?> + '?id=' + n.ticket_id;
+            pill.innerHTML =
+                '<i class="fas fa-ticket-alt" style="color:#38bdf8;font-size:15px;flex-shrink:0"></i>' +
+                '<div style="flex:1;line-height:1.4">' +
+                  '<div style="font-weight:600;margin-bottom:2px">Ticket nuevo asignado</div>' +
+                  '<div style="font-size:11px;color:#94a3b8">' + (n.mensaje || n.titulo || '') + '</div>' +
+                '</div>' +
+                '<a href="' + ticketUrl + '" style="' +
+                  'background:#38bdf8;color:#0f172a;border:none;border-radius:7px;' +
+                  'padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;' +
+                  'text-decoration:none;white-space:nowrap' +
+                '">Ver ticket</a>' +
+                '<button onclick="this.closest(\'div[style]\').remove()" style="' +
+                  'background:none;border:none;color:#64748b;cursor:pointer;' +
+                  'font-size:16px;line-height:1;padding:0 2px' +
+                '">×</button>';
+
+            bannerEl.appendChild(pill);
+
+            // Auto-quitar después de 12s si el usuario no interactuó
+            setTimeout(function() { if (pill.parentNode) pill.remove(); }, 12000);
+        });
+    }
+
+    // Agregar keyframe de animación
+    const style = document.createElement('style');
+    style.textContent = '@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}';
+    document.head.appendChild(style);
+
+    window.addEventListener('wintick:tickets-updated', function (e) {
+        mostrarBanner(e.detail || []);
+    });
+})();
 </script>

@@ -763,8 +763,8 @@ $this->registerJs($js);
   // ===== WEB NOTIFICATIONS =====
   let sseSource = null;
   let lastNotifsSeen = new Set();
-  // Si el reload fue tras guardar una solución, mostrar las nuevas notificaciones sin suprimirlas
-  let firstLoad = !sessionStorage.getItem('notifNoSuprimir');
+  // Ya no usamos firstLoad — lastNotifsSeen se pre-puebla con las IDs existentes
+  // en cargarNotificacionesIniciales(), así el SSE solo dispara sonido para notifs NUEVAS.
   sessionStorage.removeItem('notifNoSuprimir');
 
   async function ensureNotificationPermission() {
@@ -790,7 +790,13 @@ $this->registerJs($js);
       .then(r => r.json())
       .then(data => {
         if (data && data.success) {
-          mostrarNotificaciones(Array.isArray(data.notificaciones) ? data.notificaciones : []);
+          const lista = Array.isArray(data.notificaciones) ? data.notificaciones : [];
+          // ✅ Pre-poblar lastNotifsSeen con las IDs ya existentes en DB.
+          // Así el SSE solo dispara sonido/toast para notificaciones NUEVAS
+          // (creadas después de que la página cargó), sin importar cuándo
+          // se establece la conexión SSE.
+          lista.forEach(n => lastNotifsSeen.add(String(n.id)));
+          mostrarNotificaciones(lista);
         }
       })
       .catch(err => console.error('Error cargando notificaciones iniciales:', err));
@@ -805,12 +811,27 @@ $this->registerJs($js);
 
     sseSource.addEventListener('notificacion', function(e) {
       try {
-        const nuevas = JSON.parse(e.data);
-        if (Array.isArray(nuevas) && nuevas.length > 0) {
-          // Recargar lista completa para mostrar el estado actualizado
+        const todas = JSON.parse(e.data);
+        if (Array.isArray(todas) && todas.length > 0) {
+          // Actualizar campanita con el estado fresco del servidor
           cargarNotificacionesIniciales();
-          // Disparar alertas solo de las realmente nuevas
-          dispararAlertas(nuevas);
+
+          // Filtrar SOLO las que no estaban en DB cuando cargó la página
+          const realmente_nuevas = todas.filter(n => !lastNotifsSeen.has(String(n.id)));
+
+          // Sonido + notif del SO solo para las nuevas de verdad
+          dispararAlertas(realmente_nuevas);
+
+          // Avisar a tickets/index SOLO si hay notifs nuevas que afectan la tabla
+          // (evita el loop de toast infinito al recargar la página)
+          if (realmente_nuevas.length > 0) {
+            const afectaTabla = realmente_nuevas.some(n =>
+              ['asignado', 'actualizado', 'estado_cambio', 'comentario'].includes(n.tipo)
+            );
+            if (afectaTabla) {
+              window.dispatchEvent(new CustomEvent('wintick:tickets-updated', { detail: realmente_nuevas }));
+            }
+          }
         }
       } catch(err) {
         console.error('SSE parse error:', err);
@@ -825,17 +846,18 @@ $this->registerJs($js);
   }
 
   function dispararAlertas(notificaciones) {
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-    if (firstLoad) {
-      notificaciones.forEach(n => lastNotifsSeen.add(String(n.id)));
-      firstLoad = false;
-      return;
-    }
-    notificaciones
-      .filter(n => !lastNotifsSeen.has(String(n.id)))
-      .forEach(n => {
-        lastNotifsSeen.add(String(n.id));
-        playNotifSound();
+    // Filtrar solo las realmente nuevas (no estaban en DB cuando cargó la página)
+    const nuevas = notificaciones.filter(n => !lastNotifsSeen.has(String(n.id)));
+    if (nuevas.length === 0) return;
+
+    nuevas.forEach(n => {
+      lastNotifsSeen.add(String(n.id));
+
+      // ✅ Sonido SIEMPRE, independiente del permiso de notificaciones del navegador
+      playNotifSound();
+
+      // ✅ Notificación del SO solo si el usuario concedió permiso
+      if ("Notification" in window && Notification.permission === "granted") {
         const sysNotif = new Notification(n.titulo || 'WinTick', {
           body: n.mensaje || '',
           icon: NOTIF_ICON,
@@ -852,7 +874,8 @@ $this->registerJs($js);
             }
           }
         };
-      });
+      }
+    });
   }
 
   function actualizarBannerPermiso() {

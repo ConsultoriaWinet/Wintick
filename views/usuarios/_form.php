@@ -45,7 +45,7 @@ use yii\widgets\ActiveForm;
         'Administracion' => 'Administracion',
         'Supervisores'   => 'Supervisores',
         'Administradores'=> 'Administradores',
-        'Desarrolladores'=> 'Desarrolladores',
+       // 'Desarrolladores'=> 'Desarrolladores',
         'Monitor'        => 'Monitor (solo visualización)',
     ]) ?>
 

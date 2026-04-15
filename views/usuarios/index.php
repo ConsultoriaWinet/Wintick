@@ -8,7 +8,7 @@ $roles = [
     'Administracion' => 'Administracion',
     'Administradores'=> 'Administradores',
     'Consultores'=> 'Consultores',
-    'Desarrolladores'=> 'Desarrolladores',
+    //'Desarrolladores'=> 'Desarrolladores',
     'Supervisores'=> 'Supervisores',
     
 ];

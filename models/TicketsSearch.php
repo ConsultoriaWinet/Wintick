@@ -54,7 +54,9 @@ class TicketsSearch extends Tickets
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 20,
+                'defaultPageSize' => 20,         // fallback cuando no viene ?per-page en la URL
+                'pageSizeParam'   => 'per-page', // lee ?per-page=N de la URL
+                'pageSizeLimit'   => [10, 100],  // mínimo 10, máximo 100
             ],
             'sort' => [
                 'defaultOrder' => ['Fecha_creacion' => SORT_DESC],
