@@ -31,3 +31,5 @@ tests/_support/_generated
 
 #vagrant folder
 /.vagrant
+.claude/worktrees/trusting-dubinsky-d5b753
+.claude/worktrees/eager-colden-08a0a2
