@@ -467,6 +467,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                             <select name="Estado">
                                 <option value="">Todos</option>
                                 <option value="ABIERTO" <?= ($_GET['Estado'] ?? '') == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
+                                <option value="PROGRAMADO" <?= ($_GET['Estado'] ?? '') == 'PROGRAMADO' ? 'selected' : '' ?>>Programado</option>
                                 <option value="EN PROCESO" <?= ($_GET['Estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
                                 <option value="CONTPAQi" <?= ($_GET['Estado'] ?? '') == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi </option>
                                 <option value="CERRADO" <?= ($_GET['Estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
@@ -657,6 +658,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <td>
                         <select class="form-select form-select-sm estado">
                             <option value="ABIERTO" selected>Abierto</option>
+                            <option value="PROGRAMADO">Programado</option>
                             <option value="EN PROCESO">En Proceso</option>
                             <option value="CONTPAQi">CONTPAQi</option>
                             <option value="CERRADO">Cerrado</option>
@@ -747,6 +749,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <?php
                         $estadoClass = match($ticket->Estado) {
                             'ABIERTO'    => 'bg-primary text-white',
+                            'PROGRAMADO' => 'bg-success text-white',
                             'EN PROCESO' => 'bg-info text-dark',
                             'CONTPAQi'  => 'bg-warning text-dark',
                             'CERRADO'    => 'bg-danger text-white',
@@ -754,6 +757,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         };
                         $estadoIcon = match($ticket->Estado) {
                             'ABIERTO'    => 'fa-circle-notch',
+                            'PROGRAMADO' => 'fa-calendar-check',
                             'EN PROCESO' => 'fa-spinner',
                             'CONTPAQi'  => 'fa-pause-circle',
                             'CERRADO'    => 'fa-check-circle',
@@ -765,6 +769,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </div>
                         <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display: none; font-size: 12px; margin-top: 5px;">
                             <option value="ABIERTO" <?= $ticket->Estado == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
+                            <option value="PROGRAMADO" <?= $ticket->Estado == 'PROGRAMADO' ? 'selected' : '' ?>>Programado</option>
                             <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
                             <option value="CONTPAQi" <?= $ticket->Estado == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi</option>
                             <option value="CERRADO" <?= $ticket->Estado == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
@@ -1727,6 +1732,7 @@ function toggleEstadoSelect(element, ticketId) {
 function getEstadoClass(estado) {
     const classes = {
         'ABIERTO':    'bg-primary text-white',
+        'PROGRAMADO': 'bg-success text-white',
         'EN PROCESO': 'bg-info text-dark',
         'CONTPAQi':  'bg-warning text-dark',
         'CERRADO':    'bg-danger text-white'
@@ -1737,6 +1743,7 @@ function getEstadoClass(estado) {
 function getEstadoIcon(estado) {
     const icons = {
         'ABIERTO':    'fa-circle-notch',
+        'PROGRAMADO': 'fa-calendar-check',
         'EN PROCESO': 'fa-spinner',
         'CONTPAQi':  'fa-pause-circle',
         'CERRADO':    'fa-check-circle'
@@ -2393,6 +2400,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function getStatusClass(estado) {
     const e = (estado || '').toUpperCase();
     if (e === 'ABIERTO')    return 'swal-status-abierto';
+    if (e === 'PROGRAMADO') return 'swal-status-programado';
     if (e === 'EN PROCESO') return 'swal-status-en-proceso';
     if (e === 'CONTPAQi')  return 'swal-status-contpaqi';
     if (e === 'CERRADO')    return 'swal-status-cerrado';
@@ -2626,6 +2634,7 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                             <label><i class="fas fa-circle-notch"></i> Estado</label>
                             <select id="edit-Estado">
                                 <option value="ABIERTO" ${d.estado==='ABIERTO'?'selected':''}>Abierto</option>
+                                <option value="PROGRAMADO" ${d.estado==='PROGRAMADO'?'selected':''}>Programado</option>
                                 <option value="EN PROCESO" ${d.estado==='EN PROCESO'?'selected':''}>En Proceso</option>
                                 <option value="CONTPAQi" ${d.estado==='CONTPAQi'?'selected':''}>CONTPAQi</option>
                             </select>
