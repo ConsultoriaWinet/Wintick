@@ -11,6 +11,9 @@ use app\models\Clientes;
  */
 class ClientesSearch extends Clientes
 {
+    /** Búsqueda universal (server-side) */
+    public $q;
+
     /**
      * {@inheritdoc}
      */
@@ -18,7 +21,7 @@ class ClientesSearch extends Clientes
     {
         return [
             [['id', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Estado', 'created_at', 'updated_at'], 'integer'],
-            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Criticidad', 'Contacto_nombre', 'Prioridad', 'Tipo_servicio'], 'safe'],
+            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Criticidad', 'Contacto_nombre', 'Prioridad', 'Tipo_servicio', 'q'], 'safe'],
         ];
     }
 
@@ -39,22 +42,32 @@ class ClientesSearch extends Clientes
      *
      * @return ActiveDataProvider
      */
-    public function search($params, $formName = null)
+    public function search($params, $pageSize = 20, $formName = null)
     {
         $query = Clientes::find();
 
-        // add conditions that should always apply here
-
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => $pageSize,
+            ],
         ]);
 
         $this->load($params, $formName);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
+        }
+
+        // Búsqueda universal: OR LIKE en los campos más importantes
+        if (!empty($this->q)) {
+            $query->andWhere(['or',
+                ['like', 'Nombre',          $this->q],
+                ['like', 'Razon_social',    $this->q],
+                ['like', 'RFC',             $this->q],
+                ['like', 'Correo',          $this->q],
+                ['like', 'Contacto_nombre', $this->q],
+            ]);
         }
 
         // grid filtering conditions

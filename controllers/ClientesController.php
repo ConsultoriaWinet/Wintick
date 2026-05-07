@@ -55,11 +55,19 @@ class ClientesController extends Controller
     public function actionIndex()
     {
         $searchModel = new ClientesSearch();
-        $dataProvider = $searchModel->search($this->request->queryParams);
+
+        $validSizes = [10, 20, 50, 100, 500];
+        $pageSize   = (int) Yii::$app->request->get('pageSize', 20);
+        if (!in_array($pageSize, $validSizes)) {
+            $pageSize = 20;
+        }
+
+        $dataProvider = $searchModel->search($this->request->queryParams, $pageSize);
 
         return $this->render('index', [
-            'searchModel' => $searchModel,
+            'searchModel'  => $searchModel,
             'dataProvider' => $dataProvider,
+            'pageSize'     => $pageSize,
         ]);
     }
 

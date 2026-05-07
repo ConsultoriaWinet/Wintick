@@ -8,6 +8,7 @@ use yii\grid\GridView;
 /** @var yii\web\View $this */
 /** @var app\models\ClientesSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var int $pageSize */
 
 $this->title = 'Clientes';
 
@@ -18,6 +19,35 @@ $css = "
     .col-correo { display: none !important; } /* ocultar columna correo */
     .wrap-sm { white-space: normal !important; }
     .nowrap-sm { white-space: nowrap !important; }
+}
+
+/* PAGINACIÓN */
+.pagination {
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+}
+.pagination .page-item .page-link {
+    border-radius: 6px !important;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    transition: background .15s, color .15s;
+}
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+    font-weight: 600;
+}
+.pagination .page-item:not(.active) .page-link:hover {
+    background-color: #e9ecef;
+    color: #0d6efd;
+}
+.pagination .page-item.disabled .page-link {
+    color: #adb5bd;
+    background: #f8f9fa;
 }
 
 /* CARD MÓVIL */
@@ -59,19 +89,47 @@ $this->registerCss($css);
         </div>
 
         <div class="card-body">
-            <!--Filtro para buscar por cualquier cosa ----->
-         <div class="mb-3">
-            <div class="input-group">
-                <span class="input-group-text">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input 
-                    type="text" 
-                    id="universalSearch" 
-                    class="form-control" 
-                    placeholder="Buscar por cualquier cosa...">
-            </div>
-        </div>
+            <!-- Búsqueda universal + selector de paginación -->
+            <form id="searchForm" method="get" action="">
+                <input type="hidden" name="pageSize" id="pageSizeHidden" value="<?= $pageSize ?>">
+                <div class="row g-2 mb-3 align-items-center">
+                    <!-- Buscador -->
+                    <div class="col">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input
+                                type="text"
+                                id="universalSearch"
+                                name="ClientesSearch[q]"
+                                class="form-control"
+                                placeholder="Buscar por nombre, RFC, razón social, correo..."
+                                value="<?= Html::encode($searchModel->q ?? '') ?>"
+                                autocomplete="off">
+                            <?php if (!empty($searchModel->q)): ?>
+                                <a href="<?= Url::to(['clientes/index', 'pageSize' => $pageSize]) ?>"
+                                   class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <!-- Selector de registros por página -->
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <label class="input-group-text" for="pageSizeSelect">
+                                <i class="fas fa-list-ol"></i>
+                            </label>
+                            <select id="pageSizeSelect" class="form-select" style="min-width:90px;">
+                                <?php foreach ([10, 20, 50, 100, 500] as $size): ?>
+                                    <option value="<?= $size ?>" <?= $size === $pageSize ? 'selected' : '' ?>>
+                                        <?= $size ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
 
 
             <!-- ================= TABLE DESKTOP ================= -->
@@ -366,12 +424,19 @@ $this->registerJs("
 
 
 
-    // Filtro universal
-    $('#universalSearch').on('keyup', function() {
-        var value = $(this).val().toLowerCase();
-        $('.table tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-        });
+    // Búsqueda universal server-side con debounce
+    var searchTimer;
+    $('#universalSearch').on('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+            $('#searchForm').submit();
+        }, 400);
+    });
+
+    // Selector de paginación — actualiza hidden y reenvía el form
+    $('#pageSizeSelect').on('change', function() {
+        $('#pageSizeHidden').val($(this).val());
+        $('#searchForm').submit();
     });
 
 
