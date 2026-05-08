@@ -7,169 +7,103 @@ $this->title = 'Recuperar Contraseña';
 ?>
 
 <style>
-    body {
-      background-color: #A0BAA5;
-        min-height: 100vh;
-    }
-
-    .request-password-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 80vh;
-        padding: 20px;
-    }
-
-    .request-password-card {
-        width: 100%;
-        max-width: 450px;
-        background: #ffffff;
-        padding: 40px;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .request-password-card h1 {
-        text-align: center;
-        margin-bottom: 10px;
-        font-size: 28px;
-        color: #2d6a2d;
-        font-weight: 600;
-    }
-
-    .request-password-card .subtitle {
-        text-align: center;
-        color: #6c757d;
-        font-size: 14px;
-        margin-bottom: 30px;
-        line-height: 1.5;
-    }
-
-    .form-group {
-        margin-bottom: 25px;
-    }
-
-    .form-control {
-        padding: 12px 15px;
-        font-size: 15px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        transition: all 0.3s;
-    }
-
-    .form-control:focus {
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
-    }
-
-    .btn-submit {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        border: none;
-        transition: all 0.3s;
-    }
-
-    .btn-submit:hover {
-        background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-    }
-
-    .back-to-login {
-        text-align: center;
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
-    }
-
-    .back-to-login a {
-        color: #4CAF50;
-        font-size: 14px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-
-    .back-to-login a:hover {
-        color: #45a049;
-        text-decoration: underline;
-    }
-
-    .icon-envelope {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-
-    .icon-envelope svg {
-        width: 60px;
-        height: 60px;
-        color: #4CAF50;
-    }
-
-    @media (max-width: 576px) {
-        .request-password-card {
-            padding: 30px 20px;
-        }
-
-        .request-password-card h1 {
-            font-size: 24px;
-        }
-
-        .form-control {
-            font-size: 14px;
-        }
-    }
+body { background: var(--surface-2, #F5F1E8) !important; }
+.auth-wrap {
+    min-height: 100vh; display: flex;
+    align-items: center; justify-content: center; padding: 24px 16px;
+}
+.auth-card {
+    width: 100%; max-width: 420px;
+    background: var(--surface, #fff); border: 1px solid var(--border, #E8E2D2);
+    border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.08); overflow: hidden;
+}
+.auth-header {
+    padding: 30px 36px 22px; text-align: center;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+}
+.auth-icon {
+    width: 52px; height: 52px; border-radius: 13px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+}
+.auth-header h1 { font-size: 19px; font-weight: 700; color: var(--text, #1A1814); margin: 0 0 5px; }
+.auth-header p  { font-size: 13px; color: var(--text-3, #807868); margin: 0; line-height: 1.5; }
+.auth-body { padding: 26px 36px 30px; }
+.auth-label {
+    display: block; font-size: 11.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    color: var(--text-3, #807868); margin-bottom: 6px;
+}
+.auth-input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border, #E8E2D2); border-radius: 9px;
+    font-size: 14px; color: var(--text, #1A1814); background: var(--surface, #fff);
+    transition: border-color .15s, box-shadow .15s;
+}
+.auth-input:focus {
+    outline: none; border-color: var(--accent, oklch(0.60 0.13 38));
+    box-shadow: 0 0 0 3px var(--accent-ring, oklch(0.60 0.13 38 / 0.18));
+}
+.auth-input::placeholder { color: var(--text-3, #807868); }
+.auth-field { margin-bottom: 18px; }
+.auth-btn {
+    width: 100%; padding: 11px; background: var(--accent, oklch(0.60 0.13 38)); color: #fff;
+    border: none; border-radius: 9px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background .15s, box-shadow .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.auth-btn:hover { background: var(--accent-dark, oklch(0.50 0.13 38)); box-shadow: 0 4px 14px var(--accent-ring, oklch(0.60 0.13 38 / 0.18)); }
+.auth-footer {
+    text-align: center; padding: 16px 36px 20px;
+    border-top: 1px solid var(--border, #E8E2D2);
+}
+.auth-footer a {
+    font-size: 13px; color: var(--accent, oklch(0.60 0.13 38)); text-decoration: none;
+    font-weight: 500; display: inline-flex; align-items: center; gap: 5px;
+}
+.auth-footer a:hover { text-decoration: underline; color: var(--accent-dark, oklch(0.50 0.13 38)); }
 </style>
 
-<div class="request-password-container">
-    <div class="request-password-card">
-        <!-- Icono decorativo -->
-        <div class="icon-envelope">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+<div class="auth-wrap">
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <div class="auth-icon" style="background:var(--accent-light);">
+                <i class="fas fa-envelope" style="font-size:20px;color:var(--accent);"></i>
+            </div>
+            <h1>Recuperar Contraseña</h1>
+            <p>Te enviaremos un enlace a tu correo para restablecer tu contraseña</p>
         </div>
 
-        <h1><?= Html::encode($this->title) ?></h1>
-        <p class="subtitle">
-            Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
-        </p>
+        <div class="auth-body">
+            <?php $form = ActiveForm::begin([
+                'id'      => 'request-password-form',
+                'options' => ['autocomplete' => 'off'],
+            ]); ?>
 
-        <?php $form = ActiveForm::begin([
-            'id' => 'request-password-form',
-            'options' => ['autocomplete' => 'off']
-        ]); ?>
-
-            <div class="form-group">
-                <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
+            <div class="auth-field">
+                <label class="auth-label" for="email">Correo electrónico</label>
                 <?= Html::input('email', 'email', '', [
-                    'class' => 'form-control',
-                    'placeholder' => 'correo@ejemplo.com',
-                    'required' => true,
-                    'id' => 'email',
-                    'autocomplete' => 'email'
+                    'class'        => 'auth-input',
+                    'placeholder'  => 'correo@empresa.com',
+                    'required'     => true,
+                    'id'           => 'email',
+                    'autocomplete' => 'email',
+                    'autofocus'    => true,
                 ]) ?>
             </div>
 
-            <div class="form-group">
-                <?= Html::submitButton(
-                    '<i class="bi bi-send-fill me-2"></i>Enviar enlace de recuperación', 
-                    ['class' => 'btn btn-submit', 'name' => 'request-button']
-                ) ?>
-            </div>
+            <?= Html::submitButton(
+                '<i class="fas fa-paper-plane"></i> Enviar enlace',
+                ['class' => 'auth-btn', 'name' => 'request-button', 'encode' => false]
+            ) ?>
 
-        <?php ActiveForm::end(); ?>
-
-        <div class="back-to-login">
-            <i class="bi bi-arrow-left me-1"></i>
-            <?= Html::a('Volver al inicio de sesión', ['site/login']) ?>
+            <?php ActiveForm::end(); ?>
         </div>
+
+        <div class="auth-footer">
+            <?= Html::a('<i class="fas fa-arrow-left"></i> Volver al inicio de sesión', ['site/login']) ?>
+        </div>
+
     </div>
 </div>
-

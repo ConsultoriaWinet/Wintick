@@ -7,197 +7,215 @@ $this->title = 'Restablecer Contraseña';
 ?>
 
 <style>
-    body {
-        background: linear-gradient(135deg, #A0BAA5 0%, #7FA588 100%);
-        min-height: 100vh;
-    }
+body { background: var(--surface-2, #F5F1E8) !important; }
+.auth-wrap {
+    min-height: 100vh; display: flex;
+    align-items: center; justify-content: center; padding: 24px 16px;
+}
+.auth-card {
+    width: 100%; max-width: 420px;
+    background: var(--surface, #fff); border: 1px solid var(--border, #E8E2D2);
+    border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.08); overflow: hidden;
+}
+.auth-header {
+    padding: 30px 36px 22px; text-align: center;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+}
+.auth-icon {
+    width: 52px; height: 52px; border-radius: 13px;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+}
+.auth-header h1 { font-size: 19px; font-weight: 700; color: var(--text, #1A1814); margin: 0 0 5px; }
+.auth-header p  { font-size: 13px; color: var(--text-3, #807868); margin: 0; line-height: 1.5; }
+.auth-body { padding: 26px 36px 30px; }
+.auth-label {
+    display: block; font-size: 11.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    color: var(--text-3, #807868); margin-bottom: 6px;
+}
+.auth-input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border, #E8E2D2); border-radius: 9px;
+    font-size: 14px; color: var(--text, #1A1814); background: var(--surface, #fff);
+    transition: border-color .15s, box-shadow .15s;
+}
+.auth-input:focus {
+    outline: none; border-color: var(--accent, oklch(0.60 0.13 38));
+    box-shadow: 0 0 0 3px var(--accent-ring, oklch(0.60 0.13 38 / 0.18));
+}
+.auth-input::placeholder { color: var(--text-3, #807868); }
+.auth-field { margin-bottom: 16px; position: relative; }
+.pw-wrap { position: relative; }
+.pw-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; color: var(--text-3, #807868); font-size: 14px;
+    background: none; border: none; padding: 4px; transition: color .15s;
+}
+.pw-toggle:hover { color: var(--text-2, #4D483F); }
+.auth-hint {
+    font-size: 11.5px; color: var(--text-3, #807868); margin-top: 4px;
+}
+.auth-divider {
+    border: none; border-top: 1px solid var(--border, #E8E2D2); margin: 18px 0;
+}
+.auth-btn {
+    width: 100%; padding: 11px; background: var(--accent, oklch(0.60 0.13 38)); color: #fff;
+    border: none; border-radius: 9px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background .15s, box-shadow .15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 6px;
+}
+.auth-btn:hover { background: var(--accent-dark, oklch(0.50 0.13 38)); box-shadow: 0 4px 14px var(--accent-ring, oklch(0.60 0.13 38 / 0.18)); }
+.auth-footer {
+    text-align: center; padding: 16px 36px 20px;
+    border-top: 1px solid var(--border, #E8E2D2);
+}
+.auth-footer a {
+    font-size: 13px; color: var(--accent, oklch(0.60 0.13 38)); text-decoration: none;
+    font-weight: 500; display: inline-flex; align-items: center; gap: 5px;
+}
+.auth-footer a:hover { text-decoration: underline; color: var(--accent-dark, oklch(0.50 0.13 38)); }
 
-    .reset-password-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 80vh;
-        padding: 20px;
-    }
-
-    .reset-password-card {
-        width: 100%;
-        max-width: 450px;
-        background: #ffffff;
-        padding: 40px;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .reset-password-card h1 {
-        text-align: center;
-        margin-bottom: 10px;
-        font-size: 28px;
-        color: #2d6a2d;
-        font-weight: 600;
-    }
-
-    .reset-password-card .subtitle {
-        text-align: center;
-        color: #6c757d;
-        font-size: 14px;
-        margin-bottom: 30px;
-        line-height: 1.5;
-    }
-
-    .form-group {
-        margin-bottom: 25px;
-    }
-
-    .form-label {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 8px;
-    }
-
-    .form-control {
-        padding: 12px 15px;
-        font-size: 15px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        transition: all 0.3s;
-    }
-
-    .form-control:focus {
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
-    }
-
-    .btn-submit {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        border: none;
-        transition: all 0.3s;
-    }
-
-    .btn-submit:hover {
-        background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-    }
-
-    .back-to-login {
-        text-align: center;
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
-    }
-
-    .back-to-login a {
-        color: #4CAF50;
-        font-size: 14px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-
-    .back-to-login a:hover {
-        color: #45a049;
-        text-decoration: underline;
-    }
-
-    .icon-key {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-
-    .icon-key svg {
-        width: 60px;
-        height: 60px;
-        color: #4CAF50;
-    }
-
-    @media (max-width: 576px) {
-        .reset-password-card {
-            padding: 30px 20px;
-        }
-
-        .reset-password-card h1 {
-            font-size: 24px;
-        }
-
-        .form-control {
-            font-size: 14px;
-        }
-    }
+/* Indicador de fortaleza */
+.pw-strength { display: flex; gap: 4px; margin-top: 6px; }
+.pw-strength-bar {
+    height: 3px; flex: 1; border-radius: 2px;
+    background: var(--border, #E8E2D2); transition: background .25s;
+}
+.pw-strength-label { font-size: 11px; color: var(--text-3, #807868); margin-top: 3px; }
 </style>
 
-<div class="reset-password-container">
-    <div class="reset-password-card">
-        <!-- Icono decorativo -->
-        <div class="icon-key">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
+<div class="auth-wrap">
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <div class="auth-icon" style="background:#f0fdf4;">
+                <i class="fas fa-key" style="font-size:20px;color:#16a34a;"></i>
+            </div>
+            <h1>Nueva Contraseña</h1>
+            <p>Ingresa el código de verificación y tu nueva contraseña</p>
         </div>
 
-        <h1><?= Html::encode($this->title) ?></h1>
-        <p class="subtitle">
-            Ingresa el código que recibiste en tu correo y tu nueva contraseña.
-        </p>
+        <div class="auth-body">
+            <?php $form = ActiveForm::begin([
+                'id'      => 'reset-password-form',
+                'options' => ['autocomplete' => 'off'],
+            ]); ?>
 
-        <?php $form = ActiveForm::begin([
-            'id' => 'reset-password-form',
-            'options' => ['autocomplete' => 'off']
-        ]); ?>
-
-            <div class="form-group">
-                <label for="token" class="form-label fw-semibold">Código de Verificación</label>
+            <!-- Token -->
+            <div class="auth-field">
+                <label class="auth-label" for="token">Código de verificación</label>
                 <?= Html::input('text', 'token', '', [
-                    'class' => 'form-control',
-                    'placeholder' => 'Ej: aBcD1234',
-                    'required' => true,
-                    'id' => 'token',
-                    'maxlength' => 8,
-                    'autocomplete' => 'off'
+                    'class'        => 'auth-input',
+                    'placeholder'  => 'Código recibido por correo',
+                    'required'     => true,
+                    'id'           => 'token',
+                    'maxlength'    => 32,
+                    'autocomplete' => 'off',
+                    'autofocus'    => true,
+                    'style'        => 'font-family:monospace;letter-spacing:.08em;',
                 ]) ?>
             </div>
 
-            <div class="form-group">
-                <label for="new_password" class="form-label fw-semibold">Nueva Contraseña</label>
-                <?= Html::input('password', 'new_password', '', [
-                    'class' => 'form-control',
-                    'placeholder' => '••••••••',
-                    'required' => true,
-                    'id' => 'new_password',
-                    'minlength' => 6
-                ]) ?>
+            <hr class="auth-divider">
+
+            <!-- Nueva contraseña -->
+            <div class="auth-field">
+                <label class="auth-label" for="new_password">Nueva contraseña</label>
+                <div class="pw-wrap">
+                    <?= Html::input('password', 'new_password', '', [
+                        'class'       => 'auth-input',
+                        'placeholder' => '••••••••',
+                        'required'    => true,
+                        'id'          => 'new_password',
+                        'minlength'   => 6,
+                        'oninput'     => 'checkStrength(this.value)',
+                    ]) ?>
+                    <button type="button" class="pw-toggle" onclick="togglePw('new_password','icon-np')" tabindex="-1">
+                        <i id="icon-np" class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="pw-strength" id="pw-bars">
+                    <div class="pw-strength-bar" id="bar1"></div>
+                    <div class="pw-strength-bar" id="bar2"></div>
+                    <div class="pw-strength-bar" id="bar3"></div>
+                    <div class="pw-strength-bar" id="bar4"></div>
+                </div>
+                <div class="pw-strength-label" id="pw-label"></div>
             </div>
 
-            <div class="form-group">
-                <label for="confirm_password" class="form-label fw-semibold">Confirmar Contraseña</label>
-                <?= Html::input('password', 'confirm_password', '', [
-                    'class' => 'form-control',
-                    'placeholder' => '••••••••',
-                    'required' => true,
-                    'id' => 'confirm_password',
-                    'minlength' => 6
-                ]) ?>
+            <!-- Confirmar contraseña -->
+            <div class="auth-field">
+                <label class="auth-label" for="confirm_password">Confirmar contraseña</label>
+                <div class="pw-wrap">
+                    <?= Html::input('password', 'confirm_password', '', [
+                        'class'       => 'auth-input',
+                        'placeholder' => '••••••••',
+                        'required'    => true,
+                        'id'          => 'confirm_password',
+                        'minlength'   => 6,
+                        'oninput'     => 'checkMatch()',
+                    ]) ?>
+                    <button type="button" class="pw-toggle" onclick="togglePw('confirm_password','icon-cp')" tabindex="-1">
+                        <i id="icon-cp" class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="auth-hint" id="match-hint"></div>
             </div>
 
-            <div class="form-group">
-                <?= Html::submitButton(
-                    '<i class="bi bi-check-circle-fill me-2"></i>Cambiar Contraseña', 
-                    ['class' => 'btn btn-submit', 'name' => 'reset-button']
-                ) ?>
-            </div>
+            <?= Html::submitButton(
+                '<i class="fas fa-check"></i> Cambiar contraseña',
+                ['class' => 'auth-btn', 'name' => 'reset-button', 'id' => 'reset-submit', 'encode' => false]
+            ) ?>
 
-        <?php ActiveForm::end(); ?>
-
-        <div class="back-to-login">
-            <i class="bi bi-arrow-left me-1"></i>
-            <?= Html::a('Volver al inicio de sesión', ['site/login']) ?>
+            <?php ActiveForm::end(); ?>
         </div>
+
+        <div class="auth-footer">
+            <?= Html::a('<i class="fas fa-arrow-left"></i> Volver al inicio de sesión', ['site/login']) ?>
+        </div>
+
     </div>
 </div>
+
+<script>
+function togglePw(inputId, iconId) {
+    const inp  = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    const show = inp.type === 'password';
+    inp.type   = show ? 'text' : 'password';
+    icon.className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+function checkStrength(val) {
+    const bars   = [1,2,3,4].map(i => document.getElementById('bar' + i));
+    const label  = document.getElementById('pw-label');
+    const colors = ['#ef4444','#f59e0b','#3b82f6','#16a34a'];
+    const labels = ['Muy débil','Débil','Buena','Fuerte'];
+    let score = 0;
+    if (val.length >= 6)  score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    bars.forEach((b, i) => {
+        b.style.background = i < score ? colors[score - 1] : '#e5e7eb';
+    });
+    label.textContent = val.length ? labels[score - 1] || '' : '';
+    label.style.color = val.length ? colors[score - 1] : '#9ca3af';
+}
+
+function checkMatch() {
+    const np = document.getElementById('new_password').value;
+    const cp = document.getElementById('confirm_password').value;
+    const hint = document.getElementById('match-hint');
+    if (!cp) { hint.textContent = ''; return; }
+    if (np === cp) {
+        hint.textContent = '✓ Las contraseñas coinciden';
+        hint.style.color = '#16a34a';
+    } else {
+        hint.textContent = '✗ Las contraseñas no coinciden';
+        hint.style.color = '#ef4444';
+    }
+}
+</script>
