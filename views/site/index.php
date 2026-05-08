@@ -145,7 +145,7 @@ $this->title = 'Dashboard - Tickets por Consultor';
 
 <div class="site-index">
     <div class="body-content">
-        <h1 class="text-center mb-4">Calendario de Tickets</h1>
+        <h1 class="text-center mb-4">Calendario de Ticket</h1>
 
         <?php if ($esMonitor): ?>
        
