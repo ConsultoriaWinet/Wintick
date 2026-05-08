@@ -285,6 +285,65 @@ class SiteController extends Controller
     return $events;
 }
 
+    public function actionGetTicketsDia($fecha = null)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!$fecha || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            $fecha = date('Y-m-d');
+        }
+
+        $desde = $fecha . ' 00:00:00';
+        $hasta = $fecha . ' 23:59:59';
+
+        $userId = Yii::$app->user->id;
+        $soloMios = Yii::$app->user->can('verTickets') && !Yii::$app->user->can('asignarTicket');
+
+        $query = \app\models\Tickets::find()
+            ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado'])
+            ->where(
+                '(HoraInicio BETWEEN :d AND :h) OR (HoraInicio IS NULL AND Fecha_creacion BETWEEN :d2 AND :h2)',
+                [':d' => $desde, ':h' => $hasta, ':d2' => $desde, ':h2' => $hasta]
+            )
+            ->orderBy(['HoraInicio' => SORT_ASC, 'Fecha_creacion' => SORT_ASC]);
+
+        if ($soloMios) {
+            $query->andWhere(['Asignado_a' => $userId]);
+        }
+
+        $tickets = $query->all();
+        $result  = [];
+
+        foreach ($tickets as $t) {
+            $u = $t->usuarioAsignado;
+            $avatarRaw = $u->avatar ?? null;
+            $avatarUrl = ($avatarRaw && str_starts_with($avatarRaw, '/uploads/'))
+                ? \yii\helpers\Url::to('@web' . $avatarRaw, true) : null;
+
+            $start = $t->HoraInicio ?: $t->Fecha_creacion;
+
+            $result[] = [
+                'id'          => $t->id,
+                'folio'       => $t->Folio,
+                'estado'      => $t->Estado,
+                'prioridad'   => $t->Prioridad,
+                'descripcion' => $t->Descripcion,
+                'cliente'     => $t->cliente->Nombre ?? '—',
+                'sistema'     => $t->sistema->Nombre ?? '—',
+                'servicio'    => $t->servicio->Nombre ?? '—',
+                'hora'        => $start ? date('H:i', strtotime($start)) : null,
+                'asignado'    => [
+                    'nombre' => $u->Nombre ?? $u->email ?? '—',
+                    'color'  => $u->color ?? '#6b7280',
+                    'avatar' => $avatarUrl,
+                    'ini'    => $u ? mb_strtoupper(mb_substr($u->Nombre ?? $u->email ?? '?', 0, 1, 'UTF-8'), 'UTF-8') : '?',
+                ],
+            ];
+        }
+
+        return $result;
+    }
+
 
     /**
      * Request password reset

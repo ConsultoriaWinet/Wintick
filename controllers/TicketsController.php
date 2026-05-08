@@ -1846,10 +1846,16 @@ class TicketsController extends Controller
                     $esImagen   = in_array(strtolower(pathinfo($com->archivo, PATHINFO_EXTENSION)), $imageExts);
                 }
 
+                $avatarRaw = $com->usuario->avatar ?? null;
+                $avatarUrl = ($avatarRaw && str_starts_with($avatarRaw, '/uploads/'))
+                    ? \yii\helpers\Url::to('@web' . $avatarRaw, true)
+                    : null;
+
                 $result[] = [
                     'id'         => $com->id,
                     'usuario'    => $com->usuario->email ?? 'Usuario desconocido',
                     'nombre'     => $com->usuario->Nombre ?? 'Usuario',
+                    'avatar'     => $avatarUrl,
                     'comentario' => $com->comentario,
                     'tipo'       => $com->tipo,
                     'fecha'      => $com->fecha_creacion ? date('d/m/Y H:i', strtotime($com->fecha_creacion)) : date('d/m/Y H:i'),

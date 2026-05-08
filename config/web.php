@@ -94,7 +94,7 @@ $config = [
         $actionId     = $app->controller->action->id;
 
         $permitidas = [
-            'site' => ['index', 'get-tickets', 'check-update', 'logout', 'error'],
+            'site' => ['index', 'get-tickets', 'get-tickets-dia', 'check-update', 'logout', 'error'],
         ];
 
         $ok = isset($permitidas[$controllerId])

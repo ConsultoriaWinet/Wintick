@@ -572,105 +572,95 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         <table class="table table-hover table-sm" id="ticketsTable">
             <thead>
                 <tr>
-                    <th class="text-primary-emphasis">Folio</th>
-                    <th class="text-primary-emphasis">Cliente</th>
-                    <th class="text-primary-emphasis">Sistema</th>
-                    <th class="text-primary-emphasis">Servicio</th>
-                    <th class="text-primary-emphasis">Usuario Reporta</th>
-                    <th class="text-primary-emphasis">Asignado A</th>
-                    <th class="text-primary-emphasis">Fecha de reporte</th>
-                    <th class="text-primary-emphasis">Fecha/Hora Programada</th>
-                    <th class="text-primary-emphasis">Descripción</th>
-                    <th class="text-primary-emphasis">Prioridad</th>
-                    <th class="text-primary-emphasis">Estado</th>
-                    <th class="text-primary-emphasis">Acción</th>
+                    <th>Folio</th>
+                    <th>Asunto · Cliente</th>
+                    <th>Sistema · Servicio</th>
+                    <th>Prioridad</th>
+                    <th>Asignado</th>
+                    <th>Estado</th>
+                    <th>Fechas</th>
+                    <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
                 <!-- Fila para crear nuevo (FOLIO AUTOMÁTICO) MOVIDA ARRIBA -->
                 <tr class="data-row new-row">
-                    <td>
-                        <input type="text" 
-                               class="form-control form-control-sm folio" 
-                               placeholder="Auto..." 
-                               readonly 
-                               style="background: #e9ecef; font-weight: bold; color: #10b981;">
+                    <td><input type="text" class="form-control form-control-sm folio" placeholder="Auto..." readonly style="background:#e9ecef;font-weight:bold;color:#10b981;min-width:80px"></td>
+                    <td style="min-width:230px">
+                        <!-- Searchable: cliente -->
+                        <div class="ss-wrap mb-1">
+                            <input type="text" class="form-control form-control-sm ss-input" placeholder="Buscar empresa/cliente...">
+                            <div class="ss-dropdown"></div>
+                            <select class="cliente" style="display:none">
+                                <option value="">Seleccionar cliente</option>
+                                <?php foreach ($clientes as $cliente): ?>
+                                    <option value="<?= $cliente['id'] ?>" data-prioridad="<?= $cliente['Prioridad'] ?>" data-tipo="<?= $cliente['Tipo_servicio'] ?>">
+                                        <?= Html::encode($cliente['Nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <input type="text" class="form-control form-control-sm usuario-reporta mb-1" placeholder="Nombre de quien reporta">
+                        <textarea class="form-control form-control-sm descripcion" rows="1" placeholder="Descripción del problema" style="font-size:12px;resize:none;"></textarea>
                     </td>
-                    <td>
-                        <select class="form-select form-select-sm cliente" onchange="loadClienteData(this)">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($clientes as $cliente): ?>
-                                <option value="<?= $cliente['id'] ?>" data-prioridad="<?= $cliente['Prioridad'] ?>" data-tipo="<?= $cliente['Tipo_servicio'] ?>">
-                                    <?= Html::encode($cliente['Nombre']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <td style="min-width:170px">
+                        <!-- Searchable: sistema -->
+                        <div class="ss-wrap mb-1">
+                            <input type="text" class="form-control form-control-sm ss-input" placeholder="Buscar sistema...">
+                            <div class="ss-dropdown"></div>
+                            <select class="sistema" style="display:none">
+                                <option value="">Sistema</option>
+                                <?php foreach ($sistemas as $sistema): ?>
+                                    <option value="<?= $sistema['id'] ?>"><?= Html::encode($sistema['Nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <!-- Searchable: servicio -->
+                        <div class="ss-wrap">
+                            <input type="text" class="form-control form-control-sm ss-input" placeholder="Buscar servicio...">
+                            <div class="ss-dropdown"></div>
+                            <select class="servicio" style="display:none">
+                                <option value="">Servicio</option>
+                                <?php foreach ($servicios as $servicio): ?>
+                                    <option value="<?= $servicio['id'] ?>"><?= Html::encode($servicio['Nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </td>
-                    <td>
-                        <select class="form-select form-select-sm sistema">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($sistemas as $sistema): ?>
-                                <option value="<?= $sistema['id'] ?>"><?= Html::encode($sistema['Nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <td><select class="form-select form-select-sm prioridad" style="min-width:90px">
+                        <option value="">Prioridad</option>
+                        <option value="BAJA">Baja</option>
+                        <option value="MEDIA">Media</option>
+                        <option value="ALTA">Alta</option>
+                    </select></td>
+                    <td><select class="form-select form-select-sm asignado-a" style="min-width:120px">
+                        <option value="">Asignar a</option>
+                        <?php foreach ($Usuarios as $usuario): ?>
+                            <option value="<?= $usuario['id'] ?>" data-email="<?= Html::encode($usuario['email']) ?>"><?= Html::encode($usuario['Nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select></td>
+                    <td><select class="form-select form-select-sm estado" style="min-width:110px">
+                        <option value="ABIERTO" selected>Abierto</option>
+                        <option value="PROGRAMADO">Programado</option>
+                        <option value="EN PROCESO">En Proceso</option>
+                        <option value="CONTPAQi">CONTPAQi</option>
+                        <option value="CERRADO">Cerrado</option>
+                    </select></td>
+                    <td style="min-width:165px">
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <div style="display:flex;align-items:center;gap:4px;">
+                                <span style="font-size:10px;color:#888;white-space:nowrap;min-width:60px">Reporte:</span>
+                                <input type="datetime-local" class="form-control form-control-sm hora-inicio" style="font-size:11px;padding:3px 5px">
+                            </div>
+                            <div style="display:flex;align-items:center;gap:4px;">
+                                <span style="font-size:10px;color:#888;white-space:nowrap;min-width:60px">Programada:</span>
+                                <input type="datetime-local" class="form-control form-control-sm hora-programada" style="font-size:11px;padding:3px 5px">
+                            </div>
+                        </div>
                     </td>
-                    <td>
-                        <select class="form-select form-select-sm servicio">
-                            <option value="">Seleccionar</option>
-                            <?php foreach ($servicios as $servicio): ?>
-                                <option value="<?= $servicio['id'] ?>"><?= Html::encode($servicio['Nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm usuario-reporta" placeholder="Quién reporta">
-                    </td>
-               <td>
-    <select class="form-select form-select-sm asignado-a">
-        <option value="">Seleccionar</option>
-
-        <?php foreach ($Usuarios as $usuario): ?>
-            <option
-                value="<?= $usuario['id'] ?>"
-                data-email="<?= Html::encode($usuario['email']) ?>"
-            >
-                <?= Html::encode($usuario['Nombre']) ?>
-            </option>
-        <?php endforeach; ?>
-
-    </select>
-</td>
-                    <td style="width:155px;min-width:155px">
-                        <input type="datetime-local" class="form-control form-control-sm hora-programada" style="width:150px;font-size:11px;padding:3px 4px">
-                    </td>
-                    <td style="width:155px;min-width:155px">
-                        <input type="datetime-local" class="form-control form-control-sm hora-inicio" style="width:150px;font-size:11px;padding:3px 4px">
-                    </td>
-                    <td><textarea class="form-control form-control-sm descripcion" rows="1" placeholder="Descripción" style="font-size: 12px;"></textarea></td>
-                    <td>
-                        <select class="form-select form-select-sm prioridad">
-                            <option value="">Seleccionar</option>
-                            <option value="BAJA">Baja</option>
-                            <option value="MEDIA">Media</option>
-                            <option value="ALTA">Alta</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm estado">
-                            <option value="ABIERTO" selected>Abierto</option>
-                            <option value="PROGRAMADO">Programado</option>
-                            <option value="EN PROCESO">En Proceso</option>
-                            <option value="CONTPAQi">CONTPAQi</option>
-                            <option value="CERRADO">Cerrado</option>
-                        </select>
-                    </td>
-                    <td style="white-space: nowrap;">
-                        <button type="button" class="btn btn-sm btn-outline-success saveRow" title="Guardar">
-                            <i class="fas fa-save"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary deleteRow" title="Cancelar">
-                            <i class="fas fa-times"></i>
-                        </button>
+                    <td style="white-space:nowrap">
+                        <button type="button" class="btn btn-sm btn-success saveRow" title="Guardar"><i class="fas fa-save"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary deleteRow" title="Cancelar"><i class="fas fa-times"></i></button>
                     </td>
                 </tr>
 
@@ -704,93 +694,114 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                 data-tiene-solucion="<?= $ticket->Solucion ? '1' : '0' ?>"
                 data-tiempo-efectivo="<?= Html::encode($ticket->TiempoEfectivo ?: '-') ?>"
                 data-id="<?= $ticket->id ?>" >
-                    <td><strong><?= Html::encode($ticket->Folio) ?></strong></td>
-                    <td><?= $ticket->cliente ? Html::encode($ticket->cliente->Nombre) : '-' ?></td>
-                    <td><?= $ticket->sistema ? Html::encode($ticket->sistema->Nombre) : '-' ?></td>
-                    <td><?= $ticket->servicio ? Html::encode($ticket->servicio->Nombre) : '-' ?></td>
-                    <td><?= Html::encode($ticket->Usuario_reporta) ?></td>
-                    <td> <?php if ($ticket->usuarioAsignado): ?>
-        <span title="<?= Html::encode($ticket->usuarioAsignado->email) ?>">  
-            <?= Html::encode($ticket->usuarioAsignado->Nombre) ?>            
-        </span>
-    <?php else: ?>
-        -
-    <?php endif; ?></td>
-                    <td style="font-size: 12px; white-space: nowrap;">
-                        <?= $ticket->HoraProgramada ? Html::encode(date('d/m H:i', strtotime($ticket->HoraProgramada))) : '-' ?>
-                    </td>
-                    <td style="font-size: 12px; white-space: nowrap;">
-                        <?= $ticket->HoraInicio ? Html::encode(date('d/m H:i', strtotime($ticket->HoraInicio))) : '-' ?>
-                    </td>
-                    <td class="descripcion-cell" 
-                        data-bs-toggle="tooltip" 
-                        data-bs-placement="top" 
-                        data-bs-html="true"
-                        title="<?= Html::encode($ticket->Descripcion) ?>"
-                        data-full-text="<?= Html::encode($ticket->Descripcion) ?>"
-                        style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <?= Html::encode(substr($ticket->Descripcion, 0, 30)) ?><?= strlen($ticket->Descripcion) > 30 ? '...' : '' ?>
-                        <?php if (strlen($ticket->Descripcion) > 30): ?>
-                            <i class="fas fa-eye text-muted ms-1" style="font-size: 11px;"></i>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php
-                        $badgeClass = match($ticket->Prioridad) {
-                            'ALTA' => 'badge bg-danger',
-                            'MEDIA' => 'badge bg-warning text-dark',
-                            'BAJA' => 'badge bg-info',
-                            default => 'badge bg-secondary'
-                        };
-                        ?>
-                        <span class="<?= $badgeClass ?>"><?= Html::encode($ticket->Prioridad) ?></span>
-                    </td>
-                    <td>
-                        <?php
-                        $estadoClass = match($ticket->Estado) {
-                            'ABIERTO'    => 'bg-primary text-white',
-                            'PROGRAMADO' => 'bg-success text-white',
-                            'EN PROCESO' => 'bg-info text-dark',
-                            'CONTPAQi'  => 'bg-warning text-dark',
-                            'CERRADO'    => 'bg-danger text-white',
-                            default      => 'bg-secondary'
-                        };
-                        $estadoIcon = match($ticket->Estado) {
-                            'ABIERTO'    => 'fa-circle-notch',
-                            'PROGRAMADO' => 'fa-calendar-check',
-                            'EN PROCESO' => 'fa-spinner',
-                            'CONTPAQi'  => 'fa-pause-circle',
-                            'CERRADO'    => 'fa-check-circle',
-                            default      => 'fa-question-circle'
-                        };
-                        ?>
-                        <div class="estado-clickeable <?= $estadoClass ?>" onclick="toggleEstadoSelect(this, <?= $ticket->id ?>)">
-                            <i class="fas <?= $estadoIcon ?>"></i> <?= Html::encode($ticket->Estado) ?>
-                        </div>
-                        <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display: none; font-size: 12px; margin-top: 5px;">
-                            <option value="ABIERTO" <?= $ticket->Estado == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
-                            <option value="PROGRAMADO" <?= $ticket->Estado == 'PROGRAMADO' ? 'selected' : '' ?>>Programado</option>
-                            <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
-                            <option value="CONTPAQi" <?= $ticket->Estado == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi</option>
-                            <option value="CERRADO" <?= $ticket->Estado == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
-                        </select>
-                    </td>
-                    <td style="white-space: nowrap;">
-                        <?php
-                       
-
-                       //cuenta los comentarios para asi mostrarlos en el front
-                        $comentarioCount = count($ticket->comentarios);
-                        ?>
-                        <div style="position: relative; display: inline-block;">
-                            <button class="btn btn-sm btn-outline-info comment-btn-<?= $ticket->id ?>" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                                <i class="fas fa-comments"></i>
-                            </button>
+                    <?php
+                    // Avatar del asignado
+                    $asigNombre = $ticket->usuarioAsignado ? $ticket->usuarioAsignado->Nombre : '';
+                    $asigColor  = $ticket->usuarioAsignado ? ($ticket->usuarioAsignado->color ?: '#6B7280') : '#6B7280';
+                    $asigIni    = '';
+                    if ($asigNombre) {
+                        $parts   = preg_split('/\s+/', trim($asigNombre));
+                        $asigIni = mb_strtoupper(mb_substr($parts[0], 0, 1, 'UTF-8'), 'UTF-8');
+                        if (isset($parts[1])) $asigIni .= mb_strtoupper(mb_substr($parts[1], 0, 1, 'UTF-8'), 'UTF-8');
+                    }
+                    // Badges
+                    $estadoBadge = match($ticket->Estado) {
+                        'ABIERTO'    => 'tkt-estado-abierto',
+                        'PROGRAMADO' => 'tkt-estado-programado',
+                        'EN PROCESO' => 'tkt-estado-proceso',
+                        'EN ESPERA'  => 'tkt-estado-espera',
+                        'CONTPAQi'   => 'tkt-estado-contpaqi',
+                        'CERRADO'    => 'tkt-estado-cerrado',
+                        'CANCELADO'  => 'tkt-estado-cancelado',
+                        default      => 'tkt-estado-default',
+                    };
+                    $prioBadge = match($ticket->Prioridad) {
+                        'ALTA'  => 'tkt-prio-alta',
+                        'MEDIA' => 'tkt-prio-media',
+                        'BAJA'  => 'tkt-prio-baja',
+                        default => 'tkt-prio-default',
+                    };
+                    $estadoLabel = match($ticket->Estado) {
+                        'ABIERTO'    => 'Abierto',
+                        'PROGRAMADO' => 'Programado',
+                        'EN PROCESO' => 'En proceso',
+                        'EN ESPERA'  => 'En espera',
+                        'CONTPAQi'   => 'CONTPAQi',
+                        'CERRADO'    => 'Cerrado',
+                        'CANCELADO'  => 'Cancelado',
+                        default      => Html::encode($ticket->Estado),
+                    };
+                    $comentarioCount = count($ticket->comentarios);
+                    $descCorta = mb_strlen($ticket->Descripcion ?? '') > 50
+                        ? mb_substr($ticket->Descripcion, 0, 50, 'UTF-8') . '…'
+                        : ($ticket->Descripcion ?? '');
+                    $fechaActualizado = $ticket->HoraInicio
+                        ? date('d M', strtotime($ticket->HoraInicio))
+                        : ($ticket->HoraProgramada ? date('d M', strtotime($ticket->HoraProgramada)) : '—');
+                    ?>
+                    <?php
+                    $avUrl = null;
+                    if ($ticket->usuarioAsignado && $ticket->usuarioAsignado->avatar && str_starts_with($ticket->usuarioAsignado->avatar, '/uploads/')) {
+                        $avUrl = \yii\helpers\Url::to('@web' . $ticket->usuarioAsignado->avatar, true);
+                    }
+                    $fechaProg = $ticket->HoraProgramada ? Html::encode(date('d/m/Y H:i', strtotime($ticket->HoraProgramada))) : '—';
+                    ?>
+                    <td class="tkt-folio-cell"><?= Html::encode($ticket->Folio) ?></td>
+                    <td class="tkt-asunto-cell">
+                        <div class="tkt-asunto-title"><?= Html::encode($descCorta) ?></div>
+                        <div class="tkt-asunto-sub">
+                            <?= Html::encode($ticket->cliente ? $ticket->cliente->Nombre : '—') ?>
                             <?php if ($comentarioCount > 0): ?>
-                                <span class="badge bg-danger badge-count-<?= $ticket->id ?>" style="position: absolute; top: -8px; right: -8px; font-size: 11px; padding: 3px 6px; min-width: 24px; text-align: center; border-radius: 50%; font-weight: bold;"><?= $comentarioCount ?></span>
+                                <span class="tkt-cmnt-badge badge-count-<?= $ticket->id ?>"><i class="fas fa-comment-dots"></i> <?= $comentarioCount ?></span>
                             <?php endif; ?>
                         </div>
-                        <button class="btn btn-sm btn-outline-danger" title="Eliminar ticket"
+                    </td>
+                    <td class="tkt-sis-cell">
+                        <div class="tkt-sis-name"><?= Html::encode($ticket->sistema ? $ticket->sistema->Nombre : '—') ?></div>
+                        <div class="tkt-sis-svc"><?= Html::encode($ticket->servicio ? $ticket->servicio->Nombre : '—') ?></div>
+                    </td>
+                    <td><span class="tkt-prio <?= $prioBadge ?>"><?= Html::encode(ucfirst(strtolower($ticket->Prioridad ?: 'Media'))) ?></span></td>
+                    <td class="tkt-asignado-cell">
+                        <?php if ($ticket->usuarioAsignado): ?>
+                        <div class="tkt-assignee">
+                            <?php if ($avUrl): ?>
+                                <img src="<?= Html::encode($avUrl) ?>" class="tkt-av" style="object-fit:cover;" alt="<?= Html::encode($asigIni) ?>">
+                            <?php else: ?>
+                                <div class="tkt-av" style="background:<?= Html::encode($asigColor) ?>"><?= Html::encode($asigIni ?: '?') ?></div>
+                            <?php endif; ?>
+                            <span class="tkt-av-name"><?= Html::encode($asigNombre) ?></span>
+                        </div>
+                        <?php else: ?><span class="tkt-empty">—</span><?php endif; ?>
+                    </td>
+                    <td>
+                        <span class="tkt-estado <?= $estadoBadge ?> estado-clickeable" onclick="toggleEstadoSelect(this, <?= $ticket->id ?>)"><?= $estadoLabel ?></span>
+                        <select class="form-select form-select-sm estado-select estado-<?= $ticket->id ?>" onchange="updateEstado(this, <?= $ticket->id ?>)" style="display:none;font-size:12px;margin-top:4px;">
+                            <option value="ABIERTO"    <?= $ticket->Estado == 'ABIERTO'    ? 'selected' : '' ?>>Abierto</option>
+                            <option value="PROGRAMADO" <?= $ticket->Estado == 'PROGRAMADO' ? 'selected' : '' ?>>Programado</option>
+                            <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
+                            <option value="CONTPAQi"   <?= $ticket->Estado == 'CONTPAQi'   ? 'selected' : '' ?>>CONTPAQi</option>
+                            <option value="CERRADO"    <?= $ticket->Estado == 'CERRADO'    ? 'selected' : '' ?>>Cerrado</option>
+                        </select>
+                    </td>
+                    <td class="tkt-fecha-cell">
+                        <?php if ($ticket->HoraInicio): ?>
+                            <div class="tkt-fecha-row"><span class="tkt-fecha-label">Reporte</span><?= Html::encode(date('d/m/y H:i', strtotime($ticket->HoraInicio))) ?></div>
+                        <?php endif; ?>
+                        <?php if ($ticket->HoraProgramada): ?>
+                            <div class="tkt-fecha-row"><span class="tkt-fecha-label">Programada</span><?= Html::encode(date('d/m/y H:i', strtotime($ticket->HoraProgramada))) ?></div>
+                        <?php endif; ?>
+                        <?php if (!$ticket->HoraInicio && !$ticket->HoraProgramada): ?>—<?php endif; ?>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <div style="position:relative;display:inline-block;">
+                            <button class="tkt-btn-cmnt comment-btn-<?= $ticket->id ?>" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
+                                <i class="fas fa-comment-dots"></i>
+                            </button>
+                            <?php if ($comentarioCount > 0): ?>
+                                <span class="tkt-cmnt-dot badge-count-<?= $ticket->id ?>"></span>
+                            <?php endif; ?>
+                        </div>
+                        <button class="tkt-btn-del" title="Eliminar ticket"
                             onclick="confirmarEliminar(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>', <?= $ticket->Estado === 'CERRADO' && $ticket->Solucion ? 'true' : 'false' ?>)">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -800,7 +811,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
                 <!-- Fila "Sin resultados" -->
                 <tr class="no-results-row" id="noResultsRow">
-                    <td colspan="12">
+                    <td colspan="8">
                         <i class="fas fa-search" style="font-size: 40px; opacity: 0.3; margin-bottom: 10px;"></i>
                         <div><strong>No se encontraron resultados</strong></div>
                         <small>Intenta con otros términos de búsqueda</small>
@@ -829,6 +840,635 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
     
 </div>
+
+<!-- ═══════════════════════════════════════════════
+     TICKET DRAWER — panel lateral deslizante
+     ═══════════════════════════════════════════════ -->
+<style>
+/* ── Drawer base ─────────────────────────────── */
+.ticket-drawer {
+    position: fixed;
+    top: 0; right: 0;
+    width: 460px;
+    height: 100vh;
+    z-index: 1040;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-panel {
+    position: absolute;
+    top: 0; right: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--surface, #fff);
+    border-left: 1px solid var(--border, #E8E2D2);
+    box-shadow: -6px 0 32px rgba(0,0,0,0.10);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+    pointer-events: all;
+    overflow: hidden;
+}
+
+.ticket-drawer.open .drawer-panel {
+    transform: translateX(0);
+}
+
+/* ── Header ──────────────────────────────────── */
+.drawer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+    background: var(--surface, #fff);
+    flex-shrink: 0;
+}
+
+.drawer-header-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.drawer-folio-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.drawer-folio {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text, #1A1814);
+}
+
+.d-estado-badge, .d-prioridad-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+/* reutiliza los colores del theme */
+.d-estado-badge.abierto      { background: var(--state-abierto-bg, #EFF6FF);   color: var(--state-abierto, #2563EB); }
+.d-estado-badge.en-proceso   { background: var(--state-proceso-bg, #FFFBEB);   color: var(--state-proceso, #D97706); }
+.d-estado-badge.en-espera    { background: var(--state-espera-bg, #F5F3FF);    color: var(--state-espera, #7C3AED); }
+.d-estado-badge.cerrado      { background: var(--state-cerrado-bg, #F0FDF4);   color: var(--state-cerrado, #16A34A); }
+.d-estado-badge.cancelado    { background: var(--state-cancelado-bg, #F3F4F6); color: var(--state-cancelado, #6B7280); }
+.d-estado-badge.programado   { background: #F0FDF4; color: #16A34A; }
+.d-estado-badge.contpaqi     { background: #FFFBEB; color: #D97706; }
+
+.d-prioridad-badge.alta  { background: var(--priority-alta-bg, #FEF2F2);  color: var(--priority-alta, #DC2626); }
+.d-prioridad-badge.media { background: var(--priority-media-bg, #FFFBEB); color: var(--priority-media, #D97706); }
+.d-prioridad-badge.baja  { background: var(--priority-baja-bg, #EFF6FF);  color: var(--priority-baja, #2563EB); }
+
+.drawer-assignee {
+    font-size: 12px;
+    color: var(--text-3, #807868);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.drawer-header-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: 10px; }
+
+.d-icon-btn {
+    width: 30px; height: 30px;
+    border: 1px solid var(--border, #E8E2D2);
+    border-radius: 7px;
+    background: var(--surface-2, #F5F1E8);
+    color: var(--text-2, #4D483F);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: all 0.15s;
+}
+
+.d-icon-btn:hover { background: var(--border, #E8E2D2); }
+.d-icon-btn-sol   { color: var(--accent, oklch(0.60 0.13 38)); border-color: var(--accent-light, #f5ede8); }
+.d-icon-btn-close { color: var(--priority-alta, #DC2626); }
+
+/* ── Meta grid ───────────────────────────────── */
+.drawer-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+    flex-shrink: 0;
+    background: var(--surface-2, #F5F1E8);
+}
+
+.dm-item {
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dm-item:nth-child(odd)  { border-right: 1px solid var(--border, #E8E2D2); padding-right: 12px; }
+.dm-item:nth-child(even) { padding-left: 12px; }
+.dm-item:nth-last-child(-n+2) { border-bottom: none; }
+
+.dm-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-3, #807868);
+}
+
+.dm-val {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text, #1A1814);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Tabs ────────────────────────────────────── */
+.drawer-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+    flex-shrink: 0;
+    background: var(--surface, #fff);
+    padding: 0 8px;
+}
+
+.d-tab {
+    padding: 9px 13px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    background: none;
+    color: var(--text-3, #807868);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.d-tab:hover  { color: var(--text, #1A1814); }
+.d-tab.active { color: var(--accent, oklch(0.60 0.13 38)); border-bottom-color: var(--accent, oklch(0.60 0.13 38)); font-weight: 600; }
+
+/* ── Content area ────────────────────────────── */
+.drawer-content-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.drawer-content-area::-webkit-scrollbar { width: 5px; }
+.drawer-content-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.dtab-pane { display: none; }
+.dtab-pane.active { display: block; }
+
+/* ── Comment items in drawer ─────────────────── */
+.d-cmnt-list {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.d-cmnt-item {
+    display: flex;
+    gap: 9px;
+    animation: dCmntIn .2s ease;
+}
+
+@keyframes dCmntIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+.d-cmnt-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+}
+
+.d-cmnt-bubble {
+    flex: 1;
+    background: var(--surface-2, #F5F1E8);
+    border-radius: 0 10px 10px 10px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.d-cmnt-bubble.nota { background: #fff8e1; border-left: 3px solid #f59e0b; }
+.d-cmnt-bubble.solucion { background: #f0fdf4; border-left: 3px solid #16a34a; }
+
+.d-cmnt-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+.d-cmnt-autor { font-weight: 600; font-size: 12px; color: var(--text, #1A1814); }
+.d-cmnt-fecha { font-size: 10px; color: var(--text-3, #807868); }
+.d-cmnt-tipo-tag {
+    font-size: 9px; font-weight: 700; padding: 1px 6px;
+    border-radius: 8px; text-transform: uppercase; letter-spacing: .3px;
+}
+.d-cmnt-tipo-tag.nota    { background: #fef3c7; color: #b45309; }
+.d-cmnt-tipo-tag.solucion { background: #d1fae5; color: #065f46; }
+
+.d-cmnt-text { color: var(--text-2, #4D483F); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; }
+
+.d-cmnt-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-3, #807868);
+    font-size: 13px;
+}
+
+.d-cmnt-loading { text-align: center; padding: 30px; color: var(--text-3); font-size: 18px; }
+
+/* ── Description section ─────────────────────── */
+.drawer-desc-section {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border, #E8E2D2);
+    flex-shrink: 0;
+    background: var(--surface, #fff);
+}
+
+.drawer-desc-text {
+    font-size: 12.5px;
+    color: var(--text-2, #4D483F);
+    line-height: 1.55;
+    max-height: 58px;
+    overflow: hidden;
+    position: relative;
+}
+
+.drawer-desc-text.expanded { max-height: none; }
+
+.drawer-desc-more {
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    display: block;
+    margin-top: 2px;
+}
+
+/* ── Solución tab ────────────────────────────── */
+.d-sol-content {
+    padding: 16px;
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.6;
+}
+
+.d-sol-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-3);
+    font-size: 13px;
+}
+
+/* ── Edit / Solution panels ──────────────────── */
+.drawer-inner-panel {
+    padding: 14px 16px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.d-edit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.d-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.d-field-group.full { grid-column: 1/-1; }
+
+.d-field-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.d-field-group select,
+.d-field-group input,
+.d-field-group textarea {
+    font-size: 12.5px;
+    padding: 6px 9px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s;
+}
+
+.d-field-group select:focus,
+.d-field-group input:focus,
+.d-field-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.d-panel-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    justify-content: flex-end;
+    flex-shrink: 0;
+    background: var(--surface);
+}
+
+.d-btn-cancel {
+    padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text-2); font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.d-btn-cancel:hover { background: var(--border); }
+
+.d-btn-save {
+    padding: 7px 18px; border-radius: 7px; border: none;
+    background: var(--accent); color: #fff; font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+}
+.d-btn-save:hover { background: var(--accent-dark); }
+.d-btn-save:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Compose area ────────────────────────────── */
+.drawer-compose {
+    border-top: 1px solid var(--border);
+    padding: 10px 14px 12px;
+    flex-shrink: 0;
+    background: var(--surface);
+}
+
+.dc-tipo-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.dc-tipo-tab {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface-2);
+    color: var(--text-3);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.dc-tipo-tab.active, .dc-tipo-tab:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.dc-textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    resize: none;
+    transition: border-color 0.15s;
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.dc-textarea:focus { outline: none; border-color: var(--accent); }
+
+.dc-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.dc-btn-send {
+    padding: 7px 18px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+}
+
+.dc-btn-send:hover    { background: var(--accent-dark); }
+.dc-btn-send:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Shift table when drawer opens ──────────────*/
+#main > .container {
+    transition: padding-right 0.28s cubic-bezier(.4,0,.2,1);
+}
+
+body.drawer-open #main > .container {
+    padding-right: 470px;
+}
+
+@media (max-width: 900px) {
+    .ticket-drawer { width: 100vw; }
+    body.drawer-open #main > .container { padding-right: 0; }
+}
+</style>
+
+<div id="ticketDrawer" class="ticket-drawer closed">
+    <div class="drawer-panel">
+
+        <!-- ── Header ── -->
+        <div class="drawer-header">
+            <div class="drawer-header-left">
+                <div class="drawer-folio-row">
+                    <span class="drawer-folio" id="d-folio"></span>
+                    <span class="d-estado-badge" id="d-estado-badge"></span>
+                    <span class="d-prioridad-badge" id="d-prioridad-badge"></span>
+                </div>
+                <div class="drawer-assignee">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="d-asignado-label"></span>
+                    <span style="margin:0 4px;opacity:.4">·</span>
+                    <span id="d-reporta-label" style="opacity:.7"></span>
+                </div>
+            </div>
+            <div class="drawer-header-actions">
+                <button class="d-icon-btn" id="d-btn-edit" title="Editar ticket"><i class="fas fa-pen"></i></button>
+                <button class="d-icon-btn d-icon-btn-sol" id="d-btn-sol" title="Registrar solución"><i class="fas fa-check-double"></i></button>
+                <button class="d-icon-btn d-icon-btn-close" onclick="closeDrawer()" title="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+
+        <!-- ── Meta grid ── -->
+        <div class="drawer-meta">
+            <div class="dm-item"><span class="dm-label">Cliente</span><span class="dm-val" id="d-cliente"></span></div>
+            <div class="dm-item"><span class="dm-label">Sistema</span><span class="dm-val" id="d-sistema"></span></div>
+            <div class="dm-item"><span class="dm-label">Servicio</span><span class="dm-val" id="d-servicio"></span></div>
+            <div class="dm-item"><span class="dm-label">Tiempo efectivo</span><span class="dm-val" id="d-tiempo-efectivo"></span></div>
+            <div class="dm-item"><span class="dm-label">Programada</span><span class="dm-val" id="d-programada"></span></div>
+            <div class="dm-item"><span class="dm-label">Inicio</span><span class="dm-val" id="d-inicio"></span></div>
+        </div>
+
+        <!-- ── Descripción ── -->
+        <div class="drawer-desc-section">
+            <div class="drawer-desc-text" id="d-descripcion-text"></div>
+            <button class="drawer-desc-more" id="d-desc-more-btn" onclick="toggleDescMore()" style="display:none">Ver más</button>
+        </div>
+
+        <!-- ── VIEW MODE ── -->
+        <div id="drawer-view-mode" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+
+            <!-- Tabs -->
+            <div class="drawer-tabs">
+                <button class="d-tab active" onclick="switchDTab(this,'conv')" data-dtab="conv">Conversación</button>
+                <button class="d-tab" onclick="switchDTab(this,'notas')" data-dtab="notas">Notas internas</button>
+                <button class="d-tab" onclick="switchDTab(this,'sol')" data-dtab="sol">Solución</button>
+            </div>
+
+            <!-- Tab content -->
+            <div class="drawer-content-area" id="drawerContentArea">
+                <div class="dtab-pane active" id="dtab-conv">
+                    <div class="d-cmnt-list" id="d-cmnt-conv"><div class="d-cmnt-loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+                </div>
+                <div class="dtab-pane" id="dtab-notas">
+                    <div class="d-cmnt-list" id="d-cmnt-notas"></div>
+                </div>
+                <div class="dtab-pane" id="dtab-sol">
+                    <div id="d-sol-content"></div>
+                </div>
+            </div>
+
+            <!-- Compose -->
+            <div class="drawer-compose" id="drawerCompose">
+                <div class="dc-tipo-tabs">
+                    <button class="dc-tipo-tab active" onclick="setDTipo(this,'comentario')">Comentario</button>
+                    <button class="dc-tipo-tab" onclick="setDTipo(this,'nota_interna')">Nota interna</button>
+                    <button class="dc-tipo-tab" onclick="setDTipo(this,'solucion')">Solución</button>
+                </div>
+                <input type="hidden" id="d-tipo-val" value="comentario">
+                <textarea id="d-nuevo-cmnt" class="dc-textarea" placeholder="Escribe aquí..." rows="2"></textarea>
+                <div class="dc-actions">
+                    <button class="dc-btn-send" id="d-btn-send" onclick="enviarDComentario()">
+                        <i class="fas fa-paper-plane"></i> Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── EDIT MODE ── -->
+        <div id="drawer-edit-mode" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+            <div class="drawer-inner-panel">
+                <div class="d-edit-grid">
+                    <div class="d-field-group">
+                        <label><i class="fas fa-circle-notch"></i> Estado</label>
+                        <select id="de-Estado">
+                            <option value="ABIERTO">Abierto</option>
+                            <option value="PROGRAMADO">Programado</option>
+                            <option value="EN PROCESO">En Proceso</option>
+                            <option value="CONTPAQi">CONTPAQi</option>
+                        </select>
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-exclamation-circle"></i> Prioridad</label>
+                        <select id="de-Prioridad">
+                            <option value="ALTA">Alta</option>
+                            <option value="MEDIA">Media</option>
+                            <option value="BAJA">Baja</option>
+                        </select>
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-user"></i> Asignado a</label>
+                        <select id="de-Asignado_a">
+                            <option value="">Sin asignar</option>
+                        </select>
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-user-tag"></i> Usuario reporta</label>
+                        <input type="text" id="de-Usuario_reporta">
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-building"></i> Cliente</label>
+                        <select id="de-Cliente_id"><option value="">Sin cliente</option></select>
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-desktop"></i> Sistema</label>
+                        <select id="de-Sistema_id"><option value="">Sin sistema</option></select>
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-cogs"></i> Servicio</label>
+                        <select id="de-Servicio_id"><option value="">Sin servicio</option></select>
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-calendar-alt"></i> Hora programada</label>
+                        <input type="datetime-local" id="de-HoraProgramada">
+                    </div>
+                    <div class="d-field-group">
+                        <label><i class="fas fa-play-circle"></i> Hora inicio</label>
+                        <input type="datetime-local" id="de-HoraInicio">
+                    </div>
+                    <div class="d-field-group full">
+                        <label><i class="fas fa-file-alt"></i> Descripción</label>
+                        <textarea id="de-Descripcion" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="d-panel-bar">
+                <button class="d-btn-cancel" onclick="drawerShowView()"><i class="fas fa-arrow-left"></i> Cancelar</button>
+                <button class="d-btn-save" id="de-save-btn" onclick="saveDrawerEdit()"><i class="fas fa-save"></i> Guardar cambios</button>
+            </div>
+        </div>
+
+        <!-- ── SOLUTION MODE ── -->
+        <div id="drawer-sol-mode" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+            <div class="drawer-inner-panel">
+                <div style="background:var(--surface-2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
+                    <div><span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Hora de inicio</span><br><strong id="ds-label-inicio">—</strong></div>
+                    <div><span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Hora de finalización</span><br><strong id="ds-label-fin">—</strong></div>
+                    <div><span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Tiempo efectivo</span><br>
+                        <span style="background:var(--state-cerrado-bg);color:var(--state-cerrado);padding:2px 10px;border-radius:20px;font-weight:700;font-size:11px;" id="ds-badge-tiempo">Sin calcular</span>
+                    </div>
+                </div>
+                <div class="d-field-group" style="margin-bottom:12px;">
+                    <label><i class="fas fa-clock"></i> Hora de finalización</label>
+                    <input type="datetime-local" id="ds-HoraFinalizo">
+                </div>
+                <div class="d-field-group" style="margin-bottom:12px;">
+                    <label><i class="fas fa-hourglass-end"></i> Tiempo efectivo</label>
+                    <input type="text" id="ds-TiempoEfectivo" placeholder="Auto-calculado...">
+                </div>
+                <div class="d-field-group">
+                    <label><i class="fas fa-lightbulb"></i> Solución aplicada</label>
+                    <textarea id="ds-Solucion" rows="5" placeholder="Describe la causa y lo que hiciste para resolverlo..."></textarea>
+                </div>
+            </div>
+            <div class="d-panel-bar">
+                <button class="d-btn-cancel" onclick="drawerShowView()"><i class="fas fa-arrow-left"></i> Cancelar</button>
+                <button class="d-btn-save" id="ds-save-btn" onclick="saveDrawerSolucion()"><i class="fas fa-check-circle"></i> Guardar solución</button>
+            </div>
+        </div>
+
+    </div><!-- /.drawer-panel -->
+</div><!-- /#ticketDrawer -->
 
 <!-- Modal para Solución -->
 <div class="modal fade" id="solutionModal" tabindex="-1" aria-labelledby="solutionModalLabel" aria-hidden="true">
@@ -1287,11 +1927,16 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 </div>
 <script>
 window.WINTICK_USERS = <?= json_encode(array_map(function($u){
+    $avatar = $u['avatar'] ?? null;
+    $avatarUrl = ($avatar && str_starts_with($avatar, '/uploads/'))
+        ? \yii\helpers\Url::to('@web' . $avatar, true)
+        : null;
     return [
-        'id' => (int)$u['id'],
-        'email' => $u['email'],
-        'nombre' => $u['Nombre'],
-        'primerNombre' => preg_split('/\s+/', trim($u['Nombre'] ?? ''))[0] ?? ''
+        'id'          => (int)$u['id'],
+        'email'       => $u['email'],
+        'nombre'      => $u['Nombre'],
+        'primerNombre'=> preg_split('/\s+/', trim($u['Nombre'] ?? ''))[0] ?? '',
+        'avatar'      => $avatarUrl,
     ];
 }, $Usuarios), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.WINTICK_CLIENTES = <?= json_encode(array_map(fn($c) => ['id' => (int)$c['id'], 'nombre' => $c['Nombre']], $clientes), JSON_UNESCAPED_UNICODE) ?>;
@@ -1593,8 +2238,8 @@ function saveTicket(row) {
         Descripcion: row.querySelector('.descripcion').value,
         Prioridad: row.querySelector('.prioridad').value,
         Estado: row.querySelector('.estado').value,
-        HoraProgramada: (row.querySelector('.hora-programada').value || '').replace('T', ' ') || null,
-        HoraInicio:     (row.querySelector('.hora-inicio').value     || '').replace('T', ' ') || null,
+        HoraProgramada: (row.querySelector('.hora-programada')?.value || '').replace('T', ' ') || null,
+        HoraInicio:     (row.querySelector('.hora-inicio')?.value     || '').replace('T', ' ') || null,
     };
 
     if (!ticket.Folio || !ticket.Cliente_id || !ticket.Usuario_reporta || !ticket.Asignado_a) {
@@ -1683,8 +2328,8 @@ function updateEstado(selectElement, ticketId) {
     // Capturar estado anterior ANTES de modificar el div
     const estadoAnterior = div.textContent.trim();
 
-    div.className = 'estado-clickeable ' + getEstadoClass(estado);
-    div.innerHTML = '<i class="fas ' + getEstadoIcon(estado) + '"></i> ' + estado;
+    div.className = 'tkt-estado estado-clickeable ' + getEstadoClass(estado);
+    div.textContent = getEstadoLabel(estado);
     div.style.display = 'inline-flex';
     selectElement.style.display = 'none';
 
@@ -1731,13 +2376,28 @@ function toggleEstadoSelect(element, ticketId) {
 
 function getEstadoClass(estado) {
     const classes = {
-        'ABIERTO':    'bg-primary text-white',
-        'PROGRAMADO': 'bg-success text-white',
-        'EN PROCESO': 'bg-info text-dark',
-        'CONTPAQi':  'bg-warning text-dark',
-        'CERRADO':    'bg-danger text-white'
+        'ABIERTO':    'tkt-estado-abierto',
+        'PROGRAMADO': 'tkt-estado-programado',
+        'EN PROCESO': 'tkt-estado-proceso',
+        'EN ESPERA':  'tkt-estado-espera',
+        'CONTPAQi':   'tkt-estado-contpaqi',
+        'CERRADO':    'tkt-estado-cerrado',
+        'CANCELADO':  'tkt-estado-cancelado',
     };
-    return classes[estado] || 'bg-secondary';
+    return classes[estado] || 'tkt-estado-default';
+}
+
+function getEstadoLabel(estado) {
+    const labels = {
+        'ABIERTO':    'Abierto',
+        'PROGRAMADO': 'Programado',
+        'EN PROCESO': 'En proceso',
+        'EN ESPERA':  'En espera',
+        'CONTPAQi':   'CONTPAQi',
+        'CERRADO':    'Cerrado',
+        'CANCELADO':  'Cancelado',
+    };
+    return labels[estado] || estado;
 }
 
 function getEstadoIcon(estado) {
@@ -1999,8 +2659,8 @@ function closeModal() {
 
             const div = select.previousElementSibling;
             if (div) {
-                div.className = 'estado-clickeable ' + getEstadoClass(estadoRevertir);
-                div.innerHTML = '<i class="fas ' + getEstadoIcon(estadoRevertir) + '"></i> ' + estadoRevertir;
+                div.className = 'tkt-estado estado-clickeable ' + getEstadoClass(estadoRevertir);
+                div.textContent = getEstadoLabel(estadoRevertir);
                 div.style.display = 'inline-flex';
                 select.style.display = 'none';
             }
@@ -2126,10 +2786,10 @@ function mostrarComentarios(comentarios) {
 
 function renderMentions(text) {
     const safe = escapeHtml(text || '');
-    return safe.replace(/@\[(?:email):([^\]]+)\]/g, (m, email) => {
+    return safe.replace(/@\[email:([^\]]+)\]/gi, (m, email) => {
         email = (email || '').trim().toLowerCase();
         const user = (window.WINTICK_USERS || []).find(u => (u.email || '').toLowerCase() === email);
-        const nombre = user?.primerNombre || (user?.Nombre ? user.Nombre.split(/\s+/)[0] : 'usuario');
+        const nombre = user?.primerNombre || (user?.nombre ? user.nombre.split(/\s+/)[0] : email.split('@')[0]);
         return `<span class="cmnt-mention-tag">@${escapeHtml(nombre)}</span>`;
     });
 }
@@ -2266,27 +2926,35 @@ function updateCommentBadge(ticketId) {
                 const button = document.querySelector('.comment-btn-' + ticketId);
                 if (button) {
                     const container = button.parentElement;
-                    let badge = container.querySelector('.badge-count-' + ticketId);
+                    let dot = container.querySelector('.badge-count-' + ticketId);
 
                     if (data.count > 0) {
-                        if (!badge) {
-                            badge = document.createElement('span');
-                            badge.className = 'badge bg-danger badge-count-' + ticketId;
-                            badge.style.position = 'absolute';
-                            badge.style.top = '-8px';
-                            badge.style.right = '-8px';
-                            badge.style.fontSize = '11px';
-                            badge.style.padding = '3px 6px';
-                            badge.style.minWidth = '24px';
-                            badge.style.textAlign = 'center';
-                            badge.style.borderRadius = '50%';
-                            badge.style.fontWeight = 'bold';
-                            container.appendChild(badge);
+                        if (!dot) {
+                            dot = document.createElement('span');
+                            dot.className = 'tkt-cmnt-dot badge-count-' + ticketId;
+                            container.appendChild(dot);
                         }
-                        badge.textContent = data.count;
-                        badge.style.display = 'inline-block';
+                        dot.style.display = 'block';
+                        // También actualizar el badge de texto en la celda de asunto
+                        const row = button.closest('tr');
+                        if (row) {
+                            let textBadge = row.querySelector('.badge-count-txt-' + ticketId);
+                            if (!textBadge) {
+                                textBadge = document.createElement('span');
+                                textBadge.className = 'tkt-cmnt-badge badge-count-txt-' + ticketId;
+                                const sub = row.querySelector('.tkt-asunto-sub');
+                                if (sub) sub.appendChild(textBadge);
+                            }
+                            textBadge.innerHTML = '<i class="fas fa-comment-dots"></i> ' + data.count;
+                            textBadge.style.display = 'inline-flex';
+                        }
                     } else {
-                        if (badge) badge.style.display = 'none';
+                        if (dot) dot.style.display = 'none';
+                        const row = button.closest('tr');
+                        if (row) {
+                            const textBadge = row.querySelector('.badge-count-txt-' + ticketId);
+                            if (textBadge) textBadge.style.display = 'none';
+                        }
                     }
                 }
             }
@@ -2435,9 +3103,340 @@ function buildUserOptions(selectedId) {
     ).join('');
 }
 
+// ═══════════════════════════════════════════
+// TICKET DRAWER
+// ═══════════════════════════════════════════
+
+const DRAWER_CMNT_URL   = '<?= Url::to(['/tickets/obtener-comentarios']) ?>';
+const DRAWER_SEND_URL   = '<?= Url::to(['/tickets/agregar-comentario']) ?>';
+const DRAWER_SOL_URL    = '<?= \yii\helpers\Url::to(['/tickets/save-solution']) ?>';
+const DRAWER_CSRF       = '<?= Yii::$app->request->getCsrfToken() ?>';
+
+let _drawerTicketId = null;
+let _drawerData     = {};
+let _drawerCmntTipo = 'comentario';
+let _drawerTab      = 'conv';
+let _allComments    = [];
+
+/* ── Abrir drawer ────────────────────────── */
+function openDrawer(d) {
+    _drawerTicketId = d.id || d.ticketId;
+    _drawerData     = d;
+
+    // Header
+    document.getElementById('d-folio').textContent       = '#' + (d.folio || '');
+    document.getElementById('d-asignado-label').textContent = d.asignadoA || 'Sin asignar';
+    document.getElementById('d-reporta-label').textContent  = d.usuarioReporta ? 'reporte ' + d.usuarioReporta : '';
+
+    // Estado badge
+    const eBadge = document.getElementById('d-estado-badge');
+    const eKey   = (d.estado || '').toLowerCase().replace(/\s+/g, '-');
+    eBadge.className  = 'd-estado-badge ' + eKey;
+    eBadge.textContent = d.estado || '';
+
+    // Prioridad badge
+    const pBadge = document.getElementById('d-prioridad-badge');
+    pBadge.className  = 'd-prioridad-badge ' + (d.prioridad || '').toLowerCase();
+    pBadge.textContent = d.prioridad || '';
+
+    // Botón solución: solo si no tiene solución
+    document.getElementById('d-btn-sol').style.display = (d.tieneSolucion !== '1') ? '' : 'none';
+
+    // Meta
+    document.getElementById('d-cliente').textContent          = d.cliente || '-';
+    document.getElementById('d-sistema').textContent          = d.sistema || '-';
+    document.getElementById('d-servicio').textContent         = d.servicio || '-';
+    document.getElementById('d-tiempo-efectivo').textContent  = d.tiempoEfectivo || '-';
+    document.getElementById('d-programada').textContent       = d.horaProgramada || '-';
+    document.getElementById('d-inicio').textContent           = d.horaInicio || '-';
+
+    // Descripción
+    const descEl = document.getElementById('d-descripcion-text');
+    descEl.classList.remove('expanded');
+    descEl.textContent = d.descripcion || '';
+    const moreBtn = document.getElementById('d-desc-more-btn');
+    if (d.descripcion && d.descripcion.length > 120) {
+        moreBtn.style.display = 'block';
+        moreBtn.textContent   = 'Ver más';
+    } else {
+        moreBtn.style.display = 'none';
+    }
+
+    // Pestaña Solución
+    renderDrawerSolucion(d.solucion || '');
+
+    // Modo vista
+    drawerShowView();
+
+    // Cargar comentarios
+    loadDrawerComments(_drawerTicketId);
+
+    // Mostrar drawer
+    const drawer = document.getElementById('ticketDrawer');
+    drawer.classList.remove('closed');
+    drawer.classList.add('open');
+    document.body.classList.add('drawer-open');
+}
+
+/* ── Cerrar drawer ───────────────────────── */
+function closeDrawer() {
+    const drawer = document.getElementById('ticketDrawer');
+    drawer.classList.remove('open');
+    drawer.classList.add('closed');
+    document.body.classList.remove('drawer-open');
+    _drawerTicketId = null;
+}
+
+/* ── Modos del panel ─────────────────────── */
+function drawerShowView() {
+    document.getElementById('drawer-view-mode').style.display = 'flex';
+    document.getElementById('drawer-edit-mode').style.display = 'none';
+    document.getElementById('drawer-sol-mode').style.display  = 'none';
+}
+
+function drawerShowEdit() {
+    const d = _drawerData;
+    document.getElementById('de-Estado').value          = d.estado || '';
+    document.getElementById('de-Prioridad').value       = d.prioridad || '';
+    document.getElementById('de-Usuario_reporta').value = d.usuarioReporta || '';
+    document.getElementById('de-HoraProgramada').value  = d.horaProgramadaRaw || '';
+    document.getElementById('de-HoraInicio').value      = d.horaInicioRaw || '';
+    document.getElementById('de-Descripcion').value     = d.descripcion || '';
+    document.getElementById('de-Asignado_a').innerHTML  = '<option value="">Sin asignar</option>' + buildUserOptions(d.asignadoId);
+    document.getElementById('de-Cliente_id').innerHTML  = '<option value="">Sin cliente</option>'  + buildSelectOptions(window.WINTICK_CLIENTES, d.clienteId);
+    document.getElementById('de-Sistema_id').innerHTML  = '<option value="">Sin sistema</option>'  + buildSelectOptions(window.WINTICK_SISTEMAS, d.sistemaId);
+    document.getElementById('de-Servicio_id').innerHTML = '<option value="">Sin servicio</option>' + buildSelectOptions(window.WINTICK_SERVICIOS, d.servicioId);
+
+    document.getElementById('drawer-view-mode').style.display = 'none';
+    document.getElementById('drawer-edit-mode').style.display = 'flex';
+    document.getElementById('drawer-sol-mode').style.display  = 'none';
+}
+
+function drawerShowSol() {
+    const d = _drawerData;
+    document.getElementById('ds-label-inicio').textContent = d.horaInicio || '-';
+    document.getElementById('ds-label-fin').textContent    = '—';
+    document.getElementById('ds-badge-tiempo').textContent = 'Sin calcular';
+    document.getElementById('ds-HoraFinalizo').value       = '';
+    document.getElementById('ds-TiempoEfectivo').value     = '';
+    document.getElementById('ds-Solucion').value           = '';
+
+    document.getElementById('ds-HoraFinalizo').oninput = function() {
+        const fin = new Date(this.value);
+        document.getElementById('ds-label-fin').textContent = this.value ? fin.toLocaleString('es-MX') : '—';
+        if (d.horaInicioRaw && this.value) {
+            const ini = new Date(d.horaInicioRaw);
+            const diffMin = Math.round((fin - ini) / 60000);
+            if (diffMin > 0) {
+                const h = Math.floor(diffMin / 60), m = diffMin % 60;
+                document.getElementById('ds-TiempoEfectivo').value = h + '.' + String(m).padStart(2,'0');
+                document.getElementById('ds-badge-tiempo').textContent = h + 'h ' + m + 'min';
+            }
+        }
+    };
+
+    document.getElementById('drawer-view-mode').style.display = 'none';
+    document.getElementById('drawer-edit-mode').style.display = 'none';
+    document.getElementById('drawer-sol-mode').style.display  = 'flex';
+}
+
+/* ── Tab switching ───────────────────────── */
+function switchDTab(btn, tab) {
+    document.querySelectorAll('.d-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _drawerTab = tab;
+    document.querySelectorAll('.dtab-pane').forEach(p => p.classList.remove('active'));
+    const pane = document.getElementById('dtab-' + tab);
+    if (pane) pane.classList.add('active');
+    if (tab === 'conv' || tab === 'notas') renderDrawerCommentsByType();
+}
+
+/* ── Cargar comentarios ──────────────────── */
+function loadDrawerComments(ticketId) {
+    ['d-cmnt-conv','d-cmnt-notas'].forEach(id => {
+        document.getElementById(id).innerHTML = '<div class="d-cmnt-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+    });
+    fetch(DRAWER_CMNT_URL + '?ticket_id=' + ticketId)
+        .then(r => r.json())
+        .then(data => {
+            _allComments = data.success ? data.comentarios : [];
+            renderDrawerCommentsByType();
+        })
+        .catch(() => {
+            document.getElementById('d-cmnt-conv').innerHTML = '<div class="d-cmnt-empty">Error al cargar comentarios</div>';
+        });
+}
+
+function renderDrawerCommentsByType() {
+    renderDCmntList('d-cmnt-conv',   _allComments.filter(c => c.tipo === 'comentario'));
+    renderDCmntList('d-cmnt-notas',  _allComments.filter(c => c.tipo === 'nota_interna'));
+}
+
+function renderDCmntList(containerId, items) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!items.length) {
+        el.innerHTML = '<div class="d-cmnt-empty"><i class="fas fa-comment-slash" style="font-size:20px;opacity:.3;display:block;margin-bottom:8px;"></i>Sin registros</div>';
+        return;
+    }
+    el.innerHTML = items.map(c => {
+        const nombre = (c.nombre || c.usuario || 'Usuario');
+        const email  = (c.usuario || '');
+        const col    = getAvatarColor(email);
+        const ini    = nombre.charAt(0).toUpperCase();
+        const tipoTag = c.tipo !== 'comentario'
+            ? `<span class="d-cmnt-tipo-tag ${c.tipo === 'nota_interna' ? 'nota' : 'solucion'}">${c.tipo === 'nota_interna' ? 'Nota' : 'Solución'}</span>`
+            : '';
+        const avatarHtml = c.avatar
+            ? `<img src="${escapeHtml(c.avatar)}" class="d-cmnt-avatar" style="object-fit:cover;padding:0;" alt="${escapeHtml(ini)}">`
+            : `<div class="d-cmnt-avatar" style="background:${escapeHtml(col)}">${escapeHtml(ini)}</div>`;
+        return `
+            <div class="d-cmnt-item">
+                ${avatarHtml}
+                <div class="d-cmnt-bubble${c.tipo === 'nota_interna' ? ' nota' : c.tipo === 'solucion' ? ' solucion' : ''}">
+                    <div class="d-cmnt-meta">
+                        <span class="d-cmnt-autor">${escapeHtml(nombre)}</span>
+                        ${tipoTag}
+                        <span class="d-cmnt-fecha">${escapeHtml(c.fecha || '')}</span>
+                    </div>
+                    <div class="d-cmnt-text">${renderMentions(c.comentario || '')}</div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+/* ── Renderizar solución ─────────────────── */
+function renderDrawerSolucion(solucion) {
+    const el = document.getElementById('d-sol-content');
+    if (!el) return;
+    el.innerHTML = solucion
+        ? `<div class="d-sol-content" style="padding:16px;font-size:13px;color:var(--text-2);line-height:1.6;white-space:pre-wrap;">${escapeHtml(solucion)}</div>`
+        : '<div class="d-sol-empty"><i class="fas fa-lightbulb" style="font-size:20px;opacity:.3;display:block;margin-bottom:8px;"></i>Sin solución registrada aún.</div>';
+}
+
+/* ── Toggle descripción larga ────────────── */
+function toggleDescMore() {
+    const el  = document.getElementById('d-descripcion-text');
+    const btn = document.getElementById('d-desc-more-btn');
+    el.classList.toggle('expanded');
+    btn.textContent = el.classList.contains('expanded') ? 'Ver menos' : 'Ver más';
+}
+
+/* ── Tipo de comentario (compose) ────────── */
+function setDTipo(btn, tipo) {
+    document.querySelectorAll('.dc-tipo-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _drawerCmntTipo = tipo;
+    document.getElementById('d-tipo-val').value = tipo;
+    const ta = document.getElementById('d-nuevo-cmnt');
+    const hints = { comentario:'Responder al cliente...', nota_interna:'Nota interna (solo equipo)...', solucion:'Describe la solución...' };
+    ta.placeholder = hints[tipo] || 'Escribe aquí...';
+}
+
+/* ── Enviar comentario desde drawer ─────── */
+function enviarDComentario() {
+    const texto = (document.getElementById('d-nuevo-cmnt').value || '').trim();
+    if (!texto) return;
+    if (!_drawerTicketId) return;
+
+    const btn = document.getElementById('d-btn-send');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    const textoFinal = (window.buildDrawerPayload ? window.buildDrawerPayload(texto) : texto);
+
+    const fd = new FormData();
+    fd.append('ticket_id', _drawerTicketId);
+    fd.append('comentario', textoFinal);
+    fd.append('tipo', _drawerCmntTipo);
+
+    fetch(DRAWER_SEND_URL, { method:'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('d-nuevo-cmnt').value = '';
+                loadDrawerComments(_drawerTicketId);
+                updateCommentBadge(_drawerTicketId);
+            } else {
+                alert('Error: ' + (data.message || 'No se pudo enviar.'));
+            }
+        })
+        .catch(e => alert('Error de conexión'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar';
+        });
+}
+
+/* ── Guardar edición desde drawer ───────── */
+async function saveDrawerEdit() {
+    const btn = document.getElementById('de-save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    const payload = {
+        id:              _drawerTicketId,
+        Estado:          document.getElementById('de-Estado').value,
+        Prioridad:       document.getElementById('de-Prioridad').value,
+        Asignado_a:      document.getElementById('de-Asignado_a').value || null,
+        Usuario_reporta: document.getElementById('de-Usuario_reporta').value,
+        Cliente_id:      document.getElementById('de-Cliente_id').value || null,
+        Sistema_id:      document.getElementById('de-Sistema_id').value || null,
+        Servicio_id:     document.getElementById('de-Servicio_id').value || null,
+        HoraProgramada:  document.getElementById('de-HoraProgramada').value || null,
+        HoraInicio:      document.getElementById('de-HoraInicio').value || null,
+        Descripcion:     document.getElementById('de-Descripcion').value,
+    };
+    try {
+        const res  = await fetch(window.URL_QUICK_UPDATE, { method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':DRAWER_CSRF}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({ icon:'success', title:'¡Guardado!', toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            Swal.fire({ icon:'error', title:'Error al guardar', text: JSON.stringify(data.errors || data.message), confirmButtonColor: 'var(--accent)' });
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+        }
+    } catch { Swal.fire({ icon:'error', title:'Error de conexión', confirmButtonColor:'var(--accent)' }); btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios'; }
+}
+
+/* ── Guardar solución desde drawer ──────── */
+async function saveDrawerSolucion() {
+    const solucion   = (document.getElementById('ds-Solucion').value || '').trim();
+    const horaFin    = document.getElementById('ds-HoraFinalizo').value;
+    const tiempoEf   = (document.getElementById('ds-TiempoEfectivo').value || '').trim();
+    if (!solucion || !horaFin || !tiempoEf) {
+        Swal.fire({ icon:'warning', title:'Faltan datos', text:'Completa todos los campos.', confirmButtonColor:'var(--accent)' });
+        return;
+    }
+    const btn = document.getElementById('ds-save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    try {
+        const res  = await fetch(DRAWER_SOL_URL, { method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':DRAWER_CSRF}, body: JSON.stringify({ id:_drawerTicketId, solucion, horaFinalizo:horaFin, tiempoEfectivo:tiempoEf }) });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({ icon:'success', title:'¡Solución guardada!', toast:true, position:'top-end', showConfirmButton:false, timer:1800, timerProgressBar:true });
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            Swal.fire({ icon:'error', title:'Error', text: data.message || 'No se pudo guardar.', confirmButtonColor:'var(--accent)' });
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Guardar solución';
+        }
+    } catch { Swal.fire({ icon:'error', title:'Error de conexión', confirmButtonColor:'var(--accent)' }); btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle"></i> Guardar solución'; }
+}
+
+/* ── Botones del header del drawer ──────── */
+document.getElementById('d-btn-edit').addEventListener('click', drawerShowEdit);
+document.getElementById('d-btn-sol').addEventListener('click',  drawerShowSol);
+
+/* ── Cerrar con Escape ───────────────────── */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+/* ── Dblclick en filas ───────────────────── */
 document.querySelectorAll('tr.existing-row').forEach(row => {
     row.addEventListener('dblclick', function (e) {
         if (e.target.closest('button, a, select, input, textarea')) return;
+        openDrawer(this.dataset);
+        return; // ── todo lo demás es código legacy de SweetAlert, se conserva abajo pero no se ejecuta ──
 
         const d = this.dataset;
 
@@ -3117,6 +4116,310 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
         });
 
         return text.trim();
+    };
+})();
+
+// ── MENCIONES PRO para el drawer (misma lógica que el modal) ─────────
+(function initDrawerMentionsPro() {
+    const ta = document.getElementById('d-nuevo-cmnt');
+    if (!ta) return;
+
+    // Caja propia en body (el #mentionBox original vive dentro del modal y queda oculto cuando el modal está cerrado)
+    let box = document.getElementById('drawerMentionBox');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'drawerMentionBox';
+        document.body.appendChild(box);
+        const st = document.createElement('style');
+        st.textContent = `
+        #drawerMentionBox {
+            position: fixed;
+            z-index: 20000;
+            display: none;
+            width: min(360px, calc(100vw - 24px));
+            max-height: 300px;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 18px 50px rgba(0,0,0,.18);
+        }
+        #drawerMentionBox .m-head {
+            position: sticky; top: 0;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 12px; color: #64748b;
+        }
+        #drawerMentionBox .m-item {
+            padding: 10px 12px; cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; gap: 10px; align-items: center;
+        }
+        #drawerMentionBox .m-item:last-child { border-bottom: none; }
+        #drawerMentionBox .m-item:hover, #drawerMentionBox .m-item.kbd-active { background: #f8fafc; }
+        #drawerMentionBox .m-left { display: flex; flex-direction: column; gap: 2px; }
+        #drawerMentionBox .m-name { font-weight: 800; font-size: 13px; color: #0f172a; }
+        #drawerMentionBox .m-email { font-size: 12px; color: #64748b; }
+        #drawerMentionBox .m-tag {
+            font-size: 12px; font-weight: 800; padding: 6px 10px;
+            border-radius: 999px; background: #e0f2fe; color: #075985; white-space: nowrap;
+        }`;
+        document.head.appendChild(st);
+    }
+
+    const users = (window.WINTICK_USERS || []).map(u => ({
+        id          : u.id,
+        email       : (u.email || '').trim(),
+        nombre      : (u.nombre || u.Nombre || '').trim(),
+        primerNombre: (u.primerNombre || (u.Nombre || '').trim().split(/\s+/)[0] || '').trim(),
+    })).filter(u => u.email);
+
+    ta._mentions = ta._mentions || [];
+
+    function firstNameFromUser(u) {
+        return u.primerNombre || (u.nombre ? u.nombre.split(/\s+/)[0] : '') || u.email.split('@')[0];
+    }
+
+    function positionBox() {
+        const r    = ta.getBoundingClientRect();
+        let left   = r.left;
+        let top    = r.bottom + 6;
+        const boxW = box.offsetWidth  || 360;
+        const boxH = box.offsetHeight || 240;
+        left = Math.max(12, Math.min(left, window.innerWidth - boxW - 12));
+        if (top + boxH > window.innerHeight - 12) top = r.top - boxH - 6;
+        top = Math.max(12, Math.min(top, window.innerHeight - boxH - 12));
+        box.style.left = `${left}px`;
+        box.style.top  = `${top}px`;
+    }
+
+    function hide() { box.style.display = 'none'; box.innerHTML = ''; }
+
+    function getMentionQuery(text, caret) {
+        const left = text.slice(0, caret);
+        const at   = left.lastIndexOf('@');
+        if (at === -1) return null;
+        if (at > 0 && /\w/.test(left[at - 1])) return null;
+        const q = left.slice(at + 1);
+        if (q.includes(' ') || q.includes('\n')) return null;
+        return { atIndex: at, q };
+    }
+
+    function filterUsers(q) {
+        const query = (q || '').toLowerCase();
+        if (!query) return users.slice(0, 8);
+        return users.filter(u => {
+            const fn = firstNameFromUser(u).toLowerCase();
+            return u.email.toLowerCase().includes(query)
+                || (u.nombre || '').toLowerCase().includes(query)
+                || fn.includes(query);
+        }).slice(0, 8);
+    }
+
+    function insertPrettyMention(user, atIndex, caret) {
+        const label    = firstNameFromUser(user);
+        const pretty   = `@${label}`;
+        const text     = ta.value;
+        const before   = text.slice(0, atIndex);
+        const after    = text.slice(caret);
+        const inserted = pretty + ' ';
+        ta.value = before + inserted + after;
+        const start = before.length;
+        const end   = before.length + pretty.length;
+        ta._mentions.push({ start, end, email: user.email, label });
+        ta.focus();
+        ta.setSelectionRange((before + inserted).length, (before + inserted).length);
+        hide();
+    }
+
+    function cleanupMentions() {
+        const text = ta.value;
+        ta._mentions = (ta._mentions || []).filter(m => text.slice(m.start, m.end) === `@${m.label}`);
+    }
+
+    ta.addEventListener('input', () => {
+        cleanupMentions();
+        const caret = ta.selectionStart;
+        const info  = getMentionQuery(ta.value, caret);
+        if (!info) return hide();
+        const list = filterUsers(info.q);
+        if (!list.length) return hide();
+        positionBox();
+        box.innerHTML = `
+          <div class="m-head">Menciona a alguien · clic para seleccionar</div>
+          ${list.map(u => {
+            const label = firstNameFromUser(u);
+            return `<div class="m-item" data-email="${u.email}">
+                <div class="m-left">
+                  <div class="m-name">@${label}</div>
+                  <div class="m-email">${u.email}</div>
+                </div>
+                <div class="m-tag">${label}</div>
+              </div>`;
+          }).join('')}
+        `;
+        box.style.display = 'block';
+        [...box.querySelectorAll('.m-item')].forEach(el => {
+            el.addEventListener('click', () => {
+                const user = users.find(x => x.email === el.dataset.email);
+                if (user) insertPrettyMention(user, info.atIndex, caret);
+            });
+        });
+    });
+
+    ta.addEventListener('keydown', e => {
+        if (box.style.display === 'none') return;
+        const items = [...box.querySelectorAll('.m-item')];
+        if (!items.length) return;
+        const active = box.querySelector('.m-item.kbd-active') || items[0];
+        const idx    = items.indexOf(active);
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            items.forEach(el => el.classList.remove('kbd-active'));
+            (items[Math.min(idx + 1, items.length - 1)] || items[0]).classList.add('kbd-active');
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            items.forEach(el => el.classList.remove('kbd-active'));
+            (items[Math.max(idx - 1, 0)]).classList.add('kbd-active');
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            const target = box.querySelector('.m-item.kbd-active') || items[0];
+            if (target) {
+                e.preventDefault();
+                const caret = ta.selectionStart;
+                const info  = getMentionQuery(ta.value, caret);
+                const user  = users.find(x => x.email === target.dataset.email);
+                if (info && user) insertPrettyMention(user, info.atIndex, caret);
+            }
+        } else if (e.key === 'Escape') {
+            hide();
+        }
+    });
+
+    ta.addEventListener('blur', () => setTimeout(hide, 160));
+    window.addEventListener('resize', () => { if (box.style.display === 'block') positionBox(); });
+
+    window.buildDrawerPayload = function (commentVisible) {
+        let text = commentVisible || '';
+        const ms = (ta._mentions || []).slice().sort((a, b) => b.start - a.start);
+        ms.forEach(m => {
+            const current  = text.slice(m.start, m.end);
+            if (current === `@${m.label}`) {
+                text = text.slice(0, m.start) + `@[email:${m.email}]` + text.slice(m.end);
+            }
+        });
+        return text.trim();
+    };
+
+    const closeBtn = document.getElementById('d-btn-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => { ta._mentions = []; ta.value = ''; });
+})();
+
+// ── SELECTS BUSCABLES (cliente / sistema / servicio) ──────────────────
+(function initSearchableSelects() {
+
+    function normalize(s) {
+        return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    }
+
+    function initWrap(wrap, onSelect) {
+        const input    = wrap.querySelector('.ss-input');
+        const dropdown = wrap.querySelector('.ss-dropdown');
+        const select   = wrap.querySelector('select');
+        if (!input || !dropdown || !select) return;
+
+        const allOptions = Array.from(select.options).filter(o => o.value !== '');
+
+        function render(items) {
+            if (!items.length) {
+                dropdown.innerHTML = '<div class="ss-empty">Sin resultados</div>';
+            } else {
+                const q = normalize(input.value);
+                dropdown.innerHTML = items.map(opt => {
+                    const label = opt.text;
+                    const hi = q ? label.replace(
+                        new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+                        '<strong>$1</strong>'
+                    ) : label;
+                    return `<div class="ss-item" data-value="${opt.value}">${hi}</div>`;
+                }).join('');
+            }
+            dropdown.style.display = 'block';
+            dropdown.querySelectorAll('.ss-item').forEach(item => {
+                item.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    const opt = allOptions.find(o => o.value === item.dataset.value);
+                    if (!opt) return;
+                    input.value  = opt.text;
+                    select.value = opt.value;
+                    dropdown.style.display = 'none';
+                    if (onSelect) onSelect(select);
+                });
+            });
+        }
+
+        function filterAndShow() {
+            const q = normalize(input.value);
+            const filtered = q
+                ? allOptions.filter(o => normalize(o.text).includes(q))
+                : allOptions;
+            render(filtered.slice(0, 12));
+        }
+
+        input.addEventListener('focus', filterAndShow);
+        input.addEventListener('input', filterAndShow);
+        input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 160));
+        input.addEventListener('keydown', e => {
+            if (dropdown.style.display === 'none') return;
+            const items = [...dropdown.querySelectorAll('.ss-item')];
+            const active = dropdown.querySelector('.ss-active');
+            const idx = items.indexOf(active);
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                items.forEach(i => i.classList.remove('ss-active'));
+                (items[Math.min(idx + 1, items.length - 1)] || items[0])?.classList.add('ss-active');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                items.forEach(i => i.classList.remove('ss-active'));
+                (items[Math.max(idx - 1, 0)])?.classList.add('ss-active');
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                const target = dropdown.querySelector('.ss-active') || items[0];
+                if (target) {
+                    e.preventDefault();
+                    const opt = allOptions.find(o => o.value === target.dataset.value);
+                    if (opt) {
+                        input.value  = opt.text;
+                        select.value = opt.value;
+                        dropdown.style.display = 'none';
+                        if (onSelect) onSelect(select);
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    // Inicializar todos los .ss-wrap en la fila nueva cuando se cree
+    function initRow(row) {
+        const wraps = row.querySelectorAll('.ss-wrap');
+        wraps.forEach(wrap => {
+            const sel = wrap.querySelector('select');
+            if (!sel) return;
+            const cls = sel.className; // 'cliente', 'sistema', or 'servicio'
+            const cb  = cls === 'cliente' ? (s) => loadClienteData(s) : null;
+            initWrap(wrap, cb);
+        });
+    }
+
+    // Inicializar la fila nueva existente en el DOM
+    const newRow = document.querySelector('tr.new-row');
+    if (newRow) initRow(newRow);
+
+    // Re-inicializar si se resetea la fila (cuando se guarda y se limpia)
+    window.reinitSearchableSelects = () => {
+        const r = document.querySelector('tr.new-row');
+        if (r) initRow(r);
     };
 })();
 </script>

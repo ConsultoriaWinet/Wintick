@@ -39,6 +39,9 @@ $this->registerJsFile(
     ['position' => \yii\web\View::POS_HEAD]
 );
 
+$this->registerCssFile('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+$this->registerCssFile('@web/css/theme.css');
+
 
 
 ?>
@@ -59,6 +62,10 @@ $this->registerJsFile(
         --text-light: #6b7280;
         --border-color: #e5e7eb;
         --bg-light: #f9fafb;
+    }
+
+    body, button, input, select, textarea, .form-control, .form-select, .btn {
+        font-family: 'IBM Plex Sans', sans-serif !important;
     }
 
     body {
@@ -679,7 +686,8 @@ $this->registerJsFile(
 </header>
 
 <main id="main" class="flex-shrink-0" role="main">
-    <div class="container">
+    <?php $containerClass = ($this->params['fullWidth'] ?? false) ? 'container-fluid px-3' : 'container'; ?>
+    <div class="<?= $containerClass ?>">
         <?php if (!empty($this->params['breadcrumbs'])): ?>
             <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
         <?php endif ?>

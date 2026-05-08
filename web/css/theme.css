@@ -1,0 +1,787 @@
+/* =================================================================
+   WINTICK — DESIGN SYSTEM TOKENS
+   Para cambiar toda la paleta de la aplicación edita SOLO este archivo.
+   ================================================================= */
+
+/* ──────────────────────────────────────────────────────────────────
+   1. TOKENS DE COLOR
+   ────────────────────────────────────────────────────────────────── */
+:root {
+    /* Neutros */
+    --bg:          #FBF8F2;
+    --surface:     #FFFFFF;
+    --surface-2:   #F5F1E8;
+    --border:      #E8E2D2;
+
+    /* Tipografía */
+    --text:        #1A1814;
+    --text-2:      #4D483F;
+    --text-3:      #807868;
+
+    /* Acento principal */
+    --accent:           oklch(0.60 0.13 38);
+    --accent-dark:      oklch(0.50 0.13 38);
+    --accent-light:     oklch(0.94 0.04 38);
+    --accent-ring:      oklch(0.60 0.13 38 / 0.18);
+
+    /* Estados de ticket */
+    --state-abierto:      #2563EB;
+    --state-abierto-bg:   #EFF6FF;
+    --state-proceso:      #D97706;
+    --state-proceso-bg:   #FFFBEB;
+    --state-espera:       #7C3AED;
+    --state-espera-bg:    #F5F3FF;
+    --state-cerrado:      #475569;
+    --state-cerrado-bg:   #F1F5F9;
+    --state-cancelado:    #6B7280;
+    --state-cancelado-bg: #F3F4F6;
+
+    /* Prioridades */
+    --priority-alta:      #DC2626;
+    --priority-alta-bg:   #FEF2F2;
+    --priority-media:     #D97706;
+    --priority-media-bg:  #FFFBEB;
+    --priority-baja:      #2563EB;
+    --priority-baja-bg:   #EFF6FF;
+
+    /* Redefinir variables existentes del proyecto para heredar la paleta */
+    --primary-color:      var(--accent);
+    --primary-dark:       var(--accent-dark);
+    --text-dark:          var(--text);
+    --text-light:         var(--text-3);
+    --border-color:       var(--border);
+    --bg-light:           var(--surface-2);
+
+    /* Redefinir variables de Bootstrap */
+    --bs-body-bg:           var(--bg);
+    --bs-body-color:        var(--text);
+    --bs-border-color:      var(--border);
+    --bs-secondary-color:   var(--text-3);
+    --bs-font-sans-serif:   'IBM Plex Sans', sans-serif;
+    --bs-body-font-family:  'IBM Plex Sans', sans-serif;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   2. BASE
+   ────────────────────────────────────────────────────────────────── */
+html, body {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+h1, h2, h3, h4, h5, h6 { color: var(--text); }
+
+p, span, li, td, th, label, small { color: inherit; }
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-dark); }
+
+hr, .section-divider { background-color: var(--border) !important; border-color: var(--border) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   3. NAVBAR
+   ────────────────────────────────────────────────────────────────── */
+.elpepe,
+.navbar.elpepe {
+    background-color: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: 0 1px 4px oklch(0.20 0.02 38 / 0.06) !important;
+}
+
+.elpepe .navbar-brand,
+.elpepe .nav-link,
+.elpepe .elnegro {
+    color: var(--text) !important;
+}
+
+.elpepe .nav-link:hover,
+.elpepe .nav-link.active {
+    background: var(--surface-2) !important;
+    color: var(--text) !important;
+}
+
+.user-dropdown-toggle {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+}
+
+.user-dropdown-toggle span,
+.user-dropdown-toggle i {
+    color: var(--text) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   4. FOOTER
+   ────────────────────────────────────────────────────────────────── */
+#footer {
+    background-color: var(--text) !important;
+    color: #fff !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   5. CARDS
+   ────────────────────────────────────────────────────────────────── */
+.card {
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.card-header {
+    background-color: var(--surface-2) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.card-body { color: var(--text) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   6. FORMULARIOS
+   ────────────────────────────────────────────────────────────────── */
+.form-control,
+.form-select {
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.form-control::placeholder { color: var(--text-3) !important; }
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-ring) !important;
+}
+
+.form-control[readonly] {
+    background-color: var(--surface-2) !important;
+    color: var(--text-2) !important;
+}
+
+textarea.form-control { background-color: var(--surface) !important; }
+
+.form-label,
+label.control-label { color: var(--text-2) !important; }
+
+/* Yii2 error highlight */
+.has-error .form-control { border-color: var(--priority-alta) !important; }
+.help-block { color: var(--priority-alta) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   7. BOTONES
+   ────────────────────────────────────────────────────────────────── */
+.btn-primary,
+.btn-success,
+.welcome-btn {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+    background-color: var(--accent-dark) !important;
+    border-color: var(--accent-dark) !important;
+    color: #fff !important;
+}
+
+.btn-secondary {
+    background-color: var(--text-2) !important;
+    border-color: var(--text-2) !important;
+    color: #fff !important;
+}
+
+.btn-secondary:hover {
+    background-color: var(--text) !important;
+    border-color: var(--text) !important;
+}
+
+/* Botón azul/indigo del update.php */
+.btn[style*="667eea"],
+button[style*="667eea"] {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   8. CABECERAS DE PÁGINAS (ticket-header, create-header, update-header)
+   ────────────────────────────────────────────────────────────────── */
+.ticket-header,
+.create-header,
+.update-header {
+    background: var(--accent) !important;
+    color: #fff !important;
+}
+
+.ticket-title,
+.create-title,
+.update-header h1 { color: #fff !important; }
+
+.ticket-subtitle,
+.create-subtitle { color: rgba(255,255,255,0.9) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   9. SECCIONES DE CONTENIDO (info-card, form-section, etc.)
+   ────────────────────────────────────────────────────────────────── */
+.info-card,
+.form-section,
+.description-section,
+.solution-section,
+.times-section {
+    background: var(--surface-2) !important;
+    border-left-color: var(--accent) !important;
+}
+
+.info-card h3,
+.form-section h3,
+.times-section h3 { color: var(--text) !important; }
+
+.info-label { color: var(--text-3) !important; }
+.info-value { color: var(--text) !important; }
+.empty-field { color: var(--text-3) !important; }
+
+/* Historial */
+.historial-section {
+    background: var(--surface-2) !important;
+    border-left-color: var(--border) !important;
+}
+
+.historial-section h3 { color: var(--text) !important; }
+.historial-item { border-bottom-color: var(--border) !important; }
+.historial-icon { background: var(--border) !important; color: var(--text-2) !important; }
+.historial-quién { color: var(--text) !important; }
+.historial-campo { background: var(--accent-light) !important; color: var(--accent-dark) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   10. BADGES — ESTADOS DE TICKET
+   ────────────────────────────────────────────────────────────────── */
+.status-badge { font-weight: 600; }
+
+.status-badge.status-abierto,
+.ticket-estado.abierto,
+[class*="status-"][class*="abierto"] {
+    background: var(--state-abierto-bg) !important;
+    color: var(--state-abierto) !important;
+}
+
+.status-badge.status-proceso,
+.status-badge.status-en-proceso,
+.ticket-estado.proceso,
+[class*="status-"][class*="proceso"] {
+    background: var(--state-proceso-bg) !important;
+    color: var(--state-proceso) !important;
+}
+
+.status-badge.status-espera,
+.status-badge.status-en-espera,
+.status-badge.status-en\.espera,
+.ticket-estado.espera,
+[class*="status-"][class*="espera"] {
+    background: var(--state-espera-bg) !important;
+    color: var(--state-espera) !important;
+}
+
+.status-badge.status-cerrado,
+.ticket-estado.cerrado,
+[class*="status-"][class*="cerrado"] {
+    background: var(--state-cerrado-bg) !important;
+    color: var(--state-cerrado) !important;
+}
+
+.status-badge.status-cancelado,
+.ticket-estado.cancelado,
+[class*="status-"][class*="cancelado"] {
+    background: var(--state-cancelado-bg) !important;
+    color: var(--state-cancelado) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   11. BADGES — PRIORIDADES
+   ────────────────────────────────────────────────────────────────── */
+.priority-badge { font-weight: 600; }
+
+.priority-badge.priority-alta,
+[class*="priority-"][class*="alta"] {
+    background: var(--priority-alta-bg) !important;
+    color: var(--priority-alta) !important;
+}
+
+.priority-badge.priority-media,
+[class*="priority-"][class*="media"] {
+    background: var(--priority-media-bg) !important;
+    color: var(--priority-media) !important;
+}
+
+.priority-badge.priority-baja,
+[class*="priority-"][class*="baja"] {
+    background: var(--priority-baja-bg) !important;
+    color: var(--priority-baja) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   12. TABLA DE TICKETS (index)
+   ────────────────────────────────────────────────────────────────── */
+.tickets-header {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    box-shadow: 0 2px 8px oklch(0.20 0.02 38 / 0.08) !important;
+}
+
+.ticket-row,
+.data-row {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+.ticket-row:hover,
+.data-row:hover {
+    background: var(--surface-2) !important;
+}
+
+/* Zebra stripes */
+.table > tbody > tr:nth-child(even) { background-color: var(--surface-2) !important; }
+.table > tbody > tr:nth-child(odd)  { background-color: var(--surface) !important; }
+.table > thead > tr > th {
+    background-color: var(--surface-2) !important;
+    color: var(--text-2) !important;
+    border-bottom-color: var(--border) !important;
+}
+.table td, .table th { border-color: var(--border) !important; }
+
+/* Buscador global de tickets */
+#globalSearch {
+    background: oklch(0.60 0.13 38 / 0.12) !important;
+    border-color: oklch(0.60 0.13 38 / 0.30) !important;
+    color: #fff !important;
+}
+
+#globalSearch::placeholder { color: rgba(255,255,255,0.75) !important; }
+
+#globalSearch:focus {
+    background: oklch(0.60 0.13 38 / 0.22) !important;
+    border-color: rgba(255,255,255,0.65) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   13. PAGINACIÓN
+   ────────────────────────────────────────────────────────────────── */
+.pagination .page-item .page-link {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-2) !important;
+}
+
+.pagination .page-item .page-link:hover {
+    background: var(--accent-light) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent-dark) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 6px var(--accent-ring) !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+    color: var(--text-3) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   14. DROPDOWN DE USUARIO
+   ────────────────────────────────────────────────────────────────── */
+.user-dropdown-menu {
+    border-color: var(--border) !important;
+    background: var(--surface) !important;
+}
+
+.user-dropdown-header {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%) !important;
+}
+
+.user-dropdown-item:hover { background-color: var(--surface-2) !important; }
+
+.user-dropdown-item i { color: var(--accent) !important; }
+
+.user-dropdown-item.logout-btn { border-top-color: var(--border) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   15. NOTIFICACIONES
+   ────────────────────────────────────────────────────────────────── */
+.notification-dropdown {
+    border-color: var(--border) !important;
+    background: var(--surface) !important;
+}
+
+.notification-header {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%) !important;
+}
+
+.notification-item { border-bottom-color: var(--border) !important; }
+.notification-item:hover { background-color: var(--surface-2) !important; }
+.notification-item.unread { background-color: oklch(0.60 0.13 38 / 0.07) !important; }
+
+.notification-title { color: var(--text) !important; }
+.notification-message { color: var(--text-3) !important; }
+
+#notifPermissionBanner.perm-default {
+    background: var(--surface-2) !important;
+    color: var(--text-2) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   16. CLIENTES — CARDS MÓVIL
+   ────────────────────────────────────────────────────────────────── */
+.card-mobile { border-left-color: var(--accent) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   17. USUARIOS — CARDS
+   ────────────────────────────────────────────────────────────────── */
+.usuario-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   18. MODALES (Bootstrap)
+   ────────────────────────────────────────────────────────────────── */
+.modal-content {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.modal-header {
+    background: var(--surface-2) !important;
+    border-bottom-color: var(--border) !important;
+}
+
+.modal-footer { border-top-color: var(--border) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   19. ALERTAS
+   ────────────────────────────────────────────────────────────────── */
+.alert-info {
+    background: var(--accent-light) !important;
+    color: var(--accent-dark) !important;
+    border-left-color: var(--accent) !important;
+}
+
+.alert-danger  { border-left: 4px solid var(--priority-alta) !important; }
+.alert-success { border-left: 4px solid var(--state-cerrado) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   20. DROPDOWNS DE BOOTSTRAP
+   ────────────────────────────────────────────────────────────────── */
+.dropdown-menu {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+.dropdown-item { color: var(--text) !important; }
+.dropdown-item:hover { background: var(--surface-2) !important; }
+.dropdown-divider { border-color: var(--border) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   21. ESTADÍSTICAS — KPI CARDS
+   ────────────────────────────────────────────────────────────────── */
+.estadisticas-index { background: var(--bg) !important; }
+
+.page-header { border-bottom-color: var(--accent) !important; }
+.page-header h1 { color: var(--text) !important; }
+
+/* ──────────────────────────────────────────────────────────────────
+   22. FOCUS VISIBLE GLOBAL
+   ────────────────────────────────────────────────────────────────── */
+*:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   23. SCROLLBAR (Webkit)
+   ────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ──────────────────────────────────────────────────────────────────
+   24. FLATPICKR
+   ────────────────────────────────────────────────────────────────── */
+.flatpickr-calendar {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 8px 24px oklch(0.20 0.02 38 / 0.12) !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.flatpickr-day:hover {
+    background: var(--accent-light) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   25. TICKET VIEW — BOTONES ESPECÍFICOS
+   ────────────────────────────────────────────────────────────────── */
+.ticket-view .btn-primary,
+.ticket-create .btn-primary,
+.ticket-update .btn-primary {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.ticket-view .btn-primary:hover,
+.ticket-create .btn-primary:hover,
+.ticket-update .btn-primary:hover {
+    background: var(--accent-dark) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   26. TABLA DE TICKETS — NUEVO DISEÑO
+   ────────────────────────────────────────────────────────────────── */
+
+/* Cabecera */
+#ticketsTable thead th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-3);
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border);
+    background: var(--surface-2);
+    white-space: nowrap;
+}
+
+/* Filas */
+#ticketsTable tbody tr.existing-row td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+}
+
+#ticketsTable tbody tr.existing-row:hover td { background: oklch(0.97 0.01 38); }
+
+/* Folio */
+.tkt-folio-cell {
+    font-weight: 700;
+    font-size: 12.5px;
+    color: var(--text-3);
+    white-space: nowrap;
+}
+
+/* Asunto · Cliente */
+.tkt-asunto-cell { max-width: 260px; }
+.tkt-asunto-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+}
+.tkt-asunto-sub {
+    font-size: 11.5px;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+.tkt-cmnt-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Sistema · Servicio */
+.tkt-sis-cell { min-width: 130px; }
+.tkt-sis-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
+.tkt-sis-svc  { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+
+/* Estado — píldoras con punto de color */
+.tkt-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: opacity .15s;
+}
+.tkt-estado::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.tkt-estado:hover { opacity: .8; }
+
+.tkt-estado-abierto    { background: #EFF6FF; color: #2563EB; } .tkt-estado-abierto::before    { background: #2563EB; }
+.tkt-estado-proceso    { background: #FFFBEB; color: #D97706; } .tkt-estado-proceso::before    { background: #D97706; }
+.tkt-estado-espera     { background: #F5F3FF; color: #7C3AED; } .tkt-estado-espera::before     { background: #7C3AED; }
+.tkt-estado-programado { background: #F0FDF4; color: #16A34A; } .tkt-estado-programado::before { background: #16A34A; }
+.tkt-estado-cerrado    { background: #F1F5F9; color: #475569; } .tkt-estado-cerrado::before    { background: #475569; }
+.tkt-estado-cancelado  { background: #F3F4F6; color: #6B7280; } .tkt-estado-cancelado::before  { background: #6B7280; }
+.tkt-estado-contpaqi   { background: #FFFBEB; color: #B45309; } .tkt-estado-contpaqi::before   { background: #B45309; }
+.tkt-estado-default    { background: var(--surface-2); color: var(--text-3); } .tkt-estado-default::before { background: var(--text-3); }
+
+/* Prioridad */
+.tkt-prio {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.tkt-prio-alta  { background: #FEF2F2; color: #DC2626; }
+.tkt-prio-media { background: #FFFBEB; color: #D97706; }
+.tkt-prio-baja  { background: #EFF6FF; color: #2563EB; }
+.tkt-prio-default { background: var(--surface-2); color: var(--text-3); }
+
+/* Tiempo efectivo */
+.tkt-tiempo-cell { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+
+/* Asignado */
+.tkt-assignee {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+.tkt-av {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    letter-spacing: -.5px;
+}
+.tkt-av-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
+.tkt-empty { color: var(--text-3); }
+
+/* Fechas */
+.tkt-fecha-cell { font-size: 12px; color: var(--text); }
+.tkt-fecha-row  { display: flex; align-items: center; gap: 5px; line-height: 1.7; }
+.tkt-fecha-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .4px; color: var(--text-3);
+    min-width: 54px;
+}
+
+/* ── Searchable Select ─────────────────────────────── */
+.ss-wrap { position: relative; }
+.ss-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    z-index: 9999;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 2px;
+}
+.ss-item {
+    padding: 7px 12px;
+    font-size: 12.5px;
+    cursor: pointer;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+}
+.ss-item:last-child { border-bottom: none; }
+.ss-item:hover, .ss-item.ss-active { background: var(--accent-light); color: var(--accent-dark); }
+.ss-item strong { color: var(--accent-dark); }
+.ss-empty { padding: 10px 12px; font-size: 12px; color: var(--text-3); text-align: center; }
+
+/* Botones de acción */
+.tkt-btn-cmnt, .tkt-btn-del {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 7px !important;
+    border: 1px solid var(--border) !important;
+    background: var(--surface-2) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    cursor: pointer;
+    transition: all .15s;
+    vertical-align: middle;
+}
+.tkt-btn-cmnt { color: var(--accent) !important; }
+.tkt-btn-cmnt:hover { background: var(--accent-light) !important; border-color: var(--accent) !important; }
+.tkt-btn-del  { color: #DC2626 !important; margin-left: 4px; }
+.tkt-btn-del:hover { background: #FEF2F2 !important; border-color: #DC2626 !important; }
+
+.tkt-cmnt-dot {
+    position: absolute; top: -3px; right: -3px;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 1.5px solid var(--surface);
+}
+
+/* Paginación mejorada */
+.pagination {
+    gap: 4px;
+}
+.pagination .page-item .page-link {
+    border-radius: 8px !important;
+    min-width: 36px;
+    height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0 10px;
+    border: 1px solid var(--border) !important;
+    background: var(--surface) !important;
+    color: var(--text-2) !important;
+    transition: all .15s;
+}
+.pagination .page-item .page-link:hover {
+    background: var(--accent-light) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent-dark) !important;
+}
+.pagination .page-item.active .page-link {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px var(--accent-ring) !important;
+}
+.pagination .page-item.disabled .page-link {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+    color: var(--text-3) !important;
+    opacity: .5;
+}
