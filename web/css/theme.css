@@ -351,16 +351,17 @@ button[style*="667eea"] {
 
 /* Buscador global de tickets */
 #globalSearch {
-    background: oklch(0.60 0.13 38 / 0.12) !important;
-    border-color: oklch(0.60 0.13 38 / 0.30) !important;
-    color: #fff !important;
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
 }
 
-#globalSearch::placeholder { color: rgba(255,255,255,0.75) !important; }
+#globalSearch::placeholder { color: var(--text-3) !important; }
 
 #globalSearch:focus {
-    background: oklch(0.60 0.13 38 / 0.22) !important;
-    border-color: rgba(255,255,255,0.65) !important;
+    background: var(--surface) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-ring) !important;
 }
 
 /* ──────────────────────────────────────────────────────────────────
