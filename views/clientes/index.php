@@ -85,7 +85,15 @@ $this->registerCss($css);
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title"><?= Html::encode($this->title) ?></h3>
-            <?= Html::a('Crear Cliente', ['create'], ['class' => 'btn btn-success']) ?>
+            <div class="ms-auto">
+                <?= Html::a('Crear Cliente', ['create'], [
+                    'class' => 'btn btn-success me-2'
+                ]) ?>
+
+                <?= Html::a('Generar Bitacora', ['bitacora/index'], [
+                    'class' => 'btn btn-primary'
+                ]) ?>
+            </div>
         </div>
 
         <div class="card-body">
@@ -97,17 +105,12 @@ $this->registerCss($css);
                     <div class="col">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input
-                                type="text"
-                                id="universalSearch"
-                                name="ClientesSearch[q]"
-                                class="form-control"
+                            <input type="text" id="universalSearch" name="ClientesSearch[q]" class="form-control"
                                 placeholder="Buscar por nombre, RFC, razón social, correo..."
-                                value="<?= Html::encode($searchModel->q ?? '') ?>"
-                                autocomplete="off">
+                                value="<?= Html::encode($searchModel->q ?? '') ?>" autocomplete="off">
                             <?php if (!empty($searchModel->q)): ?>
                                 <a href="<?= Url::to(['clientes/index', 'pageSize' => $pageSize]) ?>"
-                                   class="btn btn-outline-secondary" title="Limpiar búsqueda">
+                                    class="btn btn-outline-secondary" title="Limpiar búsqueda">
                                     <i class="fas fa-times"></i>
                                 </a>
                             <?php endif; ?>
@@ -136,13 +139,13 @@ $this->registerCss($css);
             <div class="d-none d-md-block table-responsive">
                 <?= GridView::widget([
                     'dataProvider' => $dataProvider,
-                    
+
                     'rowOptions' => function ($model) {
-                                        return [
-                                            'class' => 'cursor-pointer',
-                                            'onclick' => "openModal({$model->id})"
-                                        ];
-                                    },
+                        return [
+                            'class' => 'cursor-pointer',
+                            'onclick' => "openModal({$model->id})"
+                        ];
+                    },
                     'tableOptions' => ['class' => 'table table-bordered table-striped table-hover'],
                     'columns' => [
                         ['class' => 'yii\grid\SerialColumn'],
@@ -165,7 +168,7 @@ $this->registerCss($css);
                             'contentOptions' => ['class' => 'm-auto text-center'],
                             'value' => function ($model) {
                                 $tiempoNum = floatval($model->Tiempo);
-                                
+
                                 // Si es negativo o cero, mostrar badge rojo
                                 if ($tiempoNum <= 0) {
                                     return '<span class="badge bg-danger">' . Html::encode($model->Tiempo) . '  SIN HORAS</span>';
@@ -181,10 +184,10 @@ $this->registerCss($css);
                             'headerOptions' => ['class' => 'col-correo'],
                             'contentOptions' => ['class' => 'col-correo'],
                             'value' => function ($model) {
-                                                return Html::a(Html::encode($model->Correo), '#', [
-                                                    'onclick' => "copyToClipboard(event, '" . Html::encode($model->Correo) . "')"
-                                                ]);
-                                            }
+                                return Html::a(Html::encode($model->Correo), '#', [
+                                    'onclick' => "copyToClipboard(event, '" . Html::encode($model->Correo) . "')"
+                                ]);
+                            }
                         ],
                     ],
                 ]); ?>
@@ -194,23 +197,24 @@ $this->registerCss($css);
             <!-- ================= MOBILE CARDS ================= -->
             <div class="d-block d-md-none">
                 <?php foreach ($dataProvider->models as $model): ?>
-                    <div class="card mb-3 shadow-sm card-mobile" onclick="openModal(<?= $model->id ?>)" style="border-left: 4px solid #28a745;">
+                    <div class="card mb-3 shadow-sm card-mobile" onclick="openModal(<?= $model->id ?>)"
+                        style="border-left: 4px solid #28a745;">
                         <div class="card-body p-3">
                             <!-- Encabezado -->
                             <h5 class="card-title mb-3 text-primary fw-bold"><?= Html::encode($model->Nombre) ?></h5>
-                            
+
                             <!-- Grid de campos -->
                             <div class="row g-2">
                                 <div class="col-12">
                                     <label class="form-label text-muted small fw-bold">RFC</label>
                                     <p class="mb-2 text-dark"><?= Html::encode($model->RFC) ?></p>
                                 </div>
-                                
+
                                 <div class="col-12">
                                     <label class="form-label text-muted small fw-bold">Razón Social</label>
                                     <p class="mb-2 text-dark"><?= Html::encode($model->Razon_social) ?></p>
                                 </div>
-                                
+
                                 <div class="col-12">
                                     <label class="form-label text-muted small fw-bold">Correo</label>
                                     <p class="mb-2">
@@ -220,17 +224,17 @@ $this->registerCss($css);
                                         ]) ?>
                                     </p>
                                 </div>
-                                
+
                                 <div class="col-12">
                                     <label class="form-label text-muted small fw-bold">Tiempo Efectivo</label>
                                     <p class="mb-0">
                                         <?php
-                                            $tiempoNum = floatval($model->Tiempo);
-                                            if ($tiempoNum <= 0) {
-                                                echo '<span class="badge bg-danger p-2">' . Html::encode($model->Tiempo) . '  SIN HORAS</span>';
-                                            } else {
-                                                echo '<span class="badge bg-success p-2">' . Html::encode($model->Tiempo) . '</span>';
-                                            }
+                                        $tiempoNum = floatval($model->Tiempo);
+                                        if ($tiempoNum <= 0) {
+                                            echo '<span class="badge bg-danger p-2">' . Html::encode($model->Tiempo) . '  SIN HORAS</span>';
+                                        } else {
+                                            echo '<span class="badge bg-success p-2">' . Html::encode($model->Tiempo) . '</span>';
+                                        }
                                         ?>
                                     </p>
                                 </div>
@@ -250,10 +254,9 @@ $this->registerCss($css);
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header py-2 px-3 border-bottom-0 bg-transparent">
-                <button id="btn-historial-cliente"
-                        class="btn btn-sm btn-outline-secondary d-none"
-                        title="Historial de tickets del cliente"
-                        style="font-size:12px;gap:4px;display:inline-flex!important;align-items:center;">
+                <button id="btn-historial-cliente" class="btn btn-sm btn-outline-secondary d-none"
+                    title="Historial de tickets del cliente"
+                    style="font-size:12px;gap:4px;display:inline-flex!important;align-items:center;">
                     <i class="fas fa-history"></i> Historial
                 </button>
                 <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Cerrar"></button>
