@@ -1701,13 +1701,15 @@ class TicketsController extends Controller
             // Soporte multipart (archivo) y JSON plano
             if (strpos($request->contentType, 'application/json') !== false) {
                 $data = json_decode($request->getRawBody(), true);
-                $ticketId     = $data['ticket_id'] ?? null;
-                $comentarioTx = $data['comentario'] ?? null;
-                $tipo         = $data['tipo'] ?? 'comentario';
+                $ticketId       = $data['ticket_id'] ?? null;
+                $comentarioTx   = $data['comentario'] ?? null;
+                $tipo           = $data['tipo'] ?? 'comentario';
+                $destinatarioId = $data['destinatario_id'] ?? null;
             } else {
-                $ticketId     = $request->post('ticket_id');
-                $comentarioTx = $request->post('comentario');
-                $tipo         = $request->post('tipo', 'comentario');
+                $ticketId       = $request->post('ticket_id');
+                $comentarioTx   = $request->post('comentario');
+                $tipo           = $request->post('tipo', 'comentario');
+                $destinatarioId = $request->post('destinatario_id') ?: null;
             }
 
             if (empty($ticketId) || empty($comentarioTx)) {
@@ -1720,10 +1722,12 @@ class TicketsController extends Controller
             }
 
             $comentario = new Comentarios();
-            $comentario->ticket_id  = (int)$ticketId;
-            $comentario->usuario_id = \Yii::$app->user->id;
-            $comentario->comentario = (string)$comentarioTx;
-            $comentario->tipo       = $tipo;
+            $comentario->ticket_id      = (int)$ticketId;
+            $comentario->usuario_id     = \Yii::$app->user->id;
+            $comentario->comentario     = (string)$comentarioTx;
+            $comentario->tipo           = $tipo;
+            $comentario->destinatario_id = ($tipo === 'nota_interna' && $destinatarioId)
+                ? (int)$destinatarioId : null;
 
             // ── Manejo de archivo adjunto ──────────────────────────────────
             $archivoNombre = null;
@@ -1731,15 +1735,7 @@ class TicketsController extends Controller
             $uploadedFile  = \yii\web\UploadedFile::getInstanceByName('archivo');
 
             if ($uploadedFile && $uploadedFile->size > 0) {
-                $ext = strtolower($uploadedFile->extension);
-                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'docx', 'xlsx'];
-
-                if (!in_array($ext, $allowed)) {
-                    return ['success' => false, 'message' => 'Tipo de archivo no permitido. Formatos: ' . implode(', ', $allowed)];
-                }
-                if ($uploadedFile->size > 8 * 1024 * 1024) {
-                    return ['success' => false, 'message' => 'El archivo no debe superar 8 MB'];
-                }
+                $ext = strtolower($uploadedFile->extension) ?: 'bin';
 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
@@ -1760,17 +1756,32 @@ class TicketsController extends Controller
                 return ['success' => false, 'errors' => $comentario->errors];
             }
 
-            $usuarioActualEmail = Yii::$app->user->identity->email ?? '';
+            $usuarioActualNombre = Yii::$app->user->identity->Nombre ?? (Yii::$app->user->identity->email ?? '');
+            $usuarioActualEmail  = Yii::$app->user->identity->email ?? '';
 
-            // Notificación al asignado
-            if ($ticket->Asignado_a && (int)$ticket->Asignado_a !== (int)Yii::$app->user->id) {
-                $this->crearNotificacion(
-                    (int)$ticket->Asignado_a,
-                    'comentario',
-                    'Nuevo comentario en ticket ' . $ticket->Folio,
-                    $usuarioActualEmail . ' agregó un comentario',
-                    $ticket->id
-                );
+            // Nota privada P2P → notificar solo al destinatario
+            if ($tipo === 'nota_interna' && $comentario->destinatario_id) {
+                $destId = (int)$comentario->destinatario_id;
+                if ($destId !== (int)Yii::$app->user->id) {
+                    $this->crearNotificacion(
+                        $destId,
+                        'mencion',
+                        $usuarioActualNombre . ' te envió una nota privada en ticket ' . $ticket->Folio,
+                        mb_substr($comentario->comentario, 0, 100),
+                        $ticket->id
+                    );
+                }
+            } else {
+                // Notificación al asignado (solo para comentarios/soluciones públicas)
+                if ($ticket->Asignado_a && (int)$ticket->Asignado_a !== (int)Yii::$app->user->id) {
+                    $this->crearNotificacion(
+                        (int)$ticket->Asignado_a,
+                        'comentario',
+                        'Nuevo comentario en ticket ' . $ticket->Folio,
+                        $usuarioActualEmail . ' agregó un comentario',
+                        $ticket->id
+                    );
+                }
             }
 
             // Notificaciones por menciones
@@ -1830,9 +1841,19 @@ class TicketsController extends Controller
                 return ['success' => false, 'message' => 'ID de ticket requerido'];
             }
 
+            $currentUserId = (int)Yii::$app->user->id;
+
+            // Notas privadas solo visibles para remitente o destinatario
             $comentarios = Comentarios::find()
                 ->where(['ticket_id' => $ticketId])
-                ->with('usuario')
+                ->andWhere([
+                    'OR',
+                    ['!=', 'tipo', 'nota_interna'],
+                    ['destinatario_id' => null],
+                    ['usuario_id' => $currentUserId],
+                    ['destinatario_id' => $currentUserId],
+                ])
+                ->with(['usuario', 'destinatario'])
                 ->orderBy(['fecha_creacion' => SORT_ASC])
                 ->all();
 
@@ -1852,15 +1873,17 @@ class TicketsController extends Controller
                     : null;
 
                 $result[] = [
-                    'id'         => $com->id,
-                    'usuario'    => $com->usuario->email ?? 'Usuario desconocido',
-                    'nombre'     => $com->usuario->Nombre ?? 'Usuario',
-                    'avatar'     => $avatarUrl,
-                    'comentario' => $com->comentario,
-                    'tipo'       => $com->tipo,
-                    'fecha'      => $com->fecha_creacion ? date('d/m/Y H:i', strtotime($com->fecha_creacion)) : date('d/m/Y H:i'),
-                    'archivo'    => $archivoUrl,
-                    'esImagen'   => $esImagen,
+                    'id'                 => $com->id,
+                    'usuario'            => $com->usuario->email ?? 'Usuario desconocido',
+                    'nombre'             => $com->usuario->Nombre ?? 'Usuario',
+                    'avatar'             => $avatarUrl,
+                    'comentario'         => $com->comentario,
+                    'tipo'               => $com->tipo,
+                    'fecha'              => $com->fecha_creacion ? date('d/m/Y H:i', strtotime($com->fecha_creacion)) : date('d/m/Y H:i'),
+                    'archivo'            => $archivoUrl,
+                    'esImagen'           => $esImagen,
+                    'destinatarioId'     => $com->destinatario_id,
+                    'destinatarioNombre' => $com->destinatario ? ($com->destinatario->Nombre ?: $com->destinatario->email) : null,
                 ];
             }
 

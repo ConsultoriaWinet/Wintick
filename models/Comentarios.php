@@ -12,11 +12,13 @@ use Yii;
  * @property int $usuario_id
  * @property string $comentario
  * @property string|null $tipo comentario, nota_interna, solucion
+ * @property int|null $destinatario_id null = visible a todos; set = nota privada P2P
  * @property string $fecha_creacion
  * @property string|null $archivo
  *
  * @property Tickets $ticket
  * @property Usuarios $usuario
+ * @property Usuarios $destinatario
  */
 class Comentarios extends \yii\db\ActiveRecord
 {
@@ -38,13 +40,14 @@ class Comentarios extends \yii\db\ActiveRecord
         return [
             [['tipo'], 'default', 'value' => 'comentario'],
             [['ticket_id', 'usuario_id', 'comentario'], 'required'],
-            [['ticket_id', 'usuario_id'], 'integer'],
+            [['ticket_id', 'usuario_id', 'destinatario_id'], 'integer'],
             [['comentario'], 'string'],
             [['fecha_creacion', 'archivo'], 'safe'],
             [['tipo'], 'string', 'max' => 20],
             [['archivo'], 'string', 'max' => 255],
             [['ticket_id'], 'exist', 'skipOnError' => true, 'targetClass' => Tickets::class, 'targetAttribute' => ['ticket_id' => 'id']],
             [['usuario_id'], 'exist', 'skipOnError' => true, 'targetClass' => Usuarios::class, 'targetAttribute' => ['usuario_id' => 'id']],
+            [['destinatario_id'], 'exist', 'skipOnError' => true, 'targetClass' => Usuarios::class, 'targetAttribute' => ['destinatario_id' => 'id']],
         ];
     }
 
@@ -82,6 +85,11 @@ class Comentarios extends \yii\db\ActiveRecord
     public function getUsuario()
     {
         return $this->hasOne(Usuarios::class, ['id' => 'usuario_id']);
+    }
+
+    public function getDestinatario()
+    {
+        return $this->hasOne(Usuarios::class, ['id' => 'destinatario_id']);
     }
 
     public function beforeSave($insert)
