@@ -1057,6 +1057,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 }
 
 .d-cmnt-bubble.nota { background: #fff8e1; border-left: 3px solid #f59e0b; }
+.d-cmnt-bubble.nota.p2p { background: #fdf2f8; border-left: 3px solid #a855f7; }
 .d-cmnt-bubble.solucion { background: #f0fdf4; border-left: 3px solid #16a34a; }
 
 .d-cmnt-meta {
@@ -1074,6 +1075,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     border-radius: 8px; text-transform: uppercase; letter-spacing: .3px;
 }
 .d-cmnt-tipo-tag.nota    { background: #fef3c7; color: #b45309; }
+.d-cmnt-tipo-tag.nota.p2p { background: #f3e8ff; color: #7c3aed; }
 .d-cmnt-tipo-tag.solucion { background: #d1fae5; color: #065f46; }
 
 .d-cmnt-text { color: var(--text-2, #4D483F); font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; }
@@ -1099,22 +1101,6 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     font-size: 12.5px;
     color: var(--text-2, #4D483F);
     line-height: 1.55;
-    max-height: 58px;
-    overflow: hidden;
-    position: relative;
-}
-
-.drawer-desc-text.expanded { max-height: none; }
-
-.drawer-desc-more {
-    font-size: 11px;
-    color: var(--accent);
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-    display: block;
-    margin-top: 2px;
 }
 
 /* ── Solución tab ────────────────────────────── */
@@ -1362,10 +1348,19 @@ body.drawer-open #main > .container {
             <div class="drawer-compose" id="drawerCompose">
                 <div class="dc-tipo-tabs">
                     <button class="dc-tipo-tab active" onclick="setDTipo(this,'comentario')">Comentario</button>
-                    <button class="dc-tipo-tab" onclick="setDTipo(this,'nota_interna')">Nota interna</button>
+                    <button class="dc-tipo-tab" onclick="setDTipo(this,'nota_interna')">🔒 Nota privada</button>
                     <button class="dc-tipo-tab" onclick="setDTipo(this,'solucion')">Solución</button>
                 </div>
                 <input type="hidden" id="d-tipo-val" value="comentario">
+                <!-- Selector de destinatario P2P (solo visible en nota_interna) -->
+                <div id="d-destinatario-wrap" style="display:none;margin-bottom:6px;">
+                    <select id="d-destinatario-id" style="width:100%;font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);">
+                        <option value="">— Enviar a (privado) —</option>
+                        <?php foreach ($Usuarios as $u): ?>
+                            <option value="<?= (int)$u['id'] ?>"><?= Html::encode($u['Nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <textarea id="d-nuevo-cmnt" class="dc-textarea" placeholder="Escribe aquí..." rows="2"></textarea>
                 <div class="dc-actions">
                     <button class="dc-btn-send" id="d-btn-send" onclick="enviarDComentario()">
@@ -3150,17 +3145,10 @@ function openDrawer(d) {
     document.getElementById('d-programada').textContent       = d.horaProgramada || '-';
     document.getElementById('d-inicio').textContent           = d.horaInicio || '-';
 
-    // Descripción
+    // Descripción — siempre completa
     const descEl = document.getElementById('d-descripcion-text');
-    descEl.classList.remove('expanded');
     descEl.textContent = d.descripcion || '';
-    const moreBtn = document.getElementById('d-desc-more-btn');
-    if (d.descripcion && d.descripcion.length > 120) {
-        moreBtn.style.display = 'block';
-        moreBtn.textContent   = 'Ver más';
-    } else {
-        moreBtn.style.display = 'none';
-    }
+    document.getElementById('d-desc-more-btn').style.display = 'none';
 
     // Pestaña Solución
     renderDrawerSolucion(d.solucion || '');
@@ -3284,16 +3272,28 @@ function renderDCmntList(containerId, items) {
         const email  = (c.usuario || '');
         const col    = getAvatarColor(email);
         const ini    = nombre.charAt(0).toUpperCase();
-        const tipoTag = c.tipo !== 'comentario'
-            ? `<span class="d-cmnt-tipo-tag ${c.tipo === 'nota_interna' ? 'nota' : 'solucion'}">${c.tipo === 'nota_interna' ? 'Nota' : 'Solución'}</span>`
-            : '';
+
+        let tipoTag = '';
+        if (c.tipo === 'nota_interna') {
+            if (c.destinatarioId) {
+                const destNombre = c.destinatarioNombre || 'alguien';
+                tipoTag = `<span class="d-cmnt-tipo-tag nota p2p" style="display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-lock" style="font-size:9px;"></i> Privado con ${escapeHtml(destNombre)}</span>`;
+            } else {
+                tipoTag = `<span class="d-cmnt-tipo-tag nota">Nota interna</span>`;
+            }
+        } else if (c.tipo === 'solucion') {
+            tipoTag = `<span class="d-cmnt-tipo-tag solucion">Solución</span>`;
+        }
+
         const avatarHtml = c.avatar
             ? `<img src="${escapeHtml(c.avatar)}" class="d-cmnt-avatar" style="object-fit:cover;padding:0;" alt="${escapeHtml(ini)}">`
             : `<div class="d-cmnt-avatar" style="background:${escapeHtml(col)}">${escapeHtml(ini)}</div>`;
+
+        const isP2P = c.tipo === 'nota_interna' && c.destinatarioId;
         return `
             <div class="d-cmnt-item">
                 ${avatarHtml}
-                <div class="d-cmnt-bubble${c.tipo === 'nota_interna' ? ' nota' : c.tipo === 'solucion' ? ' solucion' : ''}">
+                <div class="d-cmnt-bubble${c.tipo === 'nota_interna' ? ' nota' : c.tipo === 'solucion' ? ' solucion' : ''}${isP2P ? ' p2p' : ''}">
                     <div class="d-cmnt-meta">
                         <span class="d-cmnt-autor">${escapeHtml(nombre)}</span>
                         ${tipoTag}
@@ -3329,8 +3329,14 @@ function setDTipo(btn, tipo) {
     _drawerCmntTipo = tipo;
     document.getElementById('d-tipo-val').value = tipo;
     const ta = document.getElementById('d-nuevo-cmnt');
-    const hints = { comentario:'Responder al cliente...', nota_interna:'Nota interna (solo equipo)...', solucion:'Describe la solución...' };
+    const hints = { comentario:'Responder al cliente...', nota_interna:'Mensaje privado para alguien del equipo...', solucion:'Describe la solución...' };
     ta.placeholder = hints[tipo] || 'Escribe aquí...';
+    const destWrap = document.getElementById('d-destinatario-wrap');
+    if (destWrap) destWrap.style.display = tipo === 'nota_interna' ? 'block' : 'none';
+    if (tipo !== 'nota_interna') {
+        const sel = document.getElementById('d-destinatario-id');
+        if (sel) sel.value = '';
+    }
 }
 
 /* ── Enviar comentario desde drawer ─────── */
@@ -3349,12 +3355,18 @@ function enviarDComentario() {
     fd.append('ticket_id', _drawerTicketId);
     fd.append('comentario', textoFinal);
     fd.append('tipo', _drawerCmntTipo);
+    if (_drawerCmntTipo === 'nota_interna') {
+        const destSel = document.getElementById('d-destinatario-id');
+        if (destSel && destSel.value) fd.append('destinatario_id', destSel.value);
+    }
 
     fetch(DRAWER_SEND_URL, { method:'POST', body: fd })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 document.getElementById('d-nuevo-cmnt').value = '';
+                const destSel = document.getElementById('d-destinatario-id');
+                if (destSel) destSel.value = '';
                 loadDrawerComments(_drawerTicketId);
                 updateCommentBadge(_drawerTicketId);
             } else {
