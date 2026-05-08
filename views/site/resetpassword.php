@@ -90,8 +90,8 @@ body { background: var(--surface-2, #F5F1E8) !important; }
     <div class="auth-card">
 
         <div class="auth-header">
-            <div class="auth-icon" style="background:#f0fdf4;">
-                <i class="fas fa-key" style="font-size:20px;color:#16a34a;"></i>
+            <div class="auth-icon" style="background:var(--accent-light);">
+                <i class="fas fa-key" style="font-size:20px;color:var(--accent);"></i>
             </div>
             <h1>Nueva Contraseña</h1>
             <p>Ingresa el código de verificación y tu nueva contraseña</p>
