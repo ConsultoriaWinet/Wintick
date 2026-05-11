@@ -30,7 +30,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['index', 'logout', 'get-tickets', 'check-update'],
+                        'actions' => ['index', 'logout', 'get-tickets', 'check-update', 'get-cheka'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -109,7 +109,7 @@ class SiteController extends Controller
                 ->where(['Asignado_a' => $u->id])
                 ->andWhere(['LIKE', 'HoraProgramada', $fecha . '%', false])
                 ->orderBy(['HoraProgramada' => SORT_ASC])
-                ->with(['cliente'])
+                ->with(['cliente', 'sistema', 'servicio'])
                 ->all();
 
             // Incluir usuario aunque no tenga tickets (para mostrar fila vacía)
@@ -140,23 +140,22 @@ class SiteController extends Controller
                 $row['tickets'][] = [
                     'id'      => $t->id,
                     'folio'   => $t->Folio,
+                    'titulo'  => $t->Descripcion ?? '',
                     'hora'    => $horaStr,
                     'horaMin' => $horaMin,
                     'durMin'  => $durMin,
-                    'cliente' => $t->cliente ? $t->cliente->Nombre : '-',
+                    'cliente' => $t->cliente  ? $t->cliente->Nombre  : '-',
+                    'sistema' => $t->sistema  ? $t->sistema->Nombre  : '-',
+                    'servicio'=> $t->servicio ? $t->servicio->Nombre : '-',
                     'estado'  => $t->Estado,
                     'prioridad'=> $t->Prioridad,
                 ];
             }
 
-            if (!empty($row['tickets']) || count($result) < 20) {
-                $result[] = $row;
-            }
+            $result[] = $row;
         }
 
-        // Filtrar solo filas con tickets (si no hay ninguno en ese día, mostrar todos de todas formas para visibilidad)
-        $conTickets = array_filter($result, fn($r) => !empty($r['tickets']));
-        return ['fecha' => $fecha, 'usuarios' => array_values($conTickets ?: $result)];
+        return ['fecha' => $fecha, 'usuarios' => $result];
     }
 
     /**

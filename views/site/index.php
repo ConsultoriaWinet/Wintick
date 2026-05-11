@@ -136,6 +136,10 @@ $this->params['fullWidth'] = true;
     background: var(--surface-2, #f9fafb);
 }
 
+/* Cuando Cheka está activo: ocultar TODO el contenido del FC (toolbar + body) */
+#cal-area.cheka-on #calendar-container { display: none; }
+#cal-area.cheka-on #cheka-view         { display: flex; flex: 1; min-height: 0; }
+
 /* Header de navegación */
 .cheka-topbar {
     display: flex;
@@ -192,6 +196,7 @@ $this->params['fullWidth'] = true;
     display: grid;
     grid-template-columns: 168px 1fr;
     min-height: 100%;
+    align-content: start;  /* evita que las filas se estiren y bajen el contenido */
 }
 
 /* Columna izquierda: header + filas */
@@ -210,7 +215,7 @@ $this->params['fullWidth'] = true;
     border-right: 1px solid var(--border, #e5e7eb);
     border-bottom: 1px solid var(--border, #e5e7eb);
     padding: 10px 12px;
-    display: flex; align-items: center; gap: 9px;
+    display: flex; align-items: flex-start; gap: 9px;
     min-height: 68px;
 }
 .cheka-av {
@@ -273,24 +278,33 @@ $this->params['fullWidth'] = true;
 /* Bloques de ticket */
 .cheka-ticket-block {
     position: absolute;
-    top: 8px; bottom: 8px;
-    border-radius: 8px;
-    padding: 4px 7px;
+    border-radius: 5px;
+    padding: 0 7px;
     cursor: pointer;
     overflow: hidden;
-    transition: filter .15s, box-shadow .15s;
+    transition: filter .12s, box-shadow .12s, z-index 0s;
     z-index: 2;
-    min-width: 70px;
+    min-width: 56px;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
 }
 .cheka-ticket-block:hover {
     filter: brightness(.93);
-    box-shadow: 0 3px 12px rgba(0,0,0,.18);
-    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0,0,0,.22);
+    z-index: 10;
+    overflow: visible;           /* muestra cliente al hacer hover */
 }
-.cheka-blk-time  { font-size: 9.5px; font-weight: 800; opacity: .85; white-space: nowrap; }
-.cheka-blk-folio { font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cheka-blk-client{ font-size: 10px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cheka-blk-time  { font-size: 9px; font-weight: 800; opacity: .75; flex-shrink: 0; }
+.cheka-blk-sep   { opacity: .35; font-size: 9px; flex-shrink: 0; }
+.cheka-blk-folio { font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
+.cheka-blk-client{
+    font-size: 10px; opacity: .75;
+    overflow: hidden; text-overflow: ellipsis;
+    min-width: 0;                /* permite que se recorte en estado normal */
+}
 
 /* Línea de tiempo actual */
 #cheka-now-line {
@@ -874,14 +888,16 @@ window.addEventListener('resize', function () {
 <!-- ═══════════════ CHEKA VIEW JS ═══════════════ -->
 <script>
 /* ── Configuración ── */
-const CHEKA_START_H  = 7;   // hora inicio timeline
-const CHEKA_END_H    = 20;  // hora fin timeline
+const CHEKA_START_H  = 8;   // hora inicio timeline
+const CHEKA_END_H    = 19;  // hora fin timeline (19:00 = última columna visible; cubre hasta las 19:59)
 const CHEKA_PX_MIN   = 2.2; // píxeles por minuto
 const CHEKA_ROW_H    = 70;  // altura fila px
 
-let chekaActive  = false;
-let chekaDate    = new Date();
-let chekaNowInterval = null;
+let chekaActive       = false;
+let chekaDate         = new Date();
+let chekaNowInterval  = null;
+let chekaTickInterval = null;   // polling de cambios en tickets
+let chekaLastStamp    = null;   // último Fecha_actualizacion conocido
 
 /* ── Colores de estado ── */
 function chekaEstadoClass(e) {
@@ -892,24 +908,20 @@ function chekaEstadoClass(e) {
 /* ── Alternar vista ── */
 function toggleChekaView() {
     chekaActive = !chekaActive;
-    const btn    = document.getElementById('cheka-cal-toggle');
-    const calBox = document.getElementById('calendar-container');
-    const chekaBox = document.getElementById('cheka-view');
-    const hint   = document.querySelector('#cal-topbar .hint');
+    const btn     = document.getElementById('cheka-cal-toggle');
+    const calArea = document.getElementById('cal-area');
+    const hint    = document.querySelector('#cal-topbar .hint');
 
     btn.classList.toggle('active', chekaActive);
+    calArea.classList.toggle('cheka-on', chekaActive);
 
     if (chekaActive) {
-        calBox.style.display  = 'none';
-        chekaBox.style.display = 'flex';
         if (hint) hint.style.display = 'none';
         // Tomar fecha actual del calendario FullCalendar
         if (calendar) chekaDate = calendar.getDate();
         chekaLoad(chekaDate);
         startNowClock();
     } else {
-        calBox.style.display  = '';
-        chekaBox.style.display = 'none';
         if (hint) hint.style.display = '';
         stopNowClock();
     }
@@ -933,10 +945,27 @@ function startNowClock() {
     chekaNowInterval = setInterval(() => {
         updateNowPill();
         updateNowLine();
-    }, 30000);
+    }, 60000); // cada minuto — a 2.2px/min el movimiento es suave y no pesa
+
+    // Polling de cambios: si se crea/edita un ticket recarga el día en Cheka
+    chekaLastStamp = null;
+    chekaTickInterval = setInterval(() => {
+        fetch('<?= Url::to(['site/check-update']) ?>')
+            .then(r => r.json())
+            .then(data => {
+                if (chekaLastStamp === null) {
+                    chekaLastStamp = data.lastUpdate; // primera lectura, solo guardar
+                } else if (data.lastUpdate !== chekaLastStamp) {
+                    chekaLastStamp = data.lastUpdate;
+                    chekaLoad(chekaDate); // recargar el día actual
+                }
+            })
+            .catch(() => {}); // silencioso si falla
+    }, 10000); // cada 10 segundos
 }
 function stopNowClock() {
-    if (chekaNowInterval) clearInterval(chekaNowInterval);
+    if (chekaNowInterval)  clearInterval(chekaNowInterval);
+    if (chekaTickInterval) clearInterval(chekaTickInterval);
 }
 function updateNowPill() {
     const now = new Date();
@@ -1000,6 +1029,21 @@ function buildTimeHeader() {
 }
 
 /* ── Renderizar filas ── */
+/* ── Asignación de lanes (sub-filas) para tickets solapados ── */
+function chekaAssignLanes(tickets) {
+    // tickets ya ordenados por horaMin (PHP los ordena por HoraProgramada)
+    const laneEnds = []; // laneEnds[i] = minuto en que termina el último ticket del lane i
+    tickets.forEach(t => {
+        const start = t.horaMin;
+        const end   = start + Math.max(30, t.durMin || 60);
+        let lane = laneEnds.findIndex(e => e <= start);
+        if (lane === -1) lane = laneEnds.length;
+        laneEnds[lane] = end;
+        t._lane = lane;
+    });
+    return laneEnds.length; // total de lanes necesarios
+}
+
 function chekaRender(data) {
     const leftEl  = document.getElementById('cheka-rows-left');
     const rightEl = document.getElementById('cheka-rows-right');
@@ -1015,12 +1059,20 @@ function chekaRender(data) {
         return;
     }
 
+    const LANE_H   = 20; // alto de cada bloque (una sola línea)
+    const LANE_GAP = 3;  // espacio entre lanes
+    const LANE_PAD = 5;  // padding arriba/abajo de la fila
+
     data.usuarios.forEach((u, idx) => {
+        // ── Asignar lanes a tickets solapados ──
+        const numLanes = chekaAssignLanes(u.tickets);
+        const rowH = Math.max(CHEKA_ROW_H, LANE_PAD * 2 + numLanes * (LANE_H + LANE_GAP) - LANE_GAP);
+
         // ─ Celda izquierda ─
         const left = document.createElement('div');
         left.className = 'cheka-user-cell';
+        left.style.minHeight = rowH + 'px';
         const inits = (u.nombre || '?').split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
-        const gateCode = inits + '-' + String(idx + 1).padStart(2,'0');
         const avatarHtml = u.avatar
             ? `<img src="${u.avatar}" class="cheka-av-inner" style="object-fit:cover;" alt="${esc(u.nombre)}">`
             : `<div class="cheka-av-inner" style="background:${u.color};">${esc(inits)}</div>`;
@@ -1029,14 +1081,14 @@ function chekaRender(data) {
             <div class="cheka-av" style="--av-clr:${u.color};">${avatarHtml}</div>
             <div class="cheka-user-info">
                 <div class="cheka-user-name">${esc(u.nombre)}</div>
-                <div class="cheka-user-meta">Gate ${gateCode} · ${u.tickets.length}</div>
+                <div class="cheka-user-meta"><i class="fas fa-ticket-alt" style="opacity:.5;font-size:9px;"></i> ${u.tickets.length} ticket${u.tickets.length !== 1 ? 's' : ''}</div>
             </div>`;
         leftEl.appendChild(left);
 
         // ─ Fila timeline ─
         const row = document.createElement('div');
         row.className = 'cheka-row-timeline';
-        row.style.height = CHEKA_ROW_H + 'px';
+        row.style.height = rowH + 'px';
         row.style.width  = totalPx + 'px';
 
         // Franjas de fondo (rayado por hora)
@@ -1054,19 +1106,47 @@ function chekaRender(data) {
         // Tickets
         u.tickets.forEach(t => {
             const leftPx = (t.horaMin - CHEKA_START_H * 60) * CHEKA_PX_MIN;
-            const widPx  = Math.max(70, t.durMin * CHEKA_PX_MIN);
+            // Ancho visual: usar duración real pero con un máximo razonable (2h = 264px)
+            // y un mínimo de 56px para que quepa el folio
+            const durVisPx = Math.min(t.durMin * CHEKA_PX_MIN, 60 * 2 * CHEKA_PX_MIN);
+            const widPx  = Math.max(56, durVisPx);
             if (leftPx < 0 || leftPx > totalPx) return; // fuera de rango
+
+            const topPx = LANE_PAD + (t._lane || 0) * (LANE_H + LANE_GAP);
 
             const blk = document.createElement('div');
             blk.className  = 'cheka-ticket-block ' + chekaEstadoClass(t.estado);
-            blk.style.left  = leftPx + 'px';
-            blk.style.width = Math.min(widPx, totalPx - leftPx) + 'px';
+            blk.style.left   = leftPx + 'px';
+            blk.style.width  = Math.min(widPx, totalPx - leftPx) + 'px';
+            blk.style.top    = topPx + 'px';
+            blk.style.height = LANE_H + 'px';
             blk.title = t.folio + ' · ' + t.cliente + ' · ' + t.hora;
-            blk.onclick = () => window.open(URL_VER_TICKET + '?id=' + t.id, '_blank');
+            blk.onclick = () => {
+                const fakeDate = new Date(chekaDate);
+                const [hh, mm] = t.hora.split(':').map(Number);
+                fakeDate.setHours(hh, mm, 0, 0);
+                openTicketPanel({
+                    id: t.id,
+                    start: fakeDate,
+                    title: t.folio,
+                    backgroundColor: null,
+                    extendedProps: {
+                        estado:          t.estado,
+                        prioridad:       t.prioridad,
+                        description:     t.titulo  || '',
+                        cliente:         t.cliente || '-',
+                        sistema:         t.sistema || '-',
+                        servicio:        t.servicio|| '-',
+                        consultorNombre: u.nombre  || '-'
+                    }
+                });
+            };
+            /* Una sola línea: HH:mm · FOLIO  nombre cliente (se recorta si no cabe) */
             blk.innerHTML = `
-                <div class="cheka-blk-time">${esc(t.hora)}</div>
-                <div class="cheka-blk-folio">${esc(t.folio)}</div>
-                <div class="cheka-blk-client">${esc(t.cliente)}</div>`;
+                <span class="cheka-blk-time">${esc(t.hora)}</span>
+                <span class="cheka-blk-sep">·</span>
+                <span class="cheka-blk-folio">${esc(t.folio)}</span>
+                <span class="cheka-blk-client">${esc(t.cliente)}</span>`;
             row.appendChild(blk);
         });
 

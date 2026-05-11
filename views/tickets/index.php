@@ -360,10 +360,13 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 
 
 <div class="tickets-index">
-    <!-- Header Principal con Buscador Universal  -->
+    <!-- Header unificado: título + búsqueda + stats en una sola barra -->
     <div class="tickets-header">
-        <h1><i class="fas fa-ticket-alt"></i> <?= Html::encode($this->title) ?></h1> 
-       
+
+        <!-- Fila 1: título · buscador · acciones -->
+        <div class="th-row-main">
+        <h1><i class="fas fa-headset"></i> <?= Html::encode($this->title) ?></h1>
+
         <!-- BUSCADOR UNIVERSAL + FILTRO AVANZADO COMPACTO -->
         <div class="search-filter-wrapper">
             <!-- Buscador Universal Instantáneo -->
@@ -506,68 +509,43 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         </div>
 
         <div class="tickets-header-actions">
-            <a href="<?= Url::to(array_merge(['tickets/exportar'], $_GET)) ?>" 
-            class="btn btn-outline-success">
+            <a href="<?= Url::to(array_merge(['tickets/exportar'], $_GET)) ?>"
+               class="btn btn-outline-success btn-sm">
                 <i class="fas fa-file-csv"></i> Exportar CSV
             </a>
         </div>
-    </div>
+        </div><!-- /.th-row-main -->
 
-    <!-- Mes Actual Badge -->
-    <?php if (!empty($_GET['mes'])): ?>
-    <div class="mes-actual">
-        <i class="fas fa-calendar-alt"></i>
-        <?php
-            $mesesEs = [
-                1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',
-                5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',
-                9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'
-            ];
-            $ts  = strtotime($_GET['mes'] . '-01');
-            $mes = $mesesEs[(int)date('n', $ts)] . ' de ' . date('Y', $ts);
-        ?>
-        <strong><?= Html::encode($mes) ?></strong>
-        
-    </div>
-    <?php else: ?>
-   
-    <?php endif; ?>
-
-    <!-- Stats Bar -->
-    <div class="stats-bar d-flex align-items-center justify-content-between">
-        <h5 class="tickets-count">
-            <i class="fas fa-list"></i> Total de Tickets: <strong id="totalTickets"><?= $dataProvider->getTotalCount() ?></strong>
-            <span id="filteredCount" style="display: none; margin-left: 10px; color: #667eea;"></span>
-        </h5>
-        <!------Boton para actualizar pagina-------->
-        <button class="btn btn-sm btn-outline-secondary mx-4" id="refreshPage"
-                title="Actualizar página" onclick="refreshPage()">
-            <i class="fas fa-sync-alt" id="refreshIcon"></i>
-        </button>
-    </div>
-
-    <!-- Tabla -->
-    <div class="table-container">
-        <div style="margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-            <span style="font-size:12px;color:#666;">
-                <strong>Mostrando:</strong>
-                <?= count($dataProvider->getModels()) ?> de <?= $dataProvider->getTotalCount() ?> tickets
+        <!-- Fila 2: total · filtro activo · mostrando · página · refresh -->
+        <div class="th-row-stats">
+            <span class="th-stat-total">
+                <i class="fas fa-headset" style="opacity:.45;font-size:11px;"></i>
+                <strong id="totalTickets"><?= $dataProvider->getTotalCount() ?></strong> tickets
+                <span id="filteredCount" style="display:none;margin-left:8px;color:#667eea;font-weight:600;"></span>
             </span>
-            <?php
-                $perPageActual = (int)Yii::$app->request->get('per-page', 20);
-                $urlBase = Yii::$app->request->queryParams;
-            ?>
-            <div class="page-size-selector">
-                <label for="perPageSelect">Tickets por página:</label>
+            <?php if (!empty($_GET['mes'])):
+                $mesesEs=[1=>'Ene',2=>'Feb',3=>'Mar',4=>'Abr',5=>'May',6=>'Jun',7=>'Jul',8=>'Ago',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dic'];
+                $ts=strtotime($_GET['mes'].'-01');
+            ?><span class="th-stat-badge"><i class="fas fa-calendar-alt"></i> <?= Html::encode($mesesEs[(int)date('n',$ts)].' '.date('Y',$ts)) ?></span><?php endif; ?>
+            <span class="th-stat-showing">Mostrando <?= count($dataProvider->getModels()) ?> de <?= $dataProvider->getTotalCount() ?></span>
+            <?php $perPageActual=(int)Yii::$app->request->get('per-page',20); ?>
+            <div class="th-page-size">
+                <label for="perPageSelect">Por página:</label>
                 <select id="perPageSelect" onchange="cambiarPorPagina(this.value)">
-                    <?php foreach ([10, 20, 30, 50, 100] as $op): ?>
-                        <option value="<?= $op ?>" <?= $perPageActual === $op ? 'selected' : '' ?>>
-                            <?= $op ?>
-                        </option>
+                    <?php foreach([10,20,30,50,100] as $op): ?>
+                        <option value="<?=$op?>" <?=$perPageActual===$op?'selected':''?>><?=$op?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-        </div>
+            <button class="th-refresh-btn" id="refreshPage" title="Actualizar" onclick="refreshPage()">
+                <i class="fas fa-sync-alt" id="refreshIcon"></i>
+            </button>
+        </div><!-- /.th-row-stats -->
+
+    </div><!-- /.tickets-header -->
+
+    <!-- Tabla -->
+    <div class="table-container">
         
         <table class="table table-hover table-sm" id="ticketsTable">
             <thead>
