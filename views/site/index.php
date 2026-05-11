@@ -127,6 +127,203 @@ $this->params['fullWidth'] = true;
 .fc .fc-daygrid-day-frame { cursor: pointer; }
 .fc .fc-daygrid-day-frame:active { background: rgba(59,130,246,.05); }
 
+/* ─── Vista Cheka (timeline por consultor) ──────────────────── */
+#cheka-view {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    background: var(--surface-2, #f9fafb);
+}
+
+/* Header de navegación */
+.cheka-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--surface, #fff);
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    flex-shrink: 0;
+}
+.cheka-nav-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--border, #e5e7eb);
+    background: var(--surface, #fff); color: var(--text-2, #374151);
+    cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+}
+.cheka-nav-btn:hover { background: var(--surface-2, #f3f4f6); }
+.cheka-hoy-btn {
+    padding: 5px 12px; border-radius: 7px;
+    border: 1px solid var(--border, #e5e7eb);
+    background: var(--surface, #fff); color: var(--text-2, #374151);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    transition: background .15s;
+}
+.cheka-hoy-btn:hover { background: var(--surface-2, #f3f4f6); }
+.cheka-date-label {
+    font-size: 14px; font-weight: 700;
+    color: var(--text, #111827);
+    min-width: 160px;
+}
+.cheka-now-pill {
+    margin-left: auto;
+    background: #fef2f2; color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 20px; padding: 3px 10px;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; gap: 5px;
+}
+.cheka-now-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #dc2626;
+    animation: chekaPulse 1.4s ease-in-out infinite;
+}
+@keyframes chekaPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+
+/* Grid scroll wrapper */
+#cheka-scroll {
+    flex: 1; overflow: auto; position: relative;
+}
+
+/* Grid (sticky left column + scrollable timeline) */
+.cheka-grid {
+    display: grid;
+    grid-template-columns: 168px 1fr;
+    min-height: 100%;
+}
+
+/* Columna izquierda: header + filas */
+.cheka-left-header {
+    position: sticky; left: 0; z-index: 10;
+    background: var(--surface, #fff);
+    border-right: 1px solid var(--border, #e5e7eb);
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    padding: 8px 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text-3, #9ca3af);
+}
+.cheka-user-cell {
+    position: sticky; left: 0; z-index: 8;
+    background: var(--surface, #fff);
+    border-right: 1px solid var(--border, #e5e7eb);
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 9px;
+    min-height: 68px;
+}
+.cheka-av {
+    position: relative; flex-shrink: 0;
+    width: 36px; height: 36px;
+}
+.cheka-av-inner {
+    width: 32px; height: 32px; border-radius: 50%;
+    position: absolute; top: 2px; left: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    object-fit: cover; overflow: hidden;
+}
+.cheka-av::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2.5px solid var(--av-clr, #6b7280);
+}
+.cheka-user-info { flex: 1; min-width: 0; }
+.cheka-user-name { font-size: 12.5px; font-weight: 700; color: var(--text, #111827); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cheka-user-meta { font-size: 10.5px; color: var(--text-3, #9ca3af); margin-top: 1px; }
+
+/* Timeline: header de horas */
+.cheka-time-header {
+    position: sticky; top: 0; z-index: 9;
+    background: var(--surface, #fff);
+    border-bottom: 2px solid var(--border, #e5e7eb);
+    display: flex; height: 36px;
+}
+.cheka-hour-label {
+    flex-shrink: 0;
+    font-size: 10px; font-weight: 700; color: var(--text-3, #6b7280);
+    display: flex; align-items: center; justify-content: flex-start;
+    padding-left: 4px;
+    border-right: 1px solid var(--border, #e5e7eb);
+    box-sizing: border-box;
+}
+
+/* Filas de timeline */
+.cheka-row-timeline {
+    position: relative;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    min-height: 68px;
+    display: flex; align-items: center;
+}
+.cheka-row-bg-hours {
+    position: absolute; inset: 0;
+    display: flex;
+}
+.cheka-row-hour-seg {
+    flex-shrink: 0;
+    border-right: 1px solid var(--border, #f3f4f6);
+    box-sizing: border-box;
+    height: 100%;
+}
+.cheka-row-hour-seg:nth-child(even) {
+    background: rgba(0,0,0,.012);
+}
+
+/* Bloques de ticket */
+.cheka-ticket-block {
+    position: absolute;
+    top: 8px; bottom: 8px;
+    border-radius: 8px;
+    padding: 4px 7px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: filter .15s, box-shadow .15s;
+    z-index: 2;
+    min-width: 70px;
+    box-sizing: border-box;
+}
+.cheka-ticket-block:hover {
+    filter: brightness(.93);
+    box-shadow: 0 3px 12px rgba(0,0,0,.18);
+    z-index: 5;
+}
+.cheka-blk-time  { font-size: 9.5px; font-weight: 800; opacity: .85; white-space: nowrap; }
+.cheka-blk-folio { font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cheka-blk-client{ font-size: 10px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Línea de tiempo actual */
+#cheka-now-line {
+    position: absolute; top: 0; bottom: 0;
+    width: 2px; background: #dc2626;
+    z-index: 20; pointer-events: none;
+}
+#cheka-now-line::before {
+    content: '';
+    position: absolute; top: -4px; left: -4px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #dc2626;
+}
+
+/* Estado colores bloque */
+.chk-abierto    { background: #dbeafe; color: #1d4ed8; }
+.chk-programado { background: #dcfce7; color: #15803d; }
+.chk-proceso    { background: #fef9c3; color: #a16207; }
+.chk-contpaqi   { background: #fef3c7; color: #92400e; }
+.chk-cerrado    { background: #f1f5f9; color: #475569; }
+.chk-default    { background: #e0e7ff; color: #3730a3; }
+
+/* Botón Cheka en topbar del calendario */
+#cheka-cal-toggle {
+    padding: 5px 13px; border-radius: 7px;
+    border: 1px solid var(--border, #e5e7eb);
+    background: var(--surface-2, #f3f4f6); color: var(--text-2, #374151);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    transition: all .15s; display: flex; align-items: center; gap: 5px;
+}
+#cheka-cal-toggle:hover { background: var(--accent-light, #eff6ff); color: var(--accent-dark, #1d4ed8); }
+#cheka-cal-toggle.active { background: var(--accent, #3b82f6); color: #fff; border-color: var(--accent, #3b82f6); }
+
 /* ─── Panel día — FUERA del calendario, posición fija ──────── */
 #day-panel {
     position: fixed;
@@ -280,9 +477,36 @@ $this->params['fullWidth'] = true;
             <div id="cal-topbar">
                 <h1>Calendario de Tickets</h1>
                 <span class="hint"><i class="fas fa-hand-pointer"></i> Doble clic en un día · clic en ticket para ver resumen</span>
+                <button id="cheka-cal-toggle" onclick="toggleChekaView()" title="Vista por consultor día a día">
+                    <i class="fas fa-stream"></i> Cheka
+                </button>
             </div>
             <div id="calendar-container">
                 <div id="calendar"></div>
+            </div>
+
+            <!-- ── VISTA CHEKA ───────────────────────────────────── -->
+            <div id="cheka-view">
+                <!-- Barra de navegación Cheka -->
+                <div class="cheka-topbar">
+                    <button class="cheka-nav-btn" onclick="chekaNavDay(-1)" title="Día anterior">‹</button>
+                    <button class="cheka-nav-btn" onclick="chekaNavDay(1)"  title="Día siguiente">›</button>
+                    <button class="cheka-hoy-btn" onclick="chekaGoToday()">Hoy</button>
+                    <span class="cheka-date-label" id="cheka-date-label">—</span>
+                    <div class="cheka-now-pill" id="cheka-now-pill">
+                        <span class="cheka-now-dot"></span>
+                        <span id="cheka-now-time">—</span>
+                    </div>
+                </div>
+                <!-- Grid container -->
+                <div id="cheka-scroll">
+                    <div class="cheka-grid" id="cheka-grid">
+                        <div class="cheka-left-header">Técnico</div>
+                        <div class="cheka-time-header" id="cheka-time-header"></div>
+                        <div id="cheka-rows-left"></div>
+                        <div id="cheka-rows-right" style="position:relative;"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -311,9 +535,10 @@ $this->params['fullWidth'] = true;
 </div>
 
 <script>
-const ES_MONITOR     = <?= $esMonitor ? 'true' : 'false' ?>;
+const ES_MONITOR      = <?= $esMonitor ? 'true' : 'false' ?>;
 const URL_TICKETS_DIA = '<?= Url::to(['site/get-tickets-dia']) ?>';
 const URL_VER_TICKET  = '<?= Url::to(['tickets/view']) ?>';
+const URL_CHEKA       = '<?= Url::to(['site/get-cheka']) ?>';
 
 let calendar;
 let consultorActual = null;
@@ -644,4 +869,225 @@ function filtrarPorConsultor(consultorId) {
 window.addEventListener('resize', function () {
     if (calendar) setTimeout(() => calendar.updateSize(), 150);
 });
+</script>
+
+<!-- ═══════════════ CHEKA VIEW JS ═══════════════ -->
+<script>
+/* ── Configuración ── */
+const CHEKA_START_H  = 7;   // hora inicio timeline
+const CHEKA_END_H    = 20;  // hora fin timeline
+const CHEKA_PX_MIN   = 2.2; // píxeles por minuto
+const CHEKA_ROW_H    = 70;  // altura fila px
+
+let chekaActive  = false;
+let chekaDate    = new Date();
+let chekaNowInterval = null;
+
+/* ── Colores de estado ── */
+function chekaEstadoClass(e) {
+    const m = { 'ABIERTO':'chk-abierto','PROGRAMADO':'chk-programado','EN PROCESO':'chk-proceso','CONTPAQi':'chk-contpaqi','CERRADO':'chk-cerrado' };
+    return m[(e||'').toUpperCase()] || 'chk-default';
+}
+
+/* ── Alternar vista ── */
+function toggleChekaView() {
+    chekaActive = !chekaActive;
+    const btn    = document.getElementById('cheka-cal-toggle');
+    const calBox = document.getElementById('calendar-container');
+    const chekaBox = document.getElementById('cheka-view');
+    const hint   = document.querySelector('#cal-topbar .hint');
+
+    btn.classList.toggle('active', chekaActive);
+
+    if (chekaActive) {
+        calBox.style.display  = 'none';
+        chekaBox.style.display = 'flex';
+        if (hint) hint.style.display = 'none';
+        // Tomar fecha actual del calendario FullCalendar
+        if (calendar) chekaDate = calendar.getDate();
+        chekaLoad(chekaDate);
+        startNowClock();
+    } else {
+        calBox.style.display  = '';
+        chekaBox.style.display = 'none';
+        if (hint) hint.style.display = '';
+        stopNowClock();
+    }
+}
+
+/* ── Navegación ── */
+function chekaNavDay(delta) {
+    const d = new Date(chekaDate);
+    d.setDate(d.getDate() + delta);
+    chekaDate = d;
+    chekaLoad(d);
+}
+function chekaGoToday() {
+    chekaDate = new Date();
+    chekaLoad(chekaDate);
+}
+
+/* ── Reloj en tiempo real ── */
+function startNowClock() {
+    updateNowPill();
+    chekaNowInterval = setInterval(() => {
+        updateNowPill();
+        updateNowLine();
+    }, 30000);
+}
+function stopNowClock() {
+    if (chekaNowInterval) clearInterval(chekaNowInterval);
+}
+function updateNowPill() {
+    const now = new Date();
+    const h   = String(now.getHours()).padStart(2,'0');
+    const m   = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('cheka-now-time').textContent = 'AHORA ' + h + ':' + m;
+}
+function updateNowLine() {
+    const line = document.getElementById('cheka-now-line');
+    if (!line) return;
+    const now   = new Date();
+    const todayStr = now.toISOString().slice(0,10);
+    const chkStr   = chekaDate.toISOString().slice(0,10);
+    if (todayStr !== chkStr) { line.style.display = 'none'; return; }
+    line.style.display = '';
+    const minFromStart = (now.getHours() - CHEKA_START_H) * 60 + now.getMinutes();
+    line.style.left = (minFromStart * CHEKA_PX_MIN) + 'px';
+}
+
+/* ── Cargar datos ── */
+function chekaLoad(date) {
+    const dateStr = date.toISOString().slice(0,10);
+
+    // Cabecera fecha
+    const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const meses= ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const dLabel = dias[date.getDay()] + ' · ' + String(date.getDate()).padStart(2,'0') + ' ' +
+                   meses[date.getMonth()].toUpperCase() + ' ' + date.getFullYear();
+    document.getElementById('cheka-date-label').textContent = dLabel;
+
+    // Loading
+    document.getElementById('cheka-rows-left').innerHTML =
+        '<div style="padding:30px 16px;color:var(--text-3);font-size:12px;"><i class="fas fa-circle-notch fa-spin"></i> Cargando…</div>';
+    document.getElementById('cheka-rows-right').innerHTML = '';
+    buildTimeHeader();
+
+    fetch(URL_CHEKA + '?fecha=' + dateStr)
+        .then(r => r.json())
+        .then(data => chekaRender(data))
+        .catch(() => {
+            document.getElementById('cheka-rows-left').innerHTML =
+                '<div style="padding:30px 16px;color:#ef4444;font-size:12px;"><i class="fas fa-exclamation-circle"></i> Error al cargar</div>';
+        });
+}
+
+/* ── Construir cabecera de horas ── */
+function buildTimeHeader() {
+    const hdr = document.getElementById('cheka-time-header');
+    hdr.innerHTML = '';
+    const totalMin = (CHEKA_END_H - CHEKA_START_H) * 60;
+    const totalPx  = totalMin * CHEKA_PX_MIN;
+    hdr.style.width = totalPx + 'px';
+
+    for (let h = CHEKA_START_H; h <= CHEKA_END_H; h++) {
+        const lbl = document.createElement('div');
+        lbl.className = 'cheka-hour-label';
+        lbl.style.width = (60 * CHEKA_PX_MIN) + 'px';
+        lbl.textContent = String(h).padStart(2,'0') + ':00';
+        hdr.appendChild(lbl);
+    }
+}
+
+/* ── Renderizar filas ── */
+function chekaRender(data) {
+    const leftEl  = document.getElementById('cheka-rows-left');
+    const rightEl = document.getElementById('cheka-rows-right');
+    leftEl.innerHTML  = '';
+    rightEl.innerHTML = '';
+
+    const totalMin = (CHEKA_END_H - CHEKA_START_H) * 60;
+    const totalPx  = totalMin * CHEKA_PX_MIN;
+    rightEl.style.width = totalPx + 'px';
+
+    if (!data.usuarios || !data.usuarios.length) {
+        leftEl.innerHTML = '<div style="padding:30px 16px;color:var(--text-3);font-size:12.5px;text-align:center;"><i class="fas fa-calendar-day" style="font-size:22px;display:block;margin-bottom:8px;opacity:.3;"></i>Sin tickets programados</div>';
+        return;
+    }
+
+    data.usuarios.forEach((u, idx) => {
+        // ─ Celda izquierda ─
+        const left = document.createElement('div');
+        left.className = 'cheka-user-cell';
+        const inits = (u.nombre || '?').split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+        const gateCode = inits + '-' + String(idx + 1).padStart(2,'0');
+        const avatarHtml = u.avatar
+            ? `<img src="${u.avatar}" class="cheka-av-inner" style="object-fit:cover;" alt="${esc(u.nombre)}">`
+            : `<div class="cheka-av-inner" style="background:${u.color};">${esc(inits)}</div>`;
+
+        left.innerHTML = `
+            <div class="cheka-av" style="--av-clr:${u.color};">${avatarHtml}</div>
+            <div class="cheka-user-info">
+                <div class="cheka-user-name">${esc(u.nombre)}</div>
+                <div class="cheka-user-meta">Gate ${gateCode} · ${u.tickets.length}</div>
+            </div>`;
+        leftEl.appendChild(left);
+
+        // ─ Fila timeline ─
+        const row = document.createElement('div');
+        row.className = 'cheka-row-timeline';
+        row.style.height = CHEKA_ROW_H + 'px';
+        row.style.width  = totalPx + 'px';
+
+        // Franjas de fondo (rayado por hora)
+        const bg = document.createElement('div');
+        bg.className = 'cheka-row-bg-hours';
+        bg.style.width = totalPx + 'px';
+        for (let h = CHEKA_START_H; h < CHEKA_END_H; h++) {
+            const seg = document.createElement('div');
+            seg.className = 'cheka-row-hour-seg';
+            seg.style.width = (60 * CHEKA_PX_MIN) + 'px';
+            bg.appendChild(seg);
+        }
+        row.appendChild(bg);
+
+        // Tickets
+        u.tickets.forEach(t => {
+            const leftPx = (t.horaMin - CHEKA_START_H * 60) * CHEKA_PX_MIN;
+            const widPx  = Math.max(70, t.durMin * CHEKA_PX_MIN);
+            if (leftPx < 0 || leftPx > totalPx) return; // fuera de rango
+
+            const blk = document.createElement('div');
+            blk.className  = 'cheka-ticket-block ' + chekaEstadoClass(t.estado);
+            blk.style.left  = leftPx + 'px';
+            blk.style.width = Math.min(widPx, totalPx - leftPx) + 'px';
+            blk.title = t.folio + ' · ' + t.cliente + ' · ' + t.hora;
+            blk.onclick = () => window.open(URL_VER_TICKET + '?id=' + t.id, '_blank');
+            blk.innerHTML = `
+                <div class="cheka-blk-time">${esc(t.hora)}</div>
+                <div class="cheka-blk-folio">${esc(t.folio)}</div>
+                <div class="cheka-blk-client">${esc(t.cliente)}</div>`;
+            row.appendChild(blk);
+        });
+
+        rightEl.appendChild(row);
+    });
+
+    // Línea "ahora"
+    let nowLine = document.getElementById('cheka-now-line');
+    if (!nowLine) {
+        nowLine = document.createElement('div');
+        nowLine.id = 'cheka-now-line';
+        rightEl.appendChild(nowLine);
+    } else {
+        rightEl.appendChild(nowLine);
+    }
+    updateNowLine();
+}
+
+function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+}
 </script>

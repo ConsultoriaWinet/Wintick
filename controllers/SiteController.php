@@ -84,6 +84,82 @@ class SiteController extends Controller
     }
 
     /**
+     * Endpoint Cheka: devuelve tickets del día agrupados por consultor.
+     */
+    public function actionGetCheka()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $fecha = Yii::$app->request->get('fecha', date('Y-m-d'));
+        // Validar formato
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+            $fecha = date('Y-m-d');
+        }
+
+        // Todos los consultores que tienen tickets programados en esa fecha
+        // o simplemente todos los usuarios que tienen tickets alguna vez
+        $usuarios = Usuarios::find()
+            ->where(['id' => Tickets::find()->select('Asignado_a')->distinct()])
+            ->orderBy(['Nombre' => SORT_ASC])
+            ->all();
+
+        $result = [];
+        foreach ($usuarios as $u) {
+            $tickets = Tickets::find()
+                ->where(['Asignado_a' => $u->id])
+                ->andWhere(['LIKE', 'HoraProgramada', $fecha . '%', false])
+                ->orderBy(['HoraProgramada' => SORT_ASC])
+                ->with(['cliente'])
+                ->all();
+
+            // Incluir usuario aunque no tenga tickets (para mostrar fila vacía)
+            $avatar = $u->avatar ? (Yii::getAlias('@web') . $u->avatar) : null;
+            $row = [
+                'id'     => $u->id,
+                'nombre' => $u->Nombre ?: $u->email,
+                'color'  => $u->color ?: '#6b7280',
+                'avatar' => $avatar,
+                'tickets'=> [],
+            ];
+
+            foreach ($tickets as $t) {
+                if (empty($t->HoraProgramada)) continue;
+                $ts = strtotime($t->HoraProgramada);
+                $horaStr = date('H:i', $ts);
+                $horaMin = (int)date('H', $ts) * 60 + (int)date('i', $ts);
+
+                // Duración en minutos desde TiempoEfectivo (formato H.MM) o 60 min por defecto
+                $durMin = 60;
+                if (!empty($t->TiempoEfectivo)) {
+                    $parts = explode('.', $t->TiempoEfectivo);
+                    $h = (int)($parts[0] ?? 0);
+                    $m = (int)($parts[1] ?? 0);
+                    $durMin = max(30, $h * 60 + $m);
+                }
+
+                $row['tickets'][] = [
+                    'id'      => $t->id,
+                    'folio'   => $t->Folio,
+                    'hora'    => $horaStr,
+                    'horaMin' => $horaMin,
+                    'durMin'  => $durMin,
+                    'cliente' => $t->cliente ? $t->cliente->Nombre : '-',
+                    'estado'  => $t->Estado,
+                    'prioridad'=> $t->Prioridad,
+                ];
+            }
+
+            if (!empty($row['tickets']) || count($result) < 20) {
+                $result[] = $row;
+            }
+        }
+
+        // Filtrar solo filas con tickets (si no hay ninguno en ese día, mostrar todos de todas formas para visibilidad)
+        $conTickets = array_filter($result, fn($r) => !empty($r['tickets']));
+        return ['fecha' => $fecha, 'usuarios' => array_values($conTickets ?: $result)];
+    }
+
+    /**
      * Endpoint liviano para el polling del Monitor.
      * Devuelve el timestamp del último cambio en tickets.
      */
