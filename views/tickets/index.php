@@ -4438,21 +4438,55 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
 <?php
 $openComments = (int)Yii::$app->request->get('openComments', 0);
 $ticketId     = (int)Yii::$app->request->get('ticket_id', 0);
+
+// Pre-cargar datos del ticket si viene de una notificación y no está en la página actual
+$drawerPreload = null;
+if ($openComments && $ticketId) {
+    $tkt = \app\models\Tickets::findOne($ticketId);
+    if ($tkt) {
+        $drawerPreload = [
+            'id'              => $tkt->id,
+            'folio'           => $tkt->Folio,
+            'estado'          => $tkt->Estado,
+            'prioridad'       => $tkt->Prioridad,
+            'cliente'         => $tkt->cliente ? $tkt->cliente->Nombre : '-',
+            'criticidad'      => $tkt->cliente ? $tkt->cliente->Criticidad : '-',
+            'sistema'         => $tkt->sistema ? $tkt->sistema->Nombre : '-',
+            'servicio'        => $tkt->servicio ? $tkt->servicio->Nombre : '-',
+            'asignadoA'       => $tkt->usuarioAsignado ? $tkt->usuarioAsignado->email : '-',
+            'asignadoId'      => (int)$tkt->Asignado_a,
+            'usuarioReporta'  => $tkt->Usuario_reporta,
+            'horaProgramada'  => $tkt->HoraProgramada ? date('d/m/Y H:i', strtotime($tkt->HoraProgramada)) : '-',
+            'horaInicio'      => $tkt->HoraInicio ? date('d/m/Y H:i', strtotime($tkt->HoraInicio)) : '-',
+            'horaFinalizo'    => $tkt->HoraFinalizo ? date('d/m/Y H:i', strtotime($tkt->HoraFinalizo)) : '-',
+            'horaProgramadaRaw' => $tkt->HoraProgramada ? date('Y-m-d\TH:i', strtotime($tkt->HoraProgramada)) : '',
+            'horaInicioRaw'   => $tkt->HoraInicio ? date('Y-m-d\TH:i', strtotime($tkt->HoraInicio)) : '',
+            'tiempoEfectivo'  => $tkt->TiempoEfectivo ?: '-',
+            'descripcion'     => $tkt->Descripcion,
+            'solucion'        => $tkt->Solucion ?: '',
+            'tieneSolucion'   => $tkt->Solucion ? '1' : '0',
+            'clienteId'       => (int)$tkt->Cliente_id,
+            'sistemaId'       => (int)$tkt->Sistema_id,
+            'servicioId'      => (int)$tkt->Servicio_id,
+        ];
+    }
+}
 ?>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const openComments = <?= $openComments ?>;
-  const ticketId = <?= $ticketId ?>;
+  const ticketId     = <?= $ticketId ?>;
 
   if (!openComments || !ticketId) return;
 
-  // Abrir modal de comentarios del ticket
-  const btn = document.querySelector(`.comment-btn-${ticketId}`);
-  if (btn) { btn.click(); return; }
+  // Primero buscar la fila en la tabla y abrir el drawer con sus datos
+  const row = document.querySelector(`tr[data-ticket-id="${ticketId}"]`);
+  if (row) { openDrawer(row.dataset); return; }
 
-  // Si el ticket no está en la tabla visible (paginación), llamar directamente
-  if (typeof openComentariosModal === 'function') {
-    openComentariosModal(ticketId, '...');
+  // Ticket no está en la página actual → usar datos pre-cargados desde PHP
+  const preload = <?= $drawerPreload ? json_encode($drawerPreload, JSON_UNESCAPED_UNICODE) : 'null' ?>;
+  if (preload && typeof openDrawer === 'function') {
+    openDrawer(preload);
   }
 });
 

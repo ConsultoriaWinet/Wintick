@@ -875,11 +875,7 @@ $this->registerJs($js);
         sysNotif.onclick = () => {
           window.focus();
           if (n.ticket_id) {
-            if (n.tipo === 'mencion') {
-              window.location.href = `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(n.ticket_id)}&notif_id=${encodeURIComponent(n.id)}`;
-            } else {
-              window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(n.ticket_id)}`;
-            }
+            window.location.href = `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(n.ticket_id)}&notif_id=${encodeURIComponent(n.id)}`;
           }
         };
       }
@@ -974,12 +970,8 @@ $this->registerJs($js);
     })
       .catch(() => {})
       .finally(() => {
-        if (tipo === 'mencion') {
-          window.location.href =
-            `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(ticketId)}&notif_id=${encodeURIComponent(notifId)}`;
-          return;
-        }
-        window.location.href = `${TICKET_VIEW_URL}?id=${encodeURIComponent(ticketId)}`;
+        window.location.href =
+          `${TICKET_INDEX_URL}?openComments=1&ticket_id=${encodeURIComponent(ticketId)}&notif_id=${encodeURIComponent(notifId)}`;
       });
   }
 
