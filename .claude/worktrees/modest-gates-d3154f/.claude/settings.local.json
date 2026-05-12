@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(php yii *)",
-      "Bash(mysql -u root wintick -e \"SELECT COUNT\\(*\\) as total FROM clientes; SELECT id, Nombre, RFC FROM clientes ORDER BY id DESC LIMIT 5;\")"
+      "Bash(mysql -u root wintick -e \"SELECT COUNT\\(*\\) as total FROM clientes; SELECT id, Nombre, RFC FROM clientes ORDER BY id DESC LIMIT 5;\")",
+      "Bash(xargs grep -l \"RBAC\\\\|Cheka\\\\|AccessControl\")",
+      "Bash(xargs grep -i \"cheka\")"
     ]
   }
 }
