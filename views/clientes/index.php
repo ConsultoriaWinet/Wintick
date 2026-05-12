@@ -387,39 +387,43 @@ $this->registerJs("
         });
     };
 
-    // ── Búsqueda AJAX global (busca en TODOS los clientes, no solo la página actual) ──
-    var searchXHR  = null;
+    \$('#pageSizeSelect').on('change', function() {
+        \$('#pageSizeHidden').val(\$(this).val());
+        \$('#searchForm').submit();
+    });
+", \yii\web\View::POS_END);
+
+// HEREDOC: los " no necesitan escape y $(...) de jQuery no se interpola ($ seguido de '(' no es variable PHP)
+$searchUrl = Url::to(['clientes/search']);
+$this->registerJs(<<<JS
+(function() {
+    var searchXHR   = null;
     var searchTimer = null;
-    var SEARCH_URL  = '<?= Url::to(['clientes/search']) ?>';
+    var SEARCH_URL  = '$searchUrl';
 
     function escHtml(s) {
-        return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function clearCliSearch() {
-        \$('#universalSearch').val('').focus();
-        \$('#clearSearchBtn').hide();
-        \$('#ajax-search-results').hide().empty();
-        \$('#clientes-normal-content').show();
+        $('#universalSearch').val('').focus();
+        $('#clearSearchBtn').hide();
+        $('#ajax-search-results').hide().empty();
+        $('#clientes-normal-content').show();
     }
     window.clearCliSearch = clearCliSearch;
 
     function renderAjaxResults(results, q) {
-        var $container = \$('#ajax-search-results');
+        var box = $('#ajax-search-results');
         if (!results.length) {
-            $container.html(
-                '<div style="text-align:center;padding:40px 20px;color:var(--text-3,#9ca3af);">' +
-                '<i class="fas fa-search" style="font-size:24px;opacity:.3;display:block;margin-bottom:10px;"></i>' +
-                'Sin resultados para <strong>' + escHtml(q) + '</strong></div>'
-            );
+            box.html('<div style="text-align:center;padding:40px 20px;color:var(--text-3,#9ca3af);">Sin resultados para <strong>' + escHtml(q) + '</strong></div>');
             return;
         }
 
-        // Tabla desktop
         var rows = results.map(function(c) {
             var cls = c.tiempoOk ? 'ok' : 'sin';
             var txt = c.tiempoOk ? escHtml(c.Tiempo) + ' h' : escHtml(c.Tiempo) + ' SIN HORAS';
-            var correoCell = c.Correo
+            var email = c.Correo
                 ? '<a href="#" onclick="copyToClipboard(event,\'' + escHtml(c.Correo) + '\')" style="color:var(--accent,#3b82f6);text-decoration:none;">' + escHtml(c.Correo) + '</a>'
                 : '<span style="color:var(--text-3,#9ca3af);">—</span>';
             return '<tr onclick="openModal(' + c.id + ')" style="cursor:pointer;border-bottom:1px solid var(--border,#e5e7eb);">' +
@@ -428,31 +432,29 @@ $this->registerJs("
                 '<td style="max-width:160px;white-space:normal;color:var(--text-2,#374151);padding:10px 12px;">' + escHtml(c.Razon_social) + '</td>' +
                 '<td style="text-align:center;padding:10px 12px;"><span class="badge-tiempo ' + cls + '">' + txt + '</span></td>' +
                 '<td style="font-family:monospace;font-size:12px;color:var(--text-2,#374151);padding:10px 12px;">' + escHtml(c.RFC) + '</td>' +
-                '<td style="padding:10px 12px;">' + correoCell + '</td>' +
+                '<td style="padding:10px 12px;">' + email + '</td>' +
                 '</tr>';
         }).join('');
 
-        // Cards mobile
         var cards = results.map(function(c) {
             var cls = c.tiempoOk ? 'ok' : 'sin';
             var txt = c.tiempoOk ? escHtml(c.Tiempo) + ' h' : escHtml(c.Tiempo) + ' SIN HORAS';
-            var correoCard = c.Correo
+            var emailCard = c.Correo
                 ? '<a href="#" onclick="copyToClipboard(event,\'' + escHtml(c.Correo) + '\')" style="color:var(--accent,#3b82f6);">' + escHtml(c.Correo) + '</a>'
                 : '—';
             return '<div class="card-mobile-cli" onclick="openModal(' + c.id + ')">' +
                 '<div class="cli-nombre">' + escHtml(c.Nombre) + '</div>' +
                 '<div class="cli-field">RFC: <span>' + escHtml(c.RFC) + '</span></div>' +
                 '<div class="cli-field">Razón Social: <span>' + escHtml(c.Razon_social) + '</span></div>' +
-                '<div class="cli-field">Correo: <span>' + correoCard + '</span></div>' +
+                '<div class="cli-field">Correo: <span>' + emailCard + '</span></div>' +
                 '<div style="margin-top:8px;"><span class="badge-tiempo ' + cls + '">' + txt + '</span></div>' +
                 '</div>';
         }).join('');
 
-        $container.html(
+        box.html(
             '<div style="padding:8px 16px 6px;font-size:12px;color:var(--text-3,#6b7280);border-bottom:1px solid var(--border,#e5e7eb);">' +
             '<i class="fas fa-search" style="margin-right:5px;"></i>' +
-            '<strong>' + results.length + '</strong> resultado' + (results.length !== 1 ? 's' : '') + ' en todos los clientes' +
-            '</div>' +
+            '<strong>' + results.length + '</strong> resultado' + (results.length !== 1 ? 's' : '') + ' en todos los clientes</div>' +
             '<div class="d-none d-md-block" style="overflow-x:auto;">' +
             '<table class="clientes-table"><thead><tr>' +
             '<th>ID</th><th>Nombre</th><th>Razón Social</th>' +
@@ -462,41 +464,37 @@ $this->registerJs("
         );
     }
 
-    \$('#universalSearch').on('input', function() {
-        var q = \$(this).val().trim();
-        \$('#clearSearchBtn').toggle(q.length > 0);
+    $('#universalSearch').on('input', function() {
+        var q = $(this).val().trim();
+        $('#clearSearchBtn').toggle(q.length > 0);
         clearTimeout(searchTimer);
         if (searchXHR) { searchXHR.abort(); searchXHR = null; }
 
         if (!q) {
-            \$('#ajax-search-results').hide().empty();
-            \$('#clientes-normal-content').show();
+            $('#ajax-search-results').hide().empty();
+            $('#clientes-normal-content').show();
             return;
         }
 
-        // Mostrar spinner mientras carga
-        \$('#ajax-search-results').show().html(
+        $('#ajax-search-results').show().html(
             '<div style="text-align:center;padding:30px;color:var(--text-3,#9ca3af);">' +
             '<div class="spinner-border spinner-border-sm me-2"></div>Buscando...</div>'
         );
-        \$('#clientes-normal-content').hide();
+        $('#clientes-normal-content').hide();
 
         searchTimer = setTimeout(function() {
-            searchXHR = \$.getJSON(SEARCH_URL, {q: q}, function(data) {
+            searchXHR = $.getJSON(SEARCH_URL, {q: q}, function(data) {
                 renderAjaxResults(data.results, q);
             }).fail(function(xhr) {
                 if (xhr.statusText !== 'abort') {
-                    \$('#ajax-search-results').html(
+                    $('#ajax-search-results').html(
                         '<div style="text-align:center;padding:30px;color:#ef4444;">Error al buscar. Intenta de nuevo.</div>'
                     );
                 }
             });
         }, 300);
     });
-
-    \$('#pageSizeSelect').on('change', function() {
-        \$('#pageSizeHidden').val(\$(this).val());
-        \$('#searchForm').submit();
-    });
-", \yii\web\View::POS_END);
+})();
+JS
+, \yii\web\View::POS_END);
 ?>
