@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php yii *)",
+      "Bash(mysql -u root wintick -e \"SELECT COUNT\\(*\\) as total FROM clientes; SELECT id, Nombre, RFC FROM clientes ORDER BY id DESC LIMIT 5;\")"
+    ]
+  }
+}
