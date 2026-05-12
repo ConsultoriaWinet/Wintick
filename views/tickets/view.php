@@ -444,7 +444,7 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
 
                 <div class="info-item">
-                    <span class="info-label">Hora Programada</span>
+                    <span class="info-label">Hora de Reporte</span>
                     <span class="info-value">
                         <?= $model->HoraProgramada ? date('d/m/Y H:i', strtotime($model->HoraProgramada)) : '<span class="empty-field">No definida</span>' ?>
                     </span>

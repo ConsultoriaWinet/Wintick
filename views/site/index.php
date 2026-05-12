@@ -1031,7 +1031,7 @@ function buildTimeHeader() {
 /* ── Renderizar filas ── */
 /* ── Asignación de lanes (sub-filas) para tickets solapados ── */
 function chekaAssignLanes(tickets) {
-    // tickets ya ordenados por horaMin (PHP los ordena por HoraProgramada)
+    // tickets ya ordenados por horaMin (PHP los ordena por HoraInicio)
     const laneEnds = []; // laneEnds[i] = minuto en que termina el último ticket del lane i
     tickets.forEach(t => {
         const start = t.horaMin;

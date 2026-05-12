@@ -107,8 +107,8 @@ class SiteController extends Controller
         foreach ($usuarios as $u) {
             $tickets = Tickets::find()
                 ->where(['Asignado_a' => $u->id])
-                ->andWhere(['LIKE', 'HoraProgramada', $fecha . '%', false])
-                ->orderBy(['HoraProgramada' => SORT_ASC])
+                ->andWhere(['LIKE', 'HoraInicio', $fecha . '%', false])
+                ->orderBy(['HoraInicio' => SORT_ASC])
                 ->with(['cliente', 'sistema', 'servicio'])
                 ->all();
 
@@ -123,8 +123,8 @@ class SiteController extends Controller
             ];
 
             foreach ($tickets as $t) {
-                if (empty($t->HoraProgramada)) continue;
-                $ts = strtotime($t->HoraProgramada);
+                if (empty($t->HoraInicio)) continue;
+                $ts = strtotime($t->HoraInicio);
                 $horaStr = date('H:i', $ts);
                 $horaMin = (int)date('H', $ts) * 60 + (int)date('i', $ts);
 
