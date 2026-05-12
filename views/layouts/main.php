@@ -652,7 +652,7 @@ $this->registerCssFile('@web/css/theme.css');
                                     <input type="color" id="colorPickerInput" value="<?= Html::encode($currentColor) ?>"
                                            style="width:36px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;"
                                            oninput="seleccionarColor(event, this.value)">
-                                    <span style="font-size:12px; color:#6b7280;">Color personalizado</span>
+                                    <span style="font-size:12px; color:#6b7280;">Color personalizados</span>
                                 </div>
                             </div>
                         </div>
