@@ -5,17 +5,15 @@ namespace app\models;
 use Yii;
 
 /**
- * This is the model class for table "clientes".
- *
  * @property int $id
  * @property string $Nombre
- * @property string $Razon_social
+ * @property string|null $Razon_social
  * @property string|null $RFC
- * @property string $Correo
- * @property string $Contacto_nombre
+ * @property string|null $Correo         JSON: [{"label":"...","valor":"..."}]
+ * @property string|null $Contacto_nombre
  * @property string $Tiempo
- * @property string $Whatsapp_contacto
- * @property string $Telefono
+ * @property string|null $Whatsapp_contacto  JSON: [{"label":"...","valor":"..."}]
+ * @property string|null $Telefono           JSON: [{"label":"...","valor":"..."}]
  * @property string $Prioridad
  * @property string $Criticidad
  * @property int $Estado
@@ -24,54 +22,83 @@ use Yii;
  */
 class Clientes extends \yii\db\ActiveRecord
 {
-
-
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName()
     {
         return 'clientes';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
-            [['RFC'], 'default', 'value' => null],
+            [['RFC', 'Razon_social', 'Contacto_nombre', 'Telefono', 'Whatsapp_contacto', 'Correo'], 'default', 'value' => null],
+            [['Tiempo'], 'default', 'value' => '0'],
+            [['Tipo_servicio'], 'default', 'value' => 'POLIZA'],
             [['Estado'], 'default', 'value' => 1],
-            [['Nombre', 'Razon_social', 'Correo','Criticidad','Contacto_nombre', 'Tiempo', 'Whatsapp_contacto', 'Telefono', 'Prioridad', 'created_at', 'updated_at'], 'required'],
+            [['Nombre', 'Prioridad', 'Criticidad', 'created_at', 'updated_at'], 'required'],
             [['Estado', 'created_at', 'updated_at'], 'integer'],
-            [['Whatsapp_contacto', 'Telefono'], 'string', 'max' => 20],
-            [['Whatsapp_contacto', 'Telefono'], 'match', 'pattern' => '/^\d{10}$/', 'message' => 'Debe tener exactamente 10 dígitos.'],
-            [['Nombre', 'Razon_social', 'RFC', 'Correo', 'Contacto_nombre', 'Prioridad'], 'string', 'max' => 255],
+            [['Nombre', 'Razon_social', 'RFC', 'Contacto_nombre', 'Prioridad'], 'string', 'max' => 255],
+            [['Telefono', 'Whatsapp_contacto', 'Correo'], 'string'],
             [['RFC'], 'unique'],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'Nombre' => 'Nombre',
-            'Razon_social' => 'Razon Social',
-            'RFC' => 'Rfc',
-            'Correo' => 'Correo',
-            'Contacto_nombre' => 'Contacto Nombre',
-            'Tiempo' => 'Tiempo',
-            'Whatsapp_contacto' => 'Whatsapp Contacto',
-            'Telefono' => 'Telefono',
-            'Prioridad' => 'Prioridad',
-            'Criticidad' => 'Criticidad',
-            'Estado' => 'Estado',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
+            'id'                => 'ID',
+            'Nombre'            => 'Nombre',
+            'Razon_social'      => 'Razón Social',
+            'RFC'               => 'RFC',
+            'Correo'            => 'Correos',
+            'Contacto_nombre'   => 'Contacto Principal',
+            'Tiempo'            => 'Tiempo',
+            'Whatsapp_contacto' => 'WhatsApp',
+            'Telefono'          => 'Teléfonos',
+            'Prioridad'         => 'Prioridad',
+            'Criticidad'        => 'Criticidad',
+            'Tipo_servicio'     => 'Tipo de Servicio',
+            'Estado'            => 'Estado',
+            'created_at'        => 'Creado',
+            'updated_at'        => 'Actualizado',
         ];
     }
 
+    /** Devuelve el array decodificado de teléfonos. */
+    public function getTelefonos(): array
+    {
+        return json_decode($this->Telefono ?? '[]', true) ?: [];
+    }
+
+    /** Devuelve el array decodificado de WhatsApps. */
+    public function getWhatsapps(): array
+    {
+        return json_decode($this->Whatsapp_contacto ?? '[]', true) ?: [];
+    }
+
+    /** Devuelve el array decodificado de correos. */
+    public function getCorreos(): array
+    {
+        return json_decode($this->Correo ?? '[]', true) ?: [];
+    }
+
+    /** Primer teléfono disponible (para mostrar en índice). */
+    public function getPrimerTelefono(): string
+    {
+        $lista = $this->getTelefonos();
+        return $lista[0]['valor'] ?? '';
+    }
+
+    /** Primer WhatsApp disponible (para mostrar en índice). */
+    public function getPrimerWhatsapp(): string
+    {
+        $lista = $this->getWhatsapps();
+        return $lista[0]['valor'] ?? '';
+    }
+
+    /** Primer correo disponible (para mostrar en índice). */
+    public function getPrimerCorreo(): string
+    {
+        $lista = $this->getCorreos();
+        return $lista[0]['valor'] ?? '';
+    }
 }

@@ -177,12 +177,15 @@ $this->title = 'Clientes';
                     ],
                     [
                         'attribute'      => 'Correo',
+                        'label'          => 'Correo',
                         'format'         => 'raw',
                         'headerOptions'  => ['class' => 'col-correo'],
                         'contentOptions' => ['class' => 'col-correo'],
                         'value'          => function ($m) {
-                            return Html::a(Html::encode($m->Correo), '#', [
-                                'onclick' => "copyToClipboard(event, '" . Html::encode($m->Correo) . "')",
+                            $correo = $m->getPrimerCorreo();
+                            if (!$correo) return '<span style="color:var(--text-3,#9ca3af);font-size:12px;">—</span>';
+                            return Html::a(Html::encode($correo), '#', [
+                                'onclick' => "copyToClipboard(event, '" . Html::encode($correo) . "')",
                                 'style'   => 'color:var(--accent,#3b82f6);text-decoration:none;',
                             ]);
                         },
@@ -209,10 +212,11 @@ $this->title = 'Clientes';
                     <div class="cli-field">RFC: <span><?= Html::encode($model->RFC) ?></span></div>
                     <div class="cli-field">Razón Social: <span><?= Html::encode($model->Razon_social) ?></span></div>
                     <div class="cli-field">Correo:
-                        <span><?= Html::a(Html::encode($model->Correo), '#', [
-                            'onclick' => "copyToClipboard(event, '" . Html::encode($model->Correo) . "')",
+                        <?php $c = $model->getPrimerCorreo(); ?>
+                        <span><?= $c ? Html::a(Html::encode($c), '#', [
+                            'onclick' => "copyToClipboard(event, '" . Html::encode($c) . "')",
                             'style'   => 'color:var(--accent,#3b82f6);',
-                        ]) ?></span>
+                        ]) : '—' ?></span>
                     </div>
                     <div style="margin-top:8px;">
                         <?php $n = floatval($model->Tiempo); ?>
