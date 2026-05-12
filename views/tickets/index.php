@@ -4323,38 +4323,30 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
 
         function render(items) {
             if (!items.length) {
-                // Nodo simple: no requiere innerHTML extenso
-                const empty = document.createElement('div');
-                empty.className = 'ss-empty';
-                empty.textContent = 'Sin resultados';
-                dropdown.replaceChildren(empty);
+                dropdown.innerHTML = '<div class="ss-empty">Sin resultados</div>';
             } else {
-                const q   = normalize(input.value);
-                const re  = q ? new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi') : null;
-                const frag = document.createDocumentFragment();
-                items.forEach(opt => {
-                    const el = document.createElement('div');
-                    el.className    = 'ss-item';
-                    el.dataset.value = String(opt.value);
-                    // Resaltar coincidencia sin innerHTML masivo
-                    if (re) {
-                        el.innerHTML = opt.text.replace(re, '<strong>$1</strong>');
-                    } else {
-                        el.textContent = opt.text;
-                    }
-                    el.addEventListener('mousedown', e => {
-                        e.preventDefault();
-                        input.value  = opt.text;
-                        select.value = opt.value;
-                        dropdown.style.display = 'none';
-                        if (onSelect) onSelect(select);
-                    });
-                    frag.appendChild(el);
-                });
-                // replaceChildren no toca el input (sibling) → no pierde focus
-                dropdown.replaceChildren(frag);
+                const q = normalize(input.value);
+                dropdown.innerHTML = items.map(opt => {
+                    const label = opt.text;
+                    const hi = q ? label.replace(
+                        new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+                        '<strong>$1</strong>'
+                    ) : label;
+                    return `<div class="ss-item" data-value="${opt.value}">${hi}</div>`;
+                }).join('');
             }
             dropdown.style.display = 'block';
+            dropdown.querySelectorAll('.ss-item').forEach(item => {
+                item.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    const opt = allOptions.find(o => o.value === item.dataset.value);
+                    if (!opt) return;
+                    input.value  = opt.text;
+                    select.value = opt.value;
+                    dropdown.style.display = 'none';
+                    if (onSelect) onSelect(select);
+                });
+            });
         }
 
         function filterAndShow() {
@@ -4363,18 +4355,9 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                 ? allOptions.filter(o => normalize(o.text).includes(q))
                 : allOptions;
             render(filtered.slice(0, 12));
-            // Guardia: si el render causó pérdida de focus, lo restauramos una sola vez
-            if (!_guardFocus && document.activeElement !== input) {
-                _guardFocus = true;
-                const ss = input.selectionStart ?? input.value.length;
-                const se = input.selectionEnd   ?? input.value.length;
-                input.focus();
-                try { input.setSelectionRange(ss, se); } catch (_) {}
-                _guardFocus = false;
-            }
         }
 
-        input.addEventListener('focus', () => { if (!_guardFocus) filterAndShow(); });
+        input.addEventListener('focus', filterAndShow);
         input.addEventListener('input', filterAndShow);
         input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 160));
         input.addEventListener('keydown', e => {

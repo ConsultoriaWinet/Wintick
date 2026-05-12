@@ -134,7 +134,16 @@ $this->title = 'Clientes';
                 'dataProvider' => $dataProvider,
                 'layout'       => '{items}{pager}',
                 'rowOptions'   => function ($model) {
-                    return ['onclick' => "openModal({$model->id})"];
+                    $search = strtolower(implode(' ', array_filter([
+                        $model->Nombre,
+                        $model->Razon_social,
+                        $model->RFC,
+                        $model->getPrimerCorreo(),
+                    ])));
+                    return [
+                        'onclick'     => "openModal({$model->id})",
+                        'data-search' => $search,
+                    ];
                 },
                 'tableOptions' => ['class' => 'clientes-table'],
                 'headerRowOptions' => [],
@@ -207,7 +216,10 @@ $this->title = 'Clientes';
         <!-- Cards mobile -->
         <div class="d-block d-md-none" style="padding:12px;">
             <?php foreach ($dataProvider->models as $model): ?>
-                <div class="card-mobile-cli" onclick="openModal(<?= $model->id ?>)">
+                <?php $searchAttr = strtolower(implode(' ', array_filter([
+                    $model->Nombre, $model->Razon_social, $model->RFC, $model->getPrimerCorreo()
+                ]))); ?>
+                <div class="card-mobile-cli" onclick="openModal(<?= $model->id ?>)" data-search="<?= Html::encode($searchAttr) ?>">
                     <div class="cli-nombre"><?= Html::encode($model->Nombre) ?></div>
                     <div class="cli-field">RFC: <span><?= Html::encode($model->RFC) ?></span></div>
                     <div class="cli-field">Razón Social: <span><?= Html::encode($model->Razon_social) ?></span></div>
@@ -369,11 +381,31 @@ $this->registerJs("
         });
     };
 
-    var searchTimer;
+    // Filtrado instantáneo en el cliente (sin recargar página → sin perder foco)
+    function applyClientSearch(q) {
+        var norm = (q || '').toLowerCase().trim()
+            .normalize('NFD').replace(/[̀-ͯ]/g, '');
+        var total = 0;
+        \$('.clientes-table tbody tr[data-search]').each(function() {
+            var hay = \$(this).data('search').normalize('NFD').replace(/[̀-ͯ]/g,'').includes(norm);
+            \$(this).toggle(!norm || hay);
+            if (!norm || hay) total++;
+        });
+        \$('.card-mobile-cli[data-search]').each(function() {
+            var hay = \$(this).data('search').normalize('NFD').replace(/[̀-ͯ]/g,'').includes(norm);
+            \$(this).toggle(!norm || hay);
+        });
+    }
+
     \$('#universalSearch').on('input', function() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(function() { \$('#searchForm').submit(); }, 400);
+        applyClientSearch(\$(this).val());
     });
+
+    // Aplicar filtro inicial si la página cargó con un valor de búsqueda (vía URL)
+    (function() {
+        var init = \$('#universalSearch').val();
+        if (init) applyClientSearch(init);
+    })();
 
     \$('#pageSizeSelect').on('change', function() {
         \$('#pageSizeHidden').val(\$(this).val());
