@@ -23,12 +23,12 @@ class ClientesController extends Controller
     return array_merge(parent::behaviors(), [
         'access' => [
             'class' => AccessControl::class,
-            'only' => ['index','view','create','update','delete','historial'],
+            'only' => ['index','view','create','update','delete','historial','search'],
             'rules' => [
                 // ✅ Ver clientes (Admin, Supervisores, Administracion, etc.)
                 [
                     'allow' => true,
-                    'actions' => ['index','view','historial'],
+                    'actions' => ['index','view','historial','search'],
                     'roles' => ['verClientes'],
                 ],
                 // ✅ Administrar clientes (Supervisores y arriba)
@@ -223,6 +223,52 @@ class ClientesController extends Controller
             'cliente' => Html::encode($cliente->Nombre),
             'tickets' => $tickets,
         ];
+    }
+
+    /**
+     * Búsqueda AJAX — devuelve JSON con todos los clientes que coincidan con $q.
+     * No paginado (hasta 500 resultados), para el buscador instantáneo.
+     */
+    public function actionSearch()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $q = trim(Yii::$app->request->get('q', ''));
+
+        $query = Clientes::find()
+            ->select(['id', 'Nombre', 'Razon_social', 'RFC', 'Correo', 'Tiempo'])
+            ->orderBy(['Nombre' => SORT_ASC])
+            ->limit(500);
+
+        if ($q !== '') {
+            $query->andWhere(['or',
+                ['like', 'Nombre',          $q],
+                ['like', 'Razon_social',    $q],
+                ['like', 'RFC',             $q],
+                ['like', 'Correo',          $q],   // campo JSON, LIKE funciona
+                ['like', 'Contacto_nombre', $q],
+            ]);
+        }
+
+        $rows = $query->all();
+
+        $results = array_map(function ($c) {
+            // Extraer primer correo del JSON
+            $correos = json_decode($c->Correo ?? '[]', true) ?: [];
+            $primerCorreo = $correos[0]['valor'] ?? '';
+            $tiempo = (float) $c->Tiempo;
+            return [
+                'id'          => $c->id,
+                'Nombre'      => $c->Nombre,
+                'Razon_social'=> (string) ($c->Razon_social ?? ''),
+                'RFC'         => (string) ($c->RFC ?? ''),
+                'Correo'      => $primerCorreo,
+                'Tiempo'      => $c->Tiempo,
+                'tiempoOk'    => $tiempo > 0,
+            ];
+        }, $rows);
+
+        return ['results' => $results, 'count' => count($results)];
     }
 
     /**
