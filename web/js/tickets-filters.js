@@ -30,6 +30,9 @@ class TicketsFilters {
         const urlParams  = new URLSearchParams(window.location.search);
         const hasFilters = FILTER_PARAMS.some(k => urlParams.has(k) && urlParams.get(k) !== '');
 
+        // Llegamos desde una notificación — no redirigir, dejar que el ticket se abra
+        if (urlParams.has('ticket_id') || urlParams.has('openComments')) return;
+
         if (hasFilters) {
             // Hay filtros activos en URL → persistirlos
             const saved = {};
