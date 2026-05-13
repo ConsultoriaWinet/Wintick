@@ -12,6 +12,9 @@ class RbacController extends Controller
     {
         $auth = Yii::$app->authManager;
 
+        // Preservar asignaciones de usuarios antes de limpiar
+        $assignments = Yii::$app->db->createCommand('SELECT user_id, item_name FROM auth_assignment')->queryAll();
+
         // Limpia todo
         $auth->removeAll();
 
@@ -92,6 +95,7 @@ class RbacController extends Controller
         // Administración (nivel 2)
         $auth->addChild($administracion, $consultores); // hereda tickets
         $auth->addChild($administracion, $verClientes);
+        $auth->addChild($administracion, $administrarClientes);
         $auth->addChild($administracion, $verReportes);
         $auth->addChild($administracion, $verUsuarios);
 
@@ -110,6 +114,14 @@ class RbacController extends Controller
 
 
         // Monitor: sin permisos — solo puede ver el calendario (index es accesible a '@')
+
+        // Restaurar asignaciones de usuarios
+        foreach ($assignments as $a) {
+            $role = $auth->getRole($a['item_name']);
+            if ($role) {
+                $auth->assign($role, $a['user_id']);
+            }
+        }
 
         echo "✔ RBAC inicializado correctamente con permisos, 6 roles y jerarquías.\n";
 

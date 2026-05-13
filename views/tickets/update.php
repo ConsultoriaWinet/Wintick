@@ -13,10 +13,23 @@ use yii\helpers\ArrayHelper;
 
 $this->title = 'Actualizar Ticket: ' . $model->Folio;
 
+// Texto pre-seleccionado para ss-wrap
+$clienteNombre = '';
+if ($model->Cliente_id) {
+    foreach ($clientes as $c) { if ($c['id'] == $model->Cliente_id) { $clienteNombre = $c['Nombre']; break; } }
+}
+$sistemaNombre = '';
+if ($model->Sistema_id) {
+    foreach ($sistemas as $s) { if ($s['id'] == $model->Sistema_id) { $sistemaNombre = $s['Nombre']; break; } }
+}
+$servicioNombre = '';
+if ($model->Servicio_id) {
+    foreach ($servicios as $s) { if ($s['id'] == $model->Servicio_id) { $servicioNombre = $s['Nombre']; break; } }
+}
 
-$this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
-$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \yii\web\View::POS_HEAD]);
-$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
+// Valores en formato datetime-local (YYYY-MM-DDTHH:MM)
+$horaProgramadaVal = $model->HoraProgramada ? date('Y-m-d\TH:i', strtotime($model->HoraProgramada)) : '';
+$horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($model->HoraInicio))     : '';
 ?>
 
 <style>
@@ -140,33 +153,57 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
         </div>
 
         <div class="col-md-6">
-            <?= $form->field($model, 'Cliente_id')->dropDownList(
-                ArrayHelper::map($clientes, 'id', 'Nombre'),
-                [
-                    'prompt' => 'Seleccionar Cliente',
-                    'class' => 'form-select'
-                ]
-            )->label('Cliente') ?>
+            <label class="form-label">Cliente</label>
+            <div class="ss-wrap">
+                <input type="text" class="form-control ss-input" placeholder="Buscar cliente..."
+                       value="<?= Html::encode($clienteNombre) ?>">
+                <div class="ss-dropdown"></div>
+                <select id="tickets-cliente_id" name="Tickets[Cliente_id]" style="display:none">
+                    <option value="">Seleccionar Cliente</option>
+                    <?php foreach ($clientes as $c): ?>
+                        <option value="<?= $c['id'] ?>"
+                            <?= $model->Cliente_id == $c['id'] ? 'selected' : '' ?>>
+                            <?= Html::encode($c['Nombre']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
 
         <div class="col-md-6">
-            <?= $form->field($model, 'Sistema_id')->dropDownList(
-                ArrayHelper::map($sistemas, 'id', 'Nombre'),
-                [
-                    'prompt' => 'Seleccionar Sistema',
-                    'class' => 'form-select'
-                ]
-            )->label('Sistema') ?>
+            <label class="form-label">Sistema</label>
+            <div class="ss-wrap">
+                <input type="text" class="form-control ss-input" placeholder="Buscar sistema..."
+                       value="<?= Html::encode($sistemaNombre) ?>">
+                <div class="ss-dropdown"></div>
+                <select id="tickets-sistema_id" name="Tickets[Sistema_id]" style="display:none">
+                    <option value="">Seleccionar Sistema</option>
+                    <?php foreach ($sistemas as $s): ?>
+                        <option value="<?= $s['id'] ?>"
+                            <?= $model->Sistema_id == $s['id'] ? 'selected' : '' ?>>
+                            <?= Html::encode($s['Nombre']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
 
         <div class="col-md-6">
-            <?= $form->field($model, 'Servicio_id')->dropDownList(
-                ArrayHelper::map($servicios, 'id', 'Nombre'),
-                [
-                    'prompt' => 'Seleccionar Servicio',
-                    'class' => 'form-select'
-                ]
-            )->label('Servicio') ?>
+            <label class="form-label">Servicio</label>
+            <div class="ss-wrap">
+                <input type="text" class="form-control ss-input" placeholder="Buscar servicio..."
+                       value="<?= Html::encode($servicioNombre) ?>">
+                <div class="ss-dropdown"></div>
+                <select id="tickets-servicio_id" name="Tickets[Servicio_id]" style="display:none">
+                    <option value="">Seleccionar Servicio</option>
+                    <?php foreach ($servicios as $s): ?>
+                        <option value="<?= $s['id'] ?>"
+                            <?= $model->Servicio_id == $s['id'] ? 'selected' : '' ?>>
+                            <?= Html::encode($s['Nombre']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
 
         <div class="col-md-6">
@@ -187,17 +224,21 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
         </div>
 
         <div class="col-md-6">
-            <?= $form->field($model, 'HoraProgramada')->textInput([
-                'class' => 'form-control flatpickr-datetime',
-                'placeholder' => 'Seleccionar fecha y hora'
-            ])->label('Fecha de Reporte') ?>
+            <div class="form-group">
+                <label class="form-label">Hora Reporte</label>
+                <input type="datetime-local" class="form-control"
+                       name="Tickets[HoraProgramada]"
+                       value="<?= Html::encode($horaProgramadaVal) ?>">
+            </div>
         </div>
 
         <div class="col-md-6">
-            <?= $form->field($model, 'HoraInicio')->textInput([
-                'class' => 'form-control flatpickr-datetime',
-                'placeholder' => 'Seleccionar fecha y hora'
-            ])->label('Hora de Inicio') ?>
+            <div class="form-group">
+                <label class="form-label">Hora Inicio</label>
+                <input type="datetime-local" class="form-control"
+                       name="Tickets[HoraInicio]"
+                       value="<?= Html::encode($horaInicioVal) ?>">
+            </div>
         </div>
 
         <div class="col-12">
@@ -255,17 +296,93 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar Flatpickr para campos de fecha/hora
-    document.querySelectorAll('.flatpickr-datetime').forEach(function(element) {
-        flatpickr(element, {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i:s",
-            time_24hr: true,
-            locale: "es",
-            minuteIncrement: 15,
-            allowInput: true,
-            clickOpens: true
-        });
-    });
+
+    // ── Selects buscables (cliente / sistema / servicio) ──
+    (function() {
+        function normalize(s) {
+            return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        }
+
+        function initWrap(wrap) {
+            const input    = wrap.querySelector('.ss-input');
+            const dropdown = wrap.querySelector('.ss-dropdown');
+            const select   = wrap.querySelector('select');
+            if (!input || !dropdown || !select) return;
+
+            const allOptions = Array.from(select.options).filter(o => o.value !== '');
+            let _guard = false;
+
+            function render(items) {
+                if (!items.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'ss-empty';
+                    empty.textContent = 'Sin resultados';
+                    dropdown.replaceChildren(empty);
+                } else {
+                    const q   = normalize(input.value);
+                    const re  = q ? new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi') : null;
+                    const frag = document.createDocumentFragment();
+                    items.forEach(opt => {
+                        const el = document.createElement('div');
+                        el.className     = 'ss-item';
+                        el.dataset.value = String(opt.value);
+                        el.innerHTML = re ? opt.text.replace(re, '<strong>$1</strong>') : opt.text;
+                        el.addEventListener('mousedown', e => {
+                            e.preventDefault();
+                            input.value  = opt.text;
+                            select.value = opt.value;
+                            dropdown.style.display = 'none';
+                        });
+                        frag.appendChild(el);
+                    });
+                    dropdown.replaceChildren(frag);
+                }
+                dropdown.style.display = 'block';
+            }
+
+            function filterAndShow() {
+                const q = normalize(input.value);
+                render((q ? allOptions.filter(o => normalize(o.text).includes(q)) : allOptions).slice(0, 12));
+                if (!_guard && document.activeElement !== input) {
+                    _guard = true;
+                    const ss = input.selectionStart ?? input.value.length;
+                    const se = input.selectionEnd   ?? input.value.length;
+                    input.focus();
+                    try { input.setSelectionRange(ss, se); } catch (_) {}
+                    _guard = false;
+                }
+            }
+
+            input.addEventListener('focus',   () => { if (!_guard) filterAndShow(); });
+            input.addEventListener('input',   filterAndShow);
+            input.addEventListener('blur',    () => setTimeout(() => { dropdown.style.display = 'none'; }, 160));
+            input.addEventListener('keydown', e => {
+                if (dropdown.style.display === 'none') return;
+                const items  = [...dropdown.querySelectorAll('.ss-item')];
+                const active = dropdown.querySelector('.ss-active');
+                const idx    = items.indexOf(active);
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    items.forEach(i => i.classList.remove('ss-active'));
+                    (items[Math.min(idx + 1, items.length - 1)] || items[0])?.classList.add('ss-active');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    items.forEach(i => i.classList.remove('ss-active'));
+                    (items[Math.max(idx - 1, 0)])?.classList.add('ss-active');
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    const target = dropdown.querySelector('.ss-active') || items[0];
+                    if (target) {
+                        e.preventDefault();
+                        const opt = allOptions.find(o => o.value === target.dataset.value);
+                        if (opt) { input.value = opt.text; select.value = opt.value; dropdown.style.display = 'none'; }
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        document.querySelectorAll('.ss-wrap').forEach(initWrap);
+    })();
 });
 </script>

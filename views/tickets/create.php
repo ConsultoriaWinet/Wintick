@@ -36,9 +36,6 @@ if ($model->Servicio_id) {
 }
 
 
-$this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
-$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr', ['position' => \yii\web\View::POS_HEAD]);
-$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['position' => \yii\web\View::POS_HEAD]);
 ?>
 
 
@@ -394,17 +391,17 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 
             <div class="form-grid">
                 <div class="form-group">
-                    <?= $form->field($model, 'HoraProgramada')->textInput([
-                        'class' => 'form-control flatpickr-datetime',
-                        'placeholder' => 'Seleccionar fecha y hora'
-                    ])->label('Fecha de Reporte') ?>
+                    <label class="form-label">Hora Reporte</label>
+                    <input type="datetime-local" class="form-control"
+                           name="Tickets[HoraProgramada]"
+                           value="<?= Html::encode($model->HoraProgramada ? date('Y-m-d\TH:i', strtotime($model->HoraProgramada)) : '') ?>">
                 </div>
 
                 <div class="form-group">
-                    <?= $form->field($model, 'HoraInicio')->textInput([
-                        'class' => 'form-control flatpickr-datetime',
-                        'placeholder' => 'Seleccionar fecha y hora'
-                    ])->label('Hora de Inicio') ?>
+                    <label class="form-label">Hora Inicio</label>
+                    <input type="datetime-local" class="form-control"
+                           name="Tickets[HoraInicio]"
+                           value="<?= Html::encode($model->HoraInicio ? date('Y-m-d\TH:i', strtotime($model->HoraInicio)) : '') ?>">
                 </div>
 
                 <div class="form-group">
@@ -465,19 +462,6 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
-    // ── Flatpickr ──
-    document.querySelectorAll('.flatpickr-datetime').forEach(function (el) {
-        flatpickr(el, {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i:s",
-            time_24hr: true,
-            locale: "es",
-            minuteIncrement: 15,
-            allowInput: true,
-            clickOpens: true
-        });
-    });
 
     // ── Selects buscables (cliente / sistema / servicio) ──
     (function initSearchableSelects() {

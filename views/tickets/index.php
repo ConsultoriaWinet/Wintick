@@ -628,11 +628,11 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <div style="display:flex;flex-direction:column;gap:4px;">
                             <div style="display:flex;align-items:center;gap:4px;">
                                 <span style="font-size:10px;color:#888;white-space:nowrap;min-width:60px">Reporte:</span>
-                                <input type="datetime-local" class="form-control form-control-sm hora-inicio" style="font-size:11px;padding:3px 5px">
+                                <input type="datetime-local" class="form-control form-control-sm hora-programada" style="font-size:11px;padding:3px 5px">
                             </div>
                             <div style="display:flex;align-items:center;gap:4px;">
-                                <span style="font-size:10px;color:#888;white-space:nowrap;min-width:60px">Programada:</span>
-                                <input type="datetime-local" class="form-control form-control-sm hora-programada" style="font-size:11px;padding:3px 5px">
+                                <span style="font-size:10px;color:#888;white-space:nowrap;min-width:60px">Inicio:</span>
+                                <input type="datetime-local" class="form-control form-control-sm hora-inicio" style="font-size:11px;padding:3px 5px">
                             </div>
                         </div>
                     </td>
@@ -762,23 +762,15 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         </select>
                     </td>
                     <td class="tkt-fecha-cell">
-                        <?php if ($ticket->HoraInicio): ?>
-                            <div class="tkt-fecha-row"><span class="tkt-fecha-label">Reporte</span><?= Html::encode(date('d/m/y H:i', strtotime($ticket->HoraInicio))) ?></div>
-                        <?php endif; ?>
                         <?php if ($ticket->HoraProgramada): ?>
-                            <div class="tkt-fecha-row"><span class="tkt-fecha-label">Programada</span><?= Html::encode(date('d/m/y H:i', strtotime($ticket->HoraProgramada))) ?></div>
+                            <div class="tkt-fecha-row"><span class="tkt-fecha-label">Reporte</span><?= Html::encode(date('d/m/y H:i', strtotime($ticket->HoraProgramada))) ?></div>
                         <?php endif; ?>
-                        <?php if (!$ticket->HoraInicio && !$ticket->HoraProgramada): ?>—<?php endif; ?>
+                        <?php if ($ticket->HoraInicio): ?>
+                            <div class="tkt-fecha-row"><span class="tkt-fecha-label">Inicio</span><?= Html::encode(date('d/m/y H:i', strtotime($ticket->HoraInicio))) ?></div>
+                        <?php endif; ?>
+                        <?php if (!$ticket->HoraProgramada && !$ticket->HoraInicio): ?>—<?php endif; ?>
                     </td>
                     <td style="white-space:nowrap;">
-                        <div style="position:relative;display:inline-block;">
-                            <button class="tkt-btn-cmnt comment-btn-<?= $ticket->id ?>" title="Ver comentarios" onclick="openComentariosModal(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>')">
-                                <i class="fas fa-comment-dots"></i>
-                            </button>
-                            <?php if ($comentarioCount > 0): ?>
-                                <span class="tkt-cmnt-dot badge-count-<?= $ticket->id ?>"></span>
-                            <?php endif; ?>
-                        </div>
                         <button class="tkt-btn-del" title="Eliminar ticket"
                             onclick="confirmarEliminar(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>', <?= $ticket->Estado === 'CERRADO' && $ticket->Solucion ? 'true' : 'false' ?>)">
                             <i class="fas fa-trash"></i>
@@ -959,9 +951,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
     font-size: 12px;
     font-weight: 500;
     color: var(--text, #1A1814);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word;
 }
 
 /* ── Tabs ────────────────────────────────────── */
@@ -1289,7 +1279,7 @@ body.drawer-open #main > .container {
             <div class="dm-item"><span class="dm-label">Sistema</span><span class="dm-val" id="d-sistema"></span></div>
             <div class="dm-item"><span class="dm-label">Servicio</span><span class="dm-val" id="d-servicio"></span></div>
             <div class="dm-item"><span class="dm-label">Tiempo efectivo</span><span class="dm-val" id="d-tiempo-efectivo"></span></div>
-            <div class="dm-item"><span class="dm-label">Programada</span><span class="dm-val" id="d-programada"></span></div>
+            <div class="dm-item"><span class="dm-label">Reporte</span><span class="dm-val" id="d-programada"></span></div>
             <div class="dm-item"><span class="dm-label">Inicio</span><span class="dm-val" id="d-inicio"></span></div>
         </div>
 
@@ -1392,7 +1382,7 @@ body.drawer-open #main > .container {
                         <select id="de-Servicio_id"><option value="">Sin servicio</option></select>
                     </div>
                     <div class="d-field-group">
-                        <label><i class="fas fa-calendar-alt"></i> Hora programada</label>
+                        <label><i class="fas fa-calendar-alt"></i> Hora reporte</label>
                         <input type="datetime-local" id="de-HoraProgramada">
                     </div>
                     <div class="d-field-group">
@@ -3180,7 +3170,9 @@ function drawerShowEdit() {
 
 function drawerShowSol() {
     const d = _drawerData;
-    document.getElementById('ds-label-inicio').textContent = d.horaInicio || '-';
+    const iniRawForSol = d.horaInicioRaw || d.horaProgramadaRaw || '';
+    const iniLabelForSol = d.horaInicio && d.horaInicio !== '-' ? d.horaInicio : (d.horaProgramada || '-');
+    document.getElementById('ds-label-inicio').textContent = iniLabelForSol;
     document.getElementById('ds-label-fin').textContent    = '—';
     document.getElementById('ds-badge-tiempo').textContent = 'Sin calcular';
     document.getElementById('ds-HoraFinalizo').value       = '';
@@ -3190,8 +3182,8 @@ function drawerShowSol() {
     document.getElementById('ds-HoraFinalizo').oninput = function() {
         const fin = new Date(this.value);
         document.getElementById('ds-label-fin').textContent = this.value ? fin.toLocaleString('es-MX') : '—';
-        if (d.horaInicioRaw && this.value) {
-            const ini = new Date(d.horaInicioRaw);
+        if (iniRawForSol && this.value) {
+            const ini = new Date(iniRawForSol);
             const diffMin = Math.round((fin - ini) / 60000);
             if (diffMin > 0) {
                 const h = Math.floor(diffMin / 60), m = diffMin % 60;
@@ -3579,7 +3571,7 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
                             <div class="swal-info-item">
-                                <span class="swal-info-label">Hora programada</span>
+                                <span class="swal-info-label">Hora reporte</span>
                                 <span class="swal-info-value">${escapeHtml(d.horaProgramada || '-')}</span>
                             </div>
                             <div class="swal-info-item">
@@ -3669,7 +3661,7 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
                             </select>
                         </div>
                         <div class="edit-field-group">
-                            <label><i class="fas fa-calendar-alt"></i> Hora programada</label>
+                            <label><i class="fas fa-calendar-alt"></i> Hora reporte</label>
                             <input type="datetime-local" id="edit-HoraProgramada" value="${d.horaProgramadaRaw||''}">
                         </div>
                         <div class="edit-field-group">

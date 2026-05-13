@@ -206,7 +206,8 @@ class TicketsController extends Controller
             }
             $model->Fecha_creacion      = $fechaDatetime;
             $model->Fecha_actualizacion = $fechaDatetime;
-            $model->HoraProgramada      = $fechaDatetime;  // Fecha de Reporte
+            $model->HoraInicio          = $fechaDatetime;
+            $model->HoraProgramada      = date('Y-m-d H:i:s');
 
             Yii::$app->session->setFlash('fechaDesdeCalendario', $fechaSeleccionada);
             $desdeCalendario = true;
@@ -218,6 +219,13 @@ class TicketsController extends Controller
         $model->Estado = 'Abierto';
 
         if ($this->request->isPost && $model->load($this->request->post())) {
+
+            // datetime-local envía "YYYY-MM-DDTHH:MM" → convertir a "YYYY-MM-DD HH:MM:SS"
+            foreach (['HoraProgramada', 'HoraInicio'] as $campo) {
+                if (!empty($model->$campo) && str_contains($model->$campo, 'T')) {
+                    $model->$campo = str_replace('T', ' ', $model->$campo) . ':00';
+                }
+            }
 
             $model->Creado_por = Yii::$app->user->id;
             // Folio temporal único para evitar colisión en la restricción UNIQUE
@@ -337,6 +345,13 @@ class TicketsController extends Controller
         $usuarios  = Usuarios::find()->select(['id', 'Nombre', 'email'])->asArray()->all();
 
         if ($model->load(Yii::$app->request->post())) {
+            // datetime-local envía "YYYY-MM-DDTHH:MM" → convertir a "YYYY-MM-DD HH:MM:SS"
+            foreach (['HoraProgramada', 'HoraInicio'] as $campo) {
+                if (!empty($model->$campo) && str_contains($model->$campo, 'T')) {
+                    $model->$campo = str_replace('T', ' ', $model->$campo) . ':00';
+                }
+            }
+
             // Bloquear cierre desde esta vista — debe hacerse desde index con el flujo completo
             if (mb_strtolower(trim($estadoAntes)) !== 'cerrado' &&
                 mb_strtolower(trim($model->Estado)) === 'cerrado') {
@@ -792,16 +807,11 @@ class TicketsController extends Controller
                     $cliente = Clientes::findOne($ticket->Cliente_id);
                     if ($cliente) {
                         $clienteMinAntes = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
-                        $cliente->Tiempo = $this->minutesToHM($clienteMinAntes - $deltaMin);
+                        $nuevoTiempo     = $this->minutesToHM($clienteMinAntes - $deltaMin);
 
-                        if (!$cliente->updateAttributes(['Tiempo' => $cliente->Tiempo])) {
-                            $transaction->rollBack();
-                            return [
-                                'success' => false,
-                                'message' => 'Ticket guardado, pero falló actualizar tiempo del cliente',
-                                'errors'  => $cliente->errors,
-                            ];
-                        }
+                        Yii::$app->db->createCommand()
+                            ->update('clientes', ['Tiempo' => $nuevoTiempo], ['id' => $cliente->id])
+                            ->execute();
                     }
                 }
 
@@ -927,7 +937,7 @@ class TicketsController extends Controller
 
         protected function roundUpTo15(int $minutes): int
         {
-            if ($minutes <= 0) return 0;
+            if ($minutes <= 0) return $minutes;
             return (int)(ceil($minutes / 15) * 15);
         }
 

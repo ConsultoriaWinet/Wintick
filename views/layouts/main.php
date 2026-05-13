@@ -630,8 +630,8 @@ $this->registerCssFile('@web/css/theme.css');
                             <span>Cambiar foto de perfil</span>
                         </div>
 
-                        <!-- Color picker (solo Consultores) -->
-                        <?php if ($currentRol === 'Consultores'): ?>
+                        <!-- Color picker (todos excepto Monitor) -->
+                        <?php if ($currentRol !== 'Monitor'): ?>
                         <div class="user-dropdown-item" onclick="toggleColorPicker(event)" style="flex-direction:column; align-items:flex-start; gap:8px;">
                             <div style="display:flex; align-items:center; gap:12px; width:100%;">
                                 <span style="width:16px; height:16px; border-radius:50%; background:<?= Html::encode($currentColor) ?>; border:2px solid #e5e7eb; flex-shrink:0;" id="colorPreviewIcon"></span>
