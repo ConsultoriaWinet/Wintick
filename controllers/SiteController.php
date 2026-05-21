@@ -307,8 +307,12 @@ class SiteController extends Controller
 
     $userId = Yii::$app->user->id;
 
-    // Si es consultor (no puede asignar tickets), forzamos a que solo vea los suyos
-    if (Yii::$app->user->can('verTickets') && !Yii::$app->user->can('asignarTicket')) {
+    // Roles con visibilidad total ven todos los tickets del calendario
+    $rol          = Yii::$app->user->identity->rol ?? '';
+    $rolesVerTodo = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
+
+    if (!in_array($rol, $rolesVerTodo, true)) {
+        // Consultores y otros roles: solo ven sus propios tickets
         $consultorId = $userId;
     }
 

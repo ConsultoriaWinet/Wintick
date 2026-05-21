@@ -73,9 +73,14 @@ class TicketsSearch extends Tickets
 
         // ✅ LÓGICA DE USUARIO ASIGNADO - APLICAR FILTRO POR DEFECTO
         $asignadoParam = isset($params['asignado_a']) ? $params['asignado_a'] : null;
+        $rolActual     = \Yii::$app->user->isGuest ? '' : (\Yii::$app->user->identity->rol ?? '');
+        $rolesVerTodo  = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
+
         if (!isset($params['asignado_a']) && !\Yii::$app->user->isGuest) {
-            // Si no viene parámetro asignado_a, filtrar por usuario actual
-            $query->andWhere(['Asignado_a' => \Yii::$app->user->id]);
+            // Roles con visibilidad total no tienen filtro por defecto → ven todos los tickets
+            if (!in_array($rolActual, $rolesVerTodo, true)) {
+                $query->andWhere(['Asignado_a' => \Yii::$app->user->id]);
+            }
         } elseif ($asignadoParam !== '' && $asignadoParam !== null) {
             // Si viene parámetro explícito, aplicarlo
             $query->andWhere(['Asignado_a' => $asignadoParam]);
