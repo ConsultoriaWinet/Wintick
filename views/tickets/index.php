@@ -1233,6 +1233,75 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
 .dc-btn-send:hover    { background: var(--accent-dark); }
 .dc-btn-send:disabled { opacity: 0.55; cursor: not-allowed; }
 
+.dc-btn-attach {
+    padding: 7px 11px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.dc-btn-attach:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Drag-over en el textarea */
+.dc-textarea.drag-over {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+    outline: 2px dashed var(--accent);
+    outline-offset: -2px;
+}
+
+/* Preview de archivo pendiente */
+#dc-attach-preview {
+    margin: 6px 0 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+#dc-attach-preview:empty { display: none; }
+
+.dc-attach-item {
+    position: relative;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    max-width: 100%;
+    background: var(--bg);
+}
+.dc-attach-img {
+    display: block;
+    max-height: 110px;
+    max-width: 100%;
+    border-radius: 7px;
+    cursor: zoom-in;
+}
+.dc-attach-file {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--text);
+}
+.dc-attach-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 20px;
+    text-align: center;
+    padding: 0;
+}
+
 /* ── Shift table when drawer opens ──────────────*/
 #main > .container {
     transition: padding-right 0.28s cubic-bezier(.4,0,.2,1);
@@ -1329,8 +1398,13 @@ body.drawer-open #main > .container {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <input type="file" id="dc-file-input" style="display:none" accept="*/*">
                 <textarea id="d-nuevo-cmnt" class="dc-textarea" placeholder="Escribe aquí..." rows="2"></textarea>
+                <div id="dc-attach-preview"></div>
                 <div class="dc-actions">
+                    <button class="dc-btn-attach" id="dc-btn-attach" type="button" onclick="document.getElementById('dc-file-input').click()" title="Adjuntar archivo">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
                     <button class="dc-btn-send" id="d-btn-send" onclick="enviarDComentario()">
                         <i class="fas fa-paper-plane"></i> Enviar
                     </button>
@@ -3075,11 +3149,12 @@ const DRAWER_SEND_URL   = '<?= Url::to(['/tickets/agregar-comentario']) ?>';
 const DRAWER_SOL_URL    = '<?= \yii\helpers\Url::to(['/tickets/save-solution']) ?>';
 const DRAWER_CSRF       = '<?= Yii::$app->request->getCsrfToken() ?>';
 
-let _drawerTicketId = null;
-let _drawerData     = {};
-let _drawerCmntTipo = 'comentario';
-let _drawerTab      = 'conv';
-let _allComments    = [];
+let _drawerTicketId  = null;
+let _drawerData      = {};
+let _drawerCmntTipo  = 'comentario';
+let _drawerTab       = 'conv';
+let _allComments     = [];
+let _drawerPendingFile = null;
 
 /* ── Abrir drawer ────────────────────────── */
 function openDrawer(d) {
@@ -3260,6 +3335,31 @@ function renderDCmntList(containerId, items) {
             : `<div class="d-cmnt-avatar" style="background:${escapeHtml(col)}">${escapeHtml(ini)}</div>`;
 
         const isP2P = c.tipo === 'nota_interna' && c.destinatarioId;
+        // Archivo adjunto
+        let adjuntoHtml = '';
+        if (c.archivo) {
+            const imageExts = ['jpg','jpeg','png','gif','webp'];
+            const ext = c.archivo.split('.').pop().toLowerCase();
+            if (c.esImagen || imageExts.includes(ext)) {
+                adjuntoHtml = `<div class="cmnt-archivo">
+                    <img src="${escapeHtml(c.archivo)}" class="cmnt-img-preview"
+                         onclick="openLightbox('${escapeHtml(c.archivo)}')"
+                         alt="imagen adjunta" loading="lazy">
+                </div>`;
+            } else {
+                const fname = decodeURIComponent(c.archivo.split('/').pop());
+                adjuntoHtml = `<div class="cmnt-archivo">
+                    <a href="${escapeHtml(c.archivo)}" download class="cmnt-file-link" target="_blank">
+                        <i class="fas fa-file-download"></i> ${escapeHtml(fname)}
+                    </a>
+                </div>`;
+            }
+        }
+
+        // Ocultar el texto si es solo el nombre del archivo (enviado sin texto)
+        const textoMostrar = (c.archivo && c.comentario && c.comentario === decodeURIComponent(c.archivo.split('/').pop().replace(/^cmnt_[a-f0-9.]+\./, '')))
+            ? '' : (c.comentario || '');
+
         return `
             <div class="d-cmnt-item">
                 ${avatarHtml}
@@ -3269,7 +3369,8 @@ function renderDCmntList(containerId, items) {
                         ${tipoTag}
                         <span class="d-cmnt-fecha">${escapeHtml(c.fecha || '')}</span>
                     </div>
-                    <div class="d-cmnt-text">${renderMentions(c.comentario || '')}</div>
+                    ${textoMostrar ? `<div class="d-cmnt-text">${renderMentions(textoMostrar)}</div>` : ''}
+                    ${adjuntoHtml}
                 </div>
             </div>`;
     }).join('');
@@ -3312,14 +3413,16 @@ function setDTipo(btn, tipo) {
 /* ── Enviar comentario desde drawer ─────── */
 function enviarDComentario() {
     const texto = (document.getElementById('d-nuevo-cmnt').value || '').trim();
-    if (!texto) return;
+    if (!texto && !_drawerPendingFile) return;
     if (!_drawerTicketId) return;
 
     const btn = document.getElementById('d-btn-send');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-    const textoFinal = (window.buildDrawerPayload ? window.buildDrawerPayload(texto) : texto);
+    const textoFinal = texto
+        ? (window.buildDrawerPayload ? window.buildDrawerPayload(texto) : texto)
+        : (_drawerPendingFile ? _drawerPendingFile.name : '');
 
     const fd = new FormData();
     fd.append('ticket_id', _drawerTicketId);
@@ -3329,6 +3432,7 @@ function enviarDComentario() {
         const destSel = document.getElementById('d-destinatario-id');
         if (destSel && destSel.value) fd.append('destinatario_id', destSel.value);
     }
+    if (_drawerPendingFile) fd.append('archivo', _drawerPendingFile);
 
     fetch(DRAWER_SEND_URL, { method:'POST', body: fd })
         .then(r => r.json())
@@ -3337,6 +3441,7 @@ function enviarDComentario() {
                 document.getElementById('d-nuevo-cmnt').value = '';
                 const destSel = document.getElementById('d-destinatario-id');
                 if (destSel) destSel.value = '';
+                clearDrawerAttach();
                 loadDrawerComments(_drawerTicketId);
                 updateCommentBadge(_drawerTicketId);
             } else {
@@ -3348,6 +3453,85 @@ function enviarDComentario() {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar';
         });
+}
+
+/* ── Drag & Drop / Paste / Clip para el compose del drawer ─────── */
+(function initDrawerAttach() {
+    const ta        = document.getElementById('d-nuevo-cmnt');
+    const fileInput = document.getElementById('dc-file-input');
+    const preview   = document.getElementById('dc-attach-preview');
+    if (!ta || !fileInput || !preview) return;
+
+    /* Selección por botón clip */
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) setDrawerAttach(fileInput.files[0]);
+        fileInput.value = '';
+    });
+
+    /* Drag over */
+    ['dragenter','dragover'].forEach(ev => {
+        ta.addEventListener(ev, e => { e.preventDefault(); ta.classList.add('drag-over'); });
+    });
+    ['dragleave','dragend'].forEach(ev => {
+        ta.addEventListener(ev, () => ta.classList.remove('drag-over'));
+    });
+    ta.addEventListener('drop', e => {
+        e.preventDefault();
+        ta.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) setDrawerAttach(file);
+    });
+
+    /* Ctrl+V / paste */
+    ta.addEventListener('paste', e => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.kind === 'file') {
+                e.preventDefault();
+                setDrawerAttach(item.getAsFile());
+                return;
+            }
+        }
+    });
+})();
+
+function setDrawerAttach(file) {
+    _drawerPendingFile = file;
+    const preview = document.getElementById('dc-attach-preview');
+    preview.innerHTML = '';
+
+    const item = document.createElement('div');
+    item.className = 'dc-attach-item';
+
+    const isImage = file.type.startsWith('image/');
+    if (isImage) {
+        const img = document.createElement('img');
+        img.className = 'dc-attach-img';
+        img.src = URL.createObjectURL(file);
+        img.onclick = () => window.open(img.src, '_blank');
+        item.appendChild(img);
+    } else {
+        const info = document.createElement('div');
+        info.className = 'dc-attach-file';
+        const ext = file.name.split('.').pop().toUpperCase();
+        info.innerHTML = `<i class="fas fa-file"></i><span>${file.name}</span><small style="color:var(--text-muted)">${(file.size/1024).toFixed(0)} KB</small>`;
+        item.appendChild(info);
+    }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'dc-attach-remove';
+    removeBtn.innerHTML = '×';
+    removeBtn.onclick = clearDrawerAttach;
+    item.appendChild(removeBtn);
+
+    preview.appendChild(item);
+}
+
+function clearDrawerAttach() {
+    _drawerPendingFile = null;
+    const preview = document.getElementById('dc-attach-preview');
+    if (preview) preview.innerHTML = '';
 }
 
 /* ── Guardar edición desde drawer ───────── */

@@ -1722,8 +1722,13 @@ class TicketsController extends Controller
                 $destinatarioId = $request->post('destinatario_id') ?: null;
             }
 
-            if (empty($ticketId) || empty($comentarioTx)) {
+            $tieneArchivo = !empty($_FILES['archivo']['name']);
+            if (empty($ticketId) || (empty($comentarioTx) && !$tieneArchivo)) {
                 return ['success' => false, 'message' => 'Datos incompletos'];
+            }
+            // Si solo hay archivo sin texto, usar el nombre del archivo como texto
+            if (empty($comentarioTx) && $tieneArchivo) {
+                $comentarioTx = $_FILES['archivo']['name'];
             }
 
             $ticket = Tickets::findOne((int)$ticketId);
@@ -1873,7 +1878,7 @@ class TicketsController extends Controller
                 $archivoUrl = null;
                 $esImagen   = false;
                 if (!empty($com->archivo)) {
-                    $archivoUrl = \yii\helpers\Url::to('@web/uploads/comentarios/' . $com->archivo, true);
+                    $archivoUrl = \yii\helpers\Url::to('@web/uploads/comentarios/' . $com->archivo);
                     $esImagen   = in_array(strtolower(pathinfo($com->archivo, PATHINFO_EXTENSION)), $imageExts);
                 }
 
