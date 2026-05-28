@@ -146,7 +146,7 @@ body { background: var(--surface-2, #F5F1E8) !important; }
         <!-- Header -->
         <div class="login-header">
             <div class="login-logo">
-                <img src="<?= Yii::getAlias('@web/Logo_connombre.png') ?>" alt="Wintick">
+                <img src="<?= Yii::getAlias('@web/Logo_sinnombre.png') ?>" alt="Wintick">
             </div>
             <h1>Wintick</h1>
             <p>Ingresa tus credenciales para continuar</p>

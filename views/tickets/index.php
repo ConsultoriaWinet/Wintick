@@ -29,68 +29,69 @@ $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', 
 $this->registerJsFile('@web/js/tickets-filters.js', ['position' => \yii\web\View::POS_END]);
 
 $this->registerCss('
-    /* ── Paginación ── */
-    .pagination {
-        gap: 4px;
-        flex-wrap: wrap;
-    }
-    .pagination .page-item .page-link {
-        min-width: 36px;
-        height: 36px;
+    /* ── Paginador ─────────────────────────────────────────── */
+    .tkt-paginator-bar {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px !important;
+        gap: 14px;
+        padding: 14px 0 6px;
+        flex-wrap: wrap;
+    }
+    .tkt-pag-info {
+        font-size: 12px;
+        color: #6b7280;
+        white-space: nowrap;
+    }
+    .tkt-pag-info strong { color: #374151; }
+
+    /* Lista */
+    .tkt-pagination {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 3px;
+        flex-wrap: wrap;
+    }
+    /* Botón base */
+    .tkt-page-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        padding: 0 8px;
+        border-radius: 8px;
         border: 1px solid #e5e7eb;
         background: #fff;
         color: #4b5563;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 500;
-        padding: 0 10px;
-        transition: background .15s, color .15s, border-color .15s;
         text-decoration: none;
+        transition: background .15s, color .15s, border-color .15s;
+        cursor: pointer;
     }
-    .pagination .page-item .page-link:hover {
+    .tkt-page-link:hover {
         background: #f0f4f0;
         border-color: #8BA590;
         color: #4a7c59;
     }
-    /* Página activa — verde suave */
-    .pagination .page-item.active .page-link {
+    /* Activa */
+    .tkt-pagination li.tkt-active .tkt-page-link {
         background: #8BA590;
         border-color: #8BA590;
         color: #fff;
         font-weight: 700;
-        box-shadow: 0 2px 6px rgba(139,165,144,.35);
+        box-shadow: 0 2px 6px rgba(139,165,144,.3);
     }
-    /* Anterior / Siguiente deshabilitados */
-    .pagination .page-item.disabled .page-link {
+    /* Deshabilitada */
+    .tkt-pagination li.tkt-disabled .tkt-page-link {
         background: #f9fafb;
-        border-color: #e5e7eb;
+        border-color: #f0f0f0;
         color: #d1d5db;
         cursor: not-allowed;
         pointer-events: none;
-    }
-    /* Selector de rango */
-    .page-size-selector {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: #6b7280;
-    }
-    .page-size-selector select {
-        border: 1px solid #e5e7eb;
-        border-radius: 7px;
-        padding: 4px 8px;
-        font-size: 12px;
-        color: #374151;
-        background: #fff;
-        cursor: pointer;
-    }
-    .page-size-selector select:focus {
-        outline: none;
-        border-color: #8BA590;
     }
     /* Sin scroll horizontal */
     body { overflow-x: hidden; }
@@ -771,10 +772,12 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <?php if (!$ticket->HoraProgramada && !$ticket->HoraInicio): ?>—<?php endif; ?>
                     </td>
                     <td style="white-space:nowrap;">
+                        <?php if ($ticket->Estado !== 'CERRADO'): ?>
                         <button class="tkt-btn-del" title="Eliminar ticket"
                             onclick="confirmarEliminar(<?= $ticket->id ?>, '<?= Html::encode($ticket->Folio) ?>', <?= $ticket->Estado === 'CERRADO' && $ticket->Solucion ? 'true' : 'false' ?>)">
                             <i class="fas fa-trash"></i>
                         </button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -791,21 +794,31 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         </table>
         
         <!-- ✅ PAGINADOR -->
-        <nav aria-label="Paginación">
+        <div class="tkt-paginator-bar">
+            <span class="tkt-pag-info">
+                <?php
+                    $pg    = $dataProvider->pagination;
+                    $total = $dataProvider->getTotalCount();
+                    $desde = $total ? $pg->getOffset() + 1 : 0;
+                    $hasta = min($pg->getOffset() + $pg->getLimit(), $total);
+                ?>
+                <?= $desde ?>–<?= $hasta ?> de <strong><?= $total ?></strong>
+            </span>
+
             <?= LinkPager::widget([
-                'pagination'                    => $dataProvider->pagination,
-                'options'                       => ['class' => 'pagination justify-content-center mt-3 mb-1'],
-                'linkOptions'                   => ['class' => 'page-link'],
-                'activePageCssClass'            => 'active',
-                'disabledPageCssClass'          => 'disabled',
-                'disabledListItemSubTagOptions' => ['tag' => 'span', 'class' => 'page-link'],
+                'pagination'                    => $pg,
+                'options'                       => ['class' => 'tkt-pagination'],
+                'linkOptions'                   => ['class' => 'tkt-page-link'],
+                'activePageCssClass'            => 'tkt-active',
+                'disabledPageCssClass'          => 'tkt-disabled',
+                'disabledListItemSubTagOptions' => ['tag' => 'span', 'class' => 'tkt-page-link'],
                 'firstPageLabel'                => '«',
                 'lastPageLabel'                 => '»',
                 'prevPageLabel'                 => '‹',
                 'nextPageLabel'                 => '›',
-                'maxButtonCount'                => 7,
+                'maxButtonCount'                => 5,
             ]) ?>
-        </nav>
+        </div>
     </div>
 
     
