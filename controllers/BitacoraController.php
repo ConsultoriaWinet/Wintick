@@ -32,7 +32,7 @@ class BitacoraController extends Controller
 
                 'clientes.Nombre AS ClienteNombre',
                 'sistemas.Nombre AS SistemaNombre',
-                'usuarios.Nombre AS UsuarioNombre'
+                'tickets.Usuario_reporta AS UsuarioNombre'
             ])
             ->from('tickets')
 
@@ -327,7 +327,7 @@ class BitacoraController extends Controller
 
                 'clientes.Nombre AS ClienteNombre',
                 'sistemas.Nombre AS SistemaNombre',
-                'usuarios.Nombre AS UsuarioNombre'
+                'tickets.Usuario_reporta AS UsuarioNombre'
             ])
             ->from('tickets')
 

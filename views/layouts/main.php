@@ -738,9 +738,10 @@ $this->registerJs($js);
   // URLs desde Yii
   const NOTIF_SOUND_URL  = <?= json_encode(Yii::getAlias('@web/sounds/notify.mp3')) ?>;
 
-  const NOTIFS_URL       = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
-  const MARK_ONE_URL     = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
-  const MARK_ALL_URL     = <?= json_encode(Url::to(['/tickets/marcar-todas-leidas'])) ?>;
+  const NOTIFS_URL          = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
+  const RECORDATORIOS_URL   = <?= json_encode(Url::to(['/tickets/verificar-recordatorios'])) ?>;
+  const MARK_ONE_URL        = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
+  const MARK_ALL_URL        = <?= json_encode(Url::to(['/tickets/marcar-todas-leidas'])) ?>;
   const TICKET_INDEX_URL = <?= json_encode(Url::to(['/tickets/index'])) ?>;
   const TICKET_VIEW_URL  = <?= json_encode(Url::to(['/tickets/view'])) ?>;
 
@@ -804,34 +805,41 @@ $this->registerJs($js);
 
   function pollNotificaciones() {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    fetch(NOTIFS_URL, {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': token, 'Content-Type': 'application/json' }
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (!data || !data.success) return;
-        const lista = Array.isArray(data.notificaciones) ? data.notificaciones : [];
 
-        // Detectar las realmente nuevas (no estaban cuando cargó la página)
-        const nuevas = lista.filter(n => !lastNotifsSeen.has(String(n.id)));
+    // Primero verificar recordatorios (crea notifs si hay tickets que inician ahora),
+    // luego obtener todas las notificaciones para mostrarlas/alertarlas.
+    fetch(RECORDATORIOS_URL, { method: 'POST', headers: { 'X-CSRF-Token': token } })
+      .catch(() => {})
+      .finally(() => {
+        fetch(NOTIFS_URL, {
+          method: 'POST',
+          headers: { 'X-CSRF-Token': token, 'Content-Type': 'application/json' }
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (!data || !data.success) return;
+            const lista = Array.isArray(data.notificaciones) ? data.notificaciones : [];
 
-        // Actualizar campanita siempre
-        mostrarNotificaciones(lista);
+            // Detectar las realmente nuevas (no estaban cuando cargó la página)
+            const nuevas = lista.filter(n => !lastNotifsSeen.has(String(n.id)));
 
-        if (nuevas.length > 0) {
-          dispararAlertas(nuevas);
+            // Actualizar campanita siempre
+            mostrarNotificaciones(lista);
 
-          // Avisar a tickets/index para refrescar la tabla si corresponde
-          const afectaTabla = nuevas.some(n =>
-            ['asignado', 'actualizado', 'estado_cambio', 'comentario'].includes(n.tipo)
-          );
-          if (afectaTabla) {
-            window.dispatchEvent(new CustomEvent('wintick:tickets-updated', { detail: nuevas }));
-          }
-        }
-      })
-      .catch(() => {});
+            if (nuevas.length > 0) {
+              dispararAlertas(nuevas);
+
+              // Avisar a tickets/index para refrescar la tabla si corresponde
+              const afectaTabla = nuevas.some(n =>
+                ['asignado', 'actualizado', 'estado_cambio', 'comentario'].includes(n.tipo)
+              );
+              if (afectaTabla) {
+                window.dispatchEvent(new CustomEvent('wintick:tickets-updated', { detail: nuevas }));
+              }
+            }
+          })
+          .catch(() => {});
+      });
   }
 
   function dispararAlertas(notificaciones) {

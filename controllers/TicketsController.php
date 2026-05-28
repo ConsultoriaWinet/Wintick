@@ -78,6 +78,7 @@ class TicketsController extends Controller
             'contar-comentarios',
             'update-fecha',
             'notificaciones-stream',
+            'verificar-recordatorios',
         ];
 
         if (in_array($action->id, $jsonActions, true)) {
@@ -992,6 +993,58 @@ class TicketsController extends Controller
     }
 
 
+
+    /**
+     * Verificar si hay tickets cuyo HoraInicio acaba de llegar y crear recordatorios.
+     * Se llama desde el polling JS cada 8s. Anti-duplicado: no genera dos recordatorios
+     * para el mismo ticket en un lapso de 2 horas.
+     */
+    public function actionVerificarRecordatorios()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (\Yii::$app->user->isGuest) {
+            return ['success' => false];
+        }
+
+        $userId = (int)\Yii::$app->user->id;
+        $ahora  = date('Y-m-d H:i:s');
+        $hace10 = date('Y-m-d H:i:s', strtotime('-10 minutes'));
+
+        // Tickets del usuario que inician en la ventana de los últimos 10 minutos
+        $tickets = Tickets::find()
+            ->where(['Asignado_a' => $userId])
+            ->andWhere(['between', 'HoraInicio', $hace10, $ahora])
+            ->andWhere(['!=', 'Estado', 'CERRADO'])
+            ->all();
+
+        $creados = 0;
+        foreach ($tickets as $ticket) {
+            // Anti-duplicado: verificar si ya existe recordatorio para este ticket en las últimas 2h
+            $yaExiste = Notificaciones::find()
+                ->where([
+                    'usuario_id' => $userId,
+                    'ticket_id'  => $ticket->id,
+                    'tipo'       => 'recordatorio',
+                ])
+                ->andWhere(['>=', 'fecha_creacion', date('Y-m-d H:i:s', strtotime('-2 hours'))])
+                ->exists();
+
+            if (!$yaExiste) {
+                $hora = $ticket->HoraInicio ? date('H:i', strtotime($ticket->HoraInicio)) : '';
+                $this->crearNotificacion(
+                    $userId,
+                    'recordatorio',
+                    '⏰ Recordatorio: Ticket ' . $ticket->Folio,
+                    'El ticket ' . $ticket->Folio . ' debería iniciar' . ($hora ? ' a las ' . $hora : ' ahora') . '.',
+                    $ticket->id
+                );
+                $creados++;
+            }
+        }
+
+        return ['success' => true, 'creados' => $creados];
+    }
 
     /**
      * Obtener notificaciones del usuario actual

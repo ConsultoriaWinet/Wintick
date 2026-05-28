@@ -183,7 +183,7 @@ $this->title = 'Generar Bitácora';
                         <th>Folio</th>
                         <th>Sistema</th>
                         <th>Detalle</th>
-                        <th>Consultor</th>
+                        <th>Usuario Reporta</th>
                     </tr>
                 </thead>
                 <tbody>
