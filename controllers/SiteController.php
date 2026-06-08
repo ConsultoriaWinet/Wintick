@@ -30,7 +30,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['index', 'logout', 'get-tickets', 'check-update', 'get-cheka'],
+                        'actions' => ['index', 'logout', 'get-tickets', 'get-tickets-dia', 'check-update', 'get-cheka'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -79,7 +79,7 @@ class SiteController extends Controller
 
         return $this->render('index', [
             'consultores' => $consultores,
-            'esMonitor'   => $esMonitor,
+            'esMonitor' => $esMonitor,
         ]);
     }
 
@@ -115,40 +115,41 @@ class SiteController extends Controller
             // Incluir usuario aunque no tenga tickets (para mostrar fila vacía)
             $avatar = $u->avatar ? (Yii::getAlias('@web') . $u->avatar) : null;
             $row = [
-                'id'     => $u->id,
+                'id' => $u->id,
                 'nombre' => $u->Nombre ?: $u->email,
-                'color'  => $u->color ?: '#6b7280',
+                'color' => $u->color ?: '#6b7280',
                 'avatar' => $avatar,
-                'tickets'=> [],
+                'tickets' => [],
             ];
 
             foreach ($tickets as $t) {
-                if (empty($t->HoraInicio)) continue;
+                if (empty($t->HoraInicio))
+                    continue;
                 $ts = strtotime($t->HoraInicio);
                 $horaStr = date('H:i', $ts);
-                $horaMin = (int)date('H', $ts) * 60 + (int)date('i', $ts);
+                $horaMin = (int) date('H', $ts) * 60 + (int) date('i', $ts);
 
                 // Duración en minutos desde TiempoEfectivo (formato H.MM) o 60 min por defecto
                 $durMin = 60;
                 if (!empty($t->TiempoEfectivo)) {
                     $parts = explode('.', $t->TiempoEfectivo);
-                    $h = (int)($parts[0] ?? 0);
-                    $m = (int)($parts[1] ?? 0);
+                    $h = (int) ($parts[0] ?? 0);
+                    $m = (int) ($parts[1] ?? 0);
                     $durMin = max(30, $h * 60 + $m);
                 }
 
                 $row['tickets'][] = [
-                    'id'      => $t->id,
-                    'folio'   => $t->Folio,
-                    'titulo'  => $t->Descripcion ?? '',
-                    'hora'    => $horaStr,
+                    'id' => $t->id,
+                    'folio' => $t->Folio,
+                    'titulo' => $t->Descripcion ?? '',
+                    'hora' => $horaStr,
                     'horaMin' => $horaMin,
-                    'durMin'  => $durMin,
-                    'cliente' => $t->cliente  ? $t->cliente->Nombre  : '-',
-                    'sistema' => $t->sistema  ? $t->sistema->Nombre  : '-',
-                    'servicio'=> $t->servicio ? $t->servicio->Nombre : '-',
-                    'estado'  => $t->Estado,
-                    'prioridad'=> $t->Prioridad,
+                    'durMin' => $durMin,
+                    'cliente' => $t->cliente ? $t->cliente->Nombre : '-',
+                    'sistema' => $t->sistema ? $t->sistema->Nombre : '-',
+                    'servicio' => $t->servicio ? $t->servicio->Nombre : '-',
+                    'estado' => $t->Estado,
+                    'prioridad' => $t->Prioridad,
                 ];
             }
 
@@ -219,11 +220,11 @@ class SiteController extends Controller
                 DevLog::TIPO_LOGIN,
                 "Inicio de sesión exitoso — usuario [{$nombre}] con rol [{$rolBD}] desde " . Yii::$app->request->userIP,
                 [
-                    'usuario_id'    => $usuario->id,
+                    'usuario_id' => $usuario->id,
                     'usuario_email' => $usuario->email,
-                    'rol'           => $rolBD,
-                    'user_agent'    => Yii::$app->request->userAgent,
-                    'remember_me'   => (bool)Yii::$app->request->post('LoginForm')['rememberMe'] ?? false,
+                    'rol' => $rolBD,
+                    'user_agent' => Yii::$app->request->userAgent,
+                    'remember_me' => (bool) Yii::$app->request->post('LoginForm')['rememberMe'] ?? false,
                 ],
                 'site'
             );
@@ -257,9 +258,9 @@ class SiteController extends Controller
                 DevLog::TIPO_LOGOUT,
                 "Cierre de sesión — usuario [{$identity->Nombre}] con rol [{$identity->rol}]",
                 [
-                    'usuario_id'    => $identity->id,
+                    'usuario_id' => $identity->id,
                     'usuario_email' => $identity->email,
-                    'rol'           => $identity->rol,
+                    'rol' => $identity->rol,
                 ],
                 'site'
             );
@@ -301,68 +302,68 @@ class SiteController extends Controller
     /**
      * Get tickets for calendar (filtrados por consultor)
      */
-   public function actionGetTickets($consultorId = null)
-{
-    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    public function actionGetTickets($consultorId = null)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-    $userId = Yii::$app->user->id;
+        $userId = Yii::$app->user->id;
 
-    // Roles con visibilidad total ven todos los tickets del calendario
-    $rol          = Yii::$app->user->identity->rol ?? '';
-    $rolesVerTodo = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
+        // Roles con visibilidad total ven todos los tickets del calendario
+        $rol = Yii::$app->user->identity->rol ?? '';
+        $rolesVerTodo = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
 
-    if (!in_array($rol, $rolesVerTodo, true)) {
-        // Consultores y otros roles: solo ven sus propios tickets
-        $consultorId = $userId;
-    }
-
-    // Solo cargar tickets de los últimos 3 meses y los próximos 2 meses
-    $desde = date('Y-m-d 00:00:00', strtotime('-3 months'));
-    $hasta = date('Y-m-d 23:59:59', strtotime('+2 months'));
-
-    $query = \app\models\Tickets::find()
-        ->with(['cliente','sistema','servicio','usuarioAsignado'])
-        ->where(['between', 'Fecha_creacion', $desde, $hasta])
-        ->limit(500);
-
-    if (!empty($consultorId)) {
-        $query->andWhere(['Asignado_a' => (int)$consultorId]);
-    }
-
-    $tickets = $query->all();
-
-    $events = [];
-    foreach ($tickets as $t) {
-        //  Usa HoraInicio si existe, si no usa Fecha_creacion
-        $start = $t->HoraInicio ?: $t->Fecha_creacion;
-
-        if (!$start) {
-            continue;
+        if (!in_array($rol, $rolesVerTodo, true)) {
+            // Consultores y otros roles: solo ven sus propios tickets
+            $consultorId = $userId;
         }
 
-        $events[] = [
-            'id'    => $t->id,
-            'title' => $t->Folio,
-            'start' => date('c', strtotime($start)), // Formato ISO 8601
+        // Solo cargar tickets de los últimos 3 meses y los próximos 2 meses
+        $desde = date('Y-m-d 00:00:00', strtotime('-3 months'));
+        $hasta = date('Y-m-d 23:59:59', strtotime('+2 months'));
 
-            // Opcional: colores por consultor
-            'backgroundColor' => $t->usuarioAsignado->color ?? '#8BA590',
-            'borderColor'     => $t->usuarioAsignado->color ?? '#8BA590',
+        $query = \app\models\Tickets::find()
+            ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado'])
+            ->where(['between', 'Fecha_creacion', $desde, $hasta])
+            ->limit(500);
 
-            'extendedProps' => [
-                'consultorNombre' => $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? 'N/A',
-                'cliente'   => $t->cliente->Nombre ?? 'N/A',
-                'sistema'   => $t->sistema->Nombre ?? 'N/A',
-                'servicio'  => $t->servicio->Nombre ?? 'N/A',
-                'prioridad' => $t->Prioridad ?? 'N/A',
-                'estado'    => $t->Estado ?? 'N/A',
-                'description' => $t->Descripcion ?? '',
-            ],
-        ];
+        if (!empty($consultorId)) {
+            $query->andWhere(['Asignado_a' => (int) $consultorId]);
+        }
+
+        $tickets = $query->all();
+
+        $events = [];
+        foreach ($tickets as $t) {
+            //  Usa HoraInicio si existe, si no usa Fecha_creacion
+            $start = $t->HoraInicio ?: $t->Fecha_creacion;
+
+            if (!$start) {
+                continue;
+            }
+
+            $events[] = [
+                'id' => $t->id,
+                'title' => $t->Folio,
+                'start' => date('c', strtotime($start)), // Formato ISO 8601
+
+                // Opcional: colores por consultor
+                'backgroundColor' => $t->usuarioAsignado->color ?? '#8BA590',
+                'borderColor' => $t->usuarioAsignado->color ?? '#8BA590',
+
+                'extendedProps' => [
+                    'consultorNombre' => $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? 'N/A',
+                    'cliente' => $t->cliente->Nombre ?? 'N/A',
+                    'sistema' => $t->sistema->Nombre ?? 'N/A',
+                    'servicio' => $t->servicio->Nombre ?? 'N/A',
+                    'prioridad' => $t->Prioridad ?? 'N/A',
+                    'estado' => $t->Estado ?? 'N/A',
+                    'description' => $t->Descripcion ?? '',
+                ],
+            ];
+        }
+
+        return $events;
     }
-
-    return $events;
-}
 
     public function actionGetTicketsDia($fecha = null)
     {
@@ -391,7 +392,7 @@ class SiteController extends Controller
         }
 
         $tickets = $query->all();
-        $result  = [];
+        $result = [];
 
         foreach ($tickets as $t) {
             $u = $t->usuarioAsignado;
@@ -402,20 +403,20 @@ class SiteController extends Controller
             $start = $t->HoraInicio ?: $t->Fecha_creacion;
 
             $result[] = [
-                'id'          => $t->id,
-                'folio'       => $t->Folio,
-                'estado'      => $t->Estado,
-                'prioridad'   => $t->Prioridad,
+                'id' => $t->id,
+                'folio' => $t->Folio,
+                'estado' => $t->Estado,
+                'prioridad' => $t->Prioridad,
                 'descripcion' => $t->Descripcion,
-                'cliente'     => $t->cliente->Nombre ?? '—',
-                'sistema'     => $t->sistema->Nombre ?? '—',
-                'servicio'    => $t->servicio->Nombre ?? '—',
-                'hora'        => $start ? date('H:i', strtotime($start)) : null,
-                'asignado'    => [
+                'cliente' => $t->cliente->Nombre ?? '—',
+                'sistema' => $t->sistema->Nombre ?? '—',
+                'servicio' => $t->servicio->Nombre ?? '—',
+                'hora' => $start ? date('H:i', strtotime($start)) : null,
+                'asignado' => [
                     'nombre' => $u->Nombre ?? $u->email ?? '—',
-                    'color'  => $u->color ?? '#6b7280',
+                    'color' => $u->color ?? '#6b7280',
                     'avatar' => $avatarUrl,
-                    'ini'    => $u ? mb_strtoupper(mb_substr($u->Nombre ?? $u->email ?? '?', 0, 1, 'UTF-8'), 'UTF-8') : '?',
+                    'ini' => $u ? mb_strtoupper(mb_substr($u->Nombre ?? $u->email ?? '?', 0, 1, 'UTF-8'), 'UTF-8') : '?',
                 ],
             ];
         }

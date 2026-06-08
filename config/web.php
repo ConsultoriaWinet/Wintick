@@ -52,8 +52,8 @@ $config = [
                         'verify_peer_name' => true,
                     ],
                 ],
-    
-              
+
+
             ],
         ],
 
@@ -82,19 +82,22 @@ $config = [
 
     // Redirige al rol Monitor a site/index si intenta acceder a cualquier otra ruta
     'on beforeAction' => function (\yii\base\ActionEvent $event) {
-        $app  = \Yii::$app;
+        $app = \Yii::$app;
         $user = $app->user;
 
-        if ($user->isGuest) return;
+        if ($user->isGuest)
+            return;
 
         $identity = $user->identity;
-        if (!$identity || ($identity->rol ?? '') !== 'Monitor') return;
+        if (!$identity || ($identity->rol ?? '') !== 'Monitor')
+            return;
 
         $controllerId = $app->controller->id;
-        $actionId     = $app->controller->action->id;
+        $actionId = $app->controller->action->id;
 
         $permitidas = [
-            'site' => ['index', 'get-tickets', 'get-tickets-dia', 'check-update', 'logout', 'error'],
+            'site' => ['index', 'get-tickets', 'get-tickets-dia', 'get-cheka', 'check-update', 'logout', 'error'],
+            'tickets' => ['obtener-notificaciones', 'marcar-notificacion', 'marcar-todas-leidas', 'verificar-recordatorios'],
         ];
 
         $ok = isset($permitidas[$controllerId])
