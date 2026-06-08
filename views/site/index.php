@@ -1105,9 +1105,38 @@ $this->params['fullWidth'] = true;
                     <button class="cheka-nav-btn" onclick="chekaNavDay(1)" title="Día siguiente">›</button>
                     <button class="cheka-hoy-btn" onclick="chekaGoToday()">Hoy</button>
                     <span class="cheka-date-label" id="cheka-date-label">—</span>
-                    <div class="cheka-now-pill" id="cheka-now-pill">
-                        <span class="cheka-now-dot"></span>
-                        <span id="cheka-now-time">—</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+
+                        <div class="dropdown">
+                            <button class="btn btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                style="
+                    width:42px;
+                    height:42px;
+                    border-radius:50%;
+                    border:1px solid #e5e7eb;
+                ">
+                                <i class="fas fa-cog"></i>
+                            </button>
+
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <?= Html::a(
+                                        '<i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión',
+                                        ['/site/logout'],
+                                        [
+                                            'class' => 'dropdown-item text-danger',
+                                            'data-method' => 'post'
+                                        ]
+                                    ) ?>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="cheka-now-pill" id="cheka-now-pill">
+                            <span class="cheka-now-dot"></span>
+                            <span id="cheka-now-time">—</span>
+                        </div>
+
                     </div>
                 </div>
                 <!-- Grid container -->
