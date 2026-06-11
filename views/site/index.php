@@ -1100,6 +1100,101 @@ $this->params['fullWidth'] = true;
             <!-- ── VISTA CHEKA ───────────────────────────────────── -->
             <div id="cheka-view">
                 <!-- Barra de navegación Cheka -->
+
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title mb-1"><i class="fas fa-ticket-alt"></i> Total Tickets</h6>
+                                        <h2 class="mb-0" id="totalTickets">
+                                            <?= $estadisticasTickets['total'] ?>
+                                        </h2>
+                                        <small>
+                                            <?php if ($comparacionMes['diferencia'] > 0): ?>
+                                                <i class="fas fa-arrow-up"></i> +
+                                                <?= $comparacionMes['porcentaje'] ?>%
+                                            <?php elseif ($comparacionMes['diferencia'] < 0): ?>
+                                                <i class="fas fa-arrow-down"></i>
+                                                <?= $comparacionMes['porcentaje'] ?>%
+                                            <?php else: ?>
+                                                <i class="fas fa-minus"></i> 0%
+                                            <?php endif; ?>
+                                            vs mes anterior
+                                        </small>
+                                    </div>
+                                    <div class="icon-large">
+                                        <i class="fas fa-ticket-alt fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title mb-1"><i class="fas fa-folder-open"></i> Abiertos</h6>
+                                        <h2 class="mb-0" id="abiertosTickets">
+                                            <?= $estadisticasTickets['abiertos'] ?>
+                                        </h2>
+                                        <small>
+                                            <?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['abiertos'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>%
+                                            del total
+                                        </small>
+                                    </div>
+                                    <div class="icon-large">
+                                        <i class="fas fa-folder-open fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title mb-1"><i class="fas fa-spinner"></i> En Proceso</h6>
+                                        <h2 class="mb-0" id="enProcesoTickets">
+                                            <?= $estadisticasTickets['enProceso'] ?>
+                                        </h2>
+                                        <small>
+                                            <?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['enProceso'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>%
+                                            del total
+                                        </small>
+                                    </div>
+                                    <div class="icon-large">
+                                        <i class="fas fa-spinner fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-title mb-1"><i class="fas fa-check-circle"></i> Cerrados</h6>
+                                        <h2 class="mb-0" id="cerradosTickets">
+                                            <?= $estadisticasTickets['cerrados'] ?>
+                                        </h2>
+                                        <small>Tasa:
+                                            <?= $tasaResolucion['tasa'] ?>%
+                                        </small>
+                                    </div>
+                                    <div class="icon-large">
+                                        <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="cheka-topbar">
                     <button class="cheka-nav-btn" onclick="chekaNavDay(-1)" title="Día anterior">‹</button>
                     <button class="cheka-nav-btn" onclick="chekaNavDay(1)" title="Día siguiente">›</button>
@@ -1108,15 +1203,6 @@ $this->params['fullWidth'] = true;
                     <div style="display:flex;align-items:center;gap:10px;">
 
                         <div class="dropdown">
-                            <button class="btn btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                style="
-                    width:42px;
-                    height:42px;
-                    border-radius:50%;
-                    border:1px solid #e5e7eb;
-                ">
-                                <i class="fas fa-cog"></i>
-                            </button>
 
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
@@ -1136,6 +1222,15 @@ $this->params['fullWidth'] = true;
                             <span class="cheka-now-dot"></span>
                             <span id="cheka-now-time">—</span>
                         </div>
+                        <button class="btn btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                            style="
+                width:42px;
+                height:42px;
+                border-radius:50%;
+                border:1px solid #e5e7eb;
+            ">
+                            <i class="fas fa-cog"></i>
+                        </button>
 
                     </div>
                 </div>
@@ -1495,6 +1590,7 @@ $this->params['fullWidth'] = true;
                         else if (data.lastUpdate !== lastUpdate) {
                             lastUpdate = data.lastUpdate;
                             calendar.refetchEvents();
+                            actualizarDashboard();
                             if (pulse) { pulse.style.background = '#f59e0b'; setTimeout(() => { pulse.style.background = '#22c55e'; }, 600); }
                         }
                     })
@@ -1819,6 +1915,26 @@ $this->params['fullWidth'] = true;
         return d.innerHTML;
     }
 
+
+    function actualizarDashboard() {
+
+        fetch('<?= Url::to(['site/get-dashboard-stats']) ?>')
+            .then(r => r.json())
+            .then(data => {
+
+                document.getElementById('totalTickets').textContent =
+                    data.total;
+
+                document.getElementById('abiertosTickets').textContent =
+                    data.abiertos;
+
+                document.getElementById('enProcesoTickets').textContent =
+                    data.enProceso;
+
+                document.getElementById('cerradosTickets').textContent =
+                    data.cerrados;
+            });
+    }
 </script>
 
 <?php if ($esMonitor): ?>

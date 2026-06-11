@@ -30,7 +30,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['index', 'logout', 'get-tickets', 'get-tickets-dia', 'check-update', 'get-cheka'],
+                        'actions' => ['index', 'logout', 'get-tickets', 'get-tickets-dia', 'check-update', 'get-cheka', 'get-dashboard-stats'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -77,9 +77,50 @@ class SiteController extends Controller
         $esMonitor = !Yii::$app->user->isGuest
             && Yii::$app->user->identity->rol === 'Monitor';
 
+        $inicio = date('Y-m-01 00:00:00');
+        $fin = date('Y-m-t 23:59:59');
+
+        $estadisticasTickets = [
+            'total' => Tickets::find()
+                ->where(['between', 'Fecha_creacion', $inicio, $fin])
+                ->count(),
+
+            'abiertos' => Tickets::find()
+                ->where(['Estado' => 'ABIERTO'])
+                ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+                ->count(),
+
+            'enProceso' => Tickets::find()
+                ->where(['Estado' => 'EN PROCESO'])
+                ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+                ->count(),
+
+            'cerrados' => Tickets::find()
+                ->where(['Estado' => 'CERRADO'])
+                ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+                ->count(),
+        ];
+
+        $comparacionMes = [
+            'diferencia' => 0,
+            'porcentaje' => 0,
+        ];
+
+        $tasaResolucion = [
+            'tasa' => $estadisticasTickets['total'] > 0
+                ? round(
+                    ($estadisticasTickets['cerrados'] / $estadisticasTickets['total']) * 100,
+                    2
+                )
+                : 0,
+        ];
+
         return $this->render('index', [
             'consultores' => $consultores,
             'esMonitor' => $esMonitor,
+            'estadisticasTickets' => $estadisticasTickets,
+            'comparacionMes' => $comparacionMes,
+            'tasaResolucion' => $tasaResolucion,
         ]);
     }
 
@@ -159,6 +200,43 @@ class SiteController extends Controller
         return ['fecha' => $fecha, 'usuarios' => $result];
     }
 
+
+    /** Endpoint para actualizar tarjetas*/
+    public function actionGetDashboardStats()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $inicio = date('Y-m-01 00:00:00');
+        $fin = date('Y-m-t 23:59:59');
+
+        $total = Tickets::find()
+            ->where(['between', 'Fecha_creacion', $inicio, $fin])
+            ->count();
+
+        $abiertos = Tickets::find()
+            ->where(['Estado' => 'ABIERTO'])
+            ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+            ->count();
+
+        $enProceso = Tickets::find()
+            ->where(['Estado' => 'EN PROCESO'])
+            ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+            ->count();
+
+        $cerrados = Tickets::find()
+            ->where(['Estado' => 'CERRADO'])
+            ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+            ->count();
+
+        return [
+            'total' => $total,
+            'abiertos' => $abiertos,
+            'enProceso' => $enProceso,
+            'cerrados' => $cerrados,
+        ];
+    }
+
+    /** Endpoint para actualizar tarjetas FIN*/
     /**
      * Endpoint liviano para el polling del Monitor.
      * Devuelve el timestamp del último cambio en tickets.
