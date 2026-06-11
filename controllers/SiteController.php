@@ -206,8 +206,18 @@ class SiteController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $inicio = date('Y-m-01 00:00:00');
-        $fin = date('Y-m-t 23:59:59');
+        $desde = Yii::$app->request->get('desde', '');
+        $hasta = Yii::$app->request->get('hasta', '');
+
+        // Validar formato YYYY-MM-DD; si no llegan o son inválidos, usar mes actual
+        $reFecha = '/^\d{4}-\d{2}-\d{2}$/';
+        if (preg_match($reFecha, $desde) && preg_match($reFecha, $hasta)) {
+            $inicio = $desde . ' 00:00:00';
+            $fin    = $hasta . ' 23:59:59';
+        } else {
+            $inicio = date('Y-m-01 00:00:00');
+            $fin    = date('Y-m-t 23:59:59');
+        }
 
         $total = Tickets::find()
             ->where(['between', 'Fecha_creacion', $inicio, $fin])
@@ -229,10 +239,12 @@ class SiteController extends Controller
             ->count();
 
         return [
-            'total' => $total,
+            'total'    => $total,
             'abiertos' => $abiertos,
             'enProceso' => $enProceso,
             'cerrados' => $cerrados,
+            'desde'    => $inicio,
+            'hasta'    => $fin,
         ];
     }
 

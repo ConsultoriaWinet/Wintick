@@ -12,6 +12,11 @@ $this->title = 'Dashboard - Tickets por Consultor';
 $this->params['fullWidth'] = true;
 ?>
 
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
 <!-- FullCalendar -->
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.19/index.global.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.19/index.global.min.js'></script>
@@ -242,6 +247,98 @@ $this->params['fullWidth'] = true;
 
     .fc .fc-daygrid-day-frame:active {
         background: rgba(59, 130, 246, .05);
+    }
+
+    /* ─── Filtro de fechas de las cards ─────────────────────────── */
+    .stats-date-filter {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 14px;
+        padding: 0 2px;
+    }
+
+    .stats-date-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 10px;
+        padding: 0 10px;
+        gap: 8px;
+        height: 38px;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .stats-date-wrap:focus-within {
+        border-color: #8BA590;
+        box-shadow: 0 0 0 3px rgba(139,165,144,.15);
+    }
+
+    .stats-date-icon {
+        color: #8BA590;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    .stats-date-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 12.5px;
+        color: var(--text, #111827);
+        font-weight: 500;
+        min-width: 200px;
+        cursor: pointer;
+    }
+
+    .stats-date-input::placeholder {
+        color: var(--text-3, #9ca3af);
+        font-weight: 400;
+    }
+
+    .stats-date-clear {
+        border: none;
+        background: none;
+        color: var(--text-3, #9ca3af);
+        cursor: pointer;
+        padding: 0;
+        font-size: 11px;
+        line-height: 1;
+        display: none;
+        transition: color .15s;
+    }
+
+    .stats-date-clear:hover { color: #dc2626; }
+    .stats-date-clear.visible { display: flex; align-items: center; }
+
+    .stats-date-hint {
+        font-size: 11px;
+        color: var(--text-3, #9ca3af);
+        white-space: nowrap;
+    }
+
+    /* Flatpickr override: color acento del aplicativo */
+    .flatpickr-day.selected,
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange,
+    .flatpickr-day.selected:hover,
+    .flatpickr-day.startRange:hover,
+    .flatpickr-day.endRange:hover {
+        background: #8BA590 !important;
+        border-color: #8BA590 !important;
+    }
+
+    .flatpickr-day.inRange {
+        background: rgba(139,165,144,.18) !important;
+        border-color: rgba(139,165,144,.18) !important;
+        box-shadow: -5px 0 0 rgba(139,165,144,.18), 5px 0 0 rgba(139,165,144,.18) !important;
+    }
+
+    .flatpickr-day.today {
+        border-color: #8BA590 !important;
     }
 
     /* ─── Vista Cheka (timeline por consultor) ──────────────────── */
@@ -1101,6 +1198,18 @@ $this->params['fullWidth'] = true;
             <div id="cheka-view">
                 <!-- Barra de navegación Cheka -->
 
+                <!-- Filtro de rango de fechas -->
+                <div class="stats-date-filter">
+                    <div class="stats-date-wrap">
+                        <i class="fas fa-calendar-alt stats-date-icon"></i>
+                        <input type="text" id="stats-range-picker" class="stats-date-input" placeholder="Seleccionar rango de fechas…" readonly>
+                        <button class="stats-date-clear" id="stats-range-clear" title="Limpiar — volver al mes actual">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <span class="stats-date-hint" id="stats-range-hint">Mostrando mes actual</span>
+                </div>
+
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card text-white bg-primary">
@@ -1140,7 +1249,7 @@ $this->params['fullWidth'] = true;
                                         <h2 class="mb-0" id="abiertosTickets">
                                             <?= $estadisticasTickets['abiertos'] ?>
                                         </h2>
-                                        <small>
+                                        <small id="pct-abiertos">
                                             <?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['abiertos'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>%
                                             del total
                                         </small>
@@ -1161,7 +1270,7 @@ $this->params['fullWidth'] = true;
                                         <h2 class="mb-0" id="enProcesoTickets">
                                             <?= $estadisticasTickets['enProceso'] ?>
                                         </h2>
-                                        <small>
+                                        <small id="pct-enproceso">
                                             <?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['enProceso'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>%
                                             del total
                                         </small>
@@ -1182,7 +1291,7 @@ $this->params['fullWidth'] = true;
                                         <h2 class="mb-0" id="cerradosTickets">
                                             <?= $estadisticasTickets['cerrados'] ?>
                                         </h2>
-                                        <small>Tasa:
+                                        <small id="pct-cerrados">Tasa:
                                             <?= $tasaResolucion['tasa'] ?>%
                                         </small>
                                     </div>
@@ -1590,7 +1699,7 @@ $this->params['fullWidth'] = true;
                         else if (data.lastUpdate !== lastUpdate) {
                             lastUpdate = data.lastUpdate;
                             calendar.refetchEvents();
-                            actualizarDashboard();
+                            actualizarDashboard(statsDesde, statsHasta);
                             if (pulse) { pulse.style.background = '#f59e0b'; setTimeout(() => { pulse.style.background = '#22c55e'; }, 600); }
                         }
                     })
@@ -1684,14 +1793,16 @@ $this->params['fullWidth'] = true;
                 .then(r => r.json())
                 .then(data => {
                     if (chekaLastStamp === null) {
-                        chekaLastStamp = data.lastUpdate; // primera lectura, solo guardar
+                        chekaLastStamp = data.lastUpdate;
                     } else if (data.lastUpdate !== chekaLastStamp) {
                         chekaLastStamp = data.lastUpdate;
-                        chekaLoad(chekaDate); // recargar el día actual
+                        chekaLoad(chekaDate);
+                        // Actualizar cards respetando el rango activo
+                        actualizarDashboard(statsDesde, statsHasta);
                     }
                 })
-                .catch(() => { }); // silencioso si falla
-        }, 10000); // cada 10 segundos
+                .catch(() => {});
+        }, 10000);
     }
     function stopNowClock() {
         if (chekaNowInterval) clearInterval(chekaNowInterval);
@@ -1915,25 +2026,68 @@ $this->params['fullWidth'] = true;
         return d.innerHTML;
     }
 
+    /* ── Rango de fechas para las cards ── */
+    let statsDesde = null;
+    let statsHasta = null;
 
-    function actualizarDashboard() {
+    document.addEventListener('DOMContentLoaded', function () {
+        flatpickr('#stats-range-picker', {
+            mode: 'range',
+            locale: 'es',
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd/m/Y',
+            disableMobile: true,
+            onChange: function (selectedDates) {
+                if (selectedDates.length === 2) {
+                    const fmt = d => d.toISOString().slice(0, 10);
+                    statsDesde = fmt(selectedDates[0]);
+                    statsHasta = fmt(selectedDates[1]);
+                    actualizarDashboard(statsDesde, statsHasta);
+                    document.getElementById('stats-range-clear').classList.add('visible');
+                    document.getElementById('stats-range-hint').textContent =
+                        'Del ' + selectedDates[0].toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) +
+                        ' al ' + selectedDates[1].toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+                }
+            },
+        });
 
-        fetch('<?= Url::to(['site/get-dashboard-stats']) ?>')
+        document.getElementById('stats-range-clear').addEventListener('click', function () {
+            statsDesde = null;
+            statsHasta = null;
+            document.querySelector('#stats-range-picker')._flatpickr.clear();
+            this.classList.remove('visible');
+            document.getElementById('stats-range-hint').textContent = 'Mostrando mes actual';
+            actualizarDashboard(null, null);
+        });
+    });
+
+    /* desde/hasta = 'YYYY-MM-DD' o null para usar mes actual */
+    function actualizarDashboard(desde, hasta) {
+        let url = '<?= Url::to(['site/get-dashboard-stats']) ?>';
+        if (desde && hasta) url += '?desde=' + desde + '&hasta=' + hasta;
+
+        fetch(url)
             .then(r => r.json())
             .then(data => {
+                document.getElementById('totalTickets').textContent    = data.total;
+                document.getElementById('abiertosTickets').textContent = data.abiertos;
+                document.getElementById('enProcesoTickets').textContent = data.enProceso;
+                document.getElementById('cerradosTickets').textContent = data.cerrados;
 
-                document.getElementById('totalTickets').textContent =
-                    data.total;
-
-                document.getElementById('abiertosTickets').textContent =
-                    data.abiertos;
-
-                document.getElementById('enProcesoTickets').textContent =
-                    data.enProceso;
-
-                document.getElementById('cerradosTickets').textContent =
-                    data.cerrados;
-            });
+                // Porcentajes de las cards secundarias
+                const total = data.total || 0;
+                const pctAb = total > 0 ? Math.round((data.abiertos  / total) * 100 * 10) / 10 : 0;
+                const pctEn = total > 0 ? Math.round((data.enProceso / total) * 100 * 10) / 10 : 0;
+                const pctCe = total > 0 ? Math.round((data.cerrados  / total) * 100 * 10) / 10 : 0;
+                const elPctAb = document.getElementById('pct-abiertos');
+                const elPctEn = document.getElementById('pct-enproceso');
+                const elPctCe = document.getElementById('pct-cerrados');
+                if (elPctAb) elPctAb.textContent = pctAb + '% del total';
+                if (elPctEn) elPctEn.textContent = pctEn + '% del total';
+                if (elPctCe) elPctCe.textContent = 'Tasa: ' + pctCe + '%';
+            })
+            .catch(() => {});
     }
 </script>
 
