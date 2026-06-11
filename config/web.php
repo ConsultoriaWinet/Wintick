@@ -96,7 +96,7 @@ $config = [
         $actionId = $app->controller->action->id;
 
         $permitidas = [
-            'site' => ['index', 'get-tickets', 'get-tickets-dia', 'get-cheka', 'check-update', 'logout', 'error'],
+            'site' => ['index', 'get-tickets', 'get-tickets-dia', 'get-cheka', 'get-dashboard-stats', 'check-update', 'logout', 'error'],
             'tickets' => ['obtener-notificaciones', 'marcar-notificacion', 'marcar-todas-leidas', 'verificar-recordatorios'],
         ];
 

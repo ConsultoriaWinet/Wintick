@@ -1207,7 +1207,7 @@ $this->params['fullWidth'] = true;
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <span class="stats-date-hint" id="stats-range-hint">Mostrando mes actual</span>
+                    <span class="stats-date-hint" id="stats-range-hint">Mostrando hoy</span>
                 </div>
 
                 <div class="row mb-4">
@@ -1220,18 +1220,7 @@ $this->params['fullWidth'] = true;
                                         <h2 class="mb-0" id="totalTickets">
                                             <?= $estadisticasTickets['total'] ?>
                                         </h2>
-                                        <small>
-                                            <?php if ($comparacionMes['diferencia'] > 0): ?>
-                                                <i class="fas fa-arrow-up"></i> +
-                                                <?= $comparacionMes['porcentaje'] ?>%
-                                            <?php elseif ($comparacionMes['diferencia'] < 0): ?>
-                                                <i class="fas fa-arrow-down"></i>
-                                                <?= $comparacionMes['porcentaje'] ?>%
-                                            <?php else: ?>
-                                                <i class="fas fa-minus"></i> 0%
-                                            <?php endif; ?>
-                                            vs mes anterior
-                                        </small>
+                                        <small><i class="fas fa-calendar-day"></i> Tickets del día mostrado</small>
                                     </div>
                                     <div class="icon-large">
                                         <i class="fas fa-ticket-alt fa-3x opacity-50"></i>
@@ -1699,7 +1688,7 @@ $this->params['fullWidth'] = true;
                         else if (data.lastUpdate !== lastUpdate) {
                             lastUpdate = data.lastUpdate;
                             calendar.refetchEvents();
-                            actualizarDashboard(statsDesde, statsHasta);
+                            if (statsCustom) actualizarDashboard(statsDesde, statsHasta);
                             if (pulse) { pulse.style.background = '#f59e0b'; setTimeout(() => { pulse.style.background = '#22c55e'; }, 600); }
                         }
                     })
@@ -1753,10 +1742,10 @@ $this->params['fullWidth'] = true;
 
         if (chekaActive) {
             if (hint) hint.style.display = 'none';
-            // Tomar fecha actual del calendario FullCalendar
             if (calendar) chekaDate = calendar.getDate();
             chekaLoad(chekaDate);
             startNowClock();
+            initStatsPicker();
         } else {
             if (hint) hint.style.display = '';
             stopNowClock();
@@ -1796,13 +1785,14 @@ $this->params['fullWidth'] = true;
                         chekaLastStamp = data.lastUpdate;
                     } else if (data.lastUpdate !== chekaLastStamp) {
                         chekaLastStamp = data.lastUpdate;
+                        // chekaRender actualiza las cards con los mismos datos del timeline
                         chekaLoad(chekaDate);
-                        // Actualizar cards respetando el rango activo
-                        actualizarDashboard(statsDesde, statsHasta);
+                        // Solo si hay rango personalizado se consulta el endpoint de stats
+                        if (statsCustom) actualizarDashboard(statsDesde, statsHasta);
                     }
                 })
                 .catch(() => {});
-        }, 10000);
+        }, 5000);
     }
     function stopNowClock() {
         if (chekaNowInterval) clearInterval(chekaNowInterval);
@@ -1899,7 +1889,37 @@ $this->params['fullWidth'] = true;
         return laneEnds.length; // total de lanes necesarios
     }
 
+    /* ── Cards calculadas desde los MISMOS datos del timeline ── */
+    function updateCardsFromCheka(data) {
+        let total = 0, abiertos = 0, enProceso = 0, cerrados = 0;
+        (data.usuarios || []).forEach(u => {
+            (u.tickets || []).forEach(t => {
+                total++;
+                const e = (t.estado || '').toUpperCase();
+                if (e === 'ABIERTO') abiertos++;
+                else if (e === 'EN PROCESO') enProceso++;
+                else if (e === 'CERRADO') cerrados++;
+            });
+        });
+
+        document.getElementById('totalTickets').textContent     = total;
+        document.getElementById('abiertosTickets').textContent  = abiertos;
+        document.getElementById('enProcesoTickets').textContent = enProceso;
+        document.getElementById('cerradosTickets').textContent  = cerrados;
+
+        const pct = n => total > 0 ? Math.round((n / total) * 1000) / 10 : 0;
+        const elPctAb = document.getElementById('pct-abiertos');
+        const elPctEn = document.getElementById('pct-enproceso');
+        const elPctCe = document.getElementById('pct-cerrados');
+        if (elPctAb) elPctAb.textContent = pct(abiertos) + '% del total';
+        if (elPctEn) elPctEn.textContent = pct(enProceso) + '% del total';
+        if (elPctCe) elPctCe.textContent = 'Tasa: ' + pct(cerrados) + '%';
+    }
+
     function chekaRender(data) {
+        // Si no hay rango personalizado activo, las cards reflejan el día del timeline
+        if (!statsCustom) updateCardsFromCheka(data);
+
         const leftEl = document.getElementById('cheka-rows-left');
         const rightEl = document.getElementById('cheka-rows-right');
         leftEl.innerHTML = '';
@@ -2026,11 +2046,20 @@ $this->params['fullWidth'] = true;
         return d.innerHTML;
     }
 
-    /* ── Rango de fechas para las cards ── */
+    /* ── Rango de fechas para las cards ──
+       Por defecto (statsCustom=false) las cards siguen el día del timeline,
+       calculadas desde los mismos datos de get-cheka en chekaRender().
+       Solo al elegir un rango en el picker (statsCustom=true) se consulta
+       get-dashboard-stats con ese rango. */
     let statsDesde = null;
     let statsHasta = null;
+    let statsCustom = false;
+    let statsPickerInited = false;
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function initStatsPicker() {
+        if (statsPickerInited) return;
+        statsPickerInited = true;
+
         flatpickr('#stats-range-picker', {
             mode: 'range',
             locale: 'es',
@@ -2038,31 +2067,35 @@ $this->params['fullWidth'] = true;
             altInput: true,
             altFormat: 'd/m/Y',
             disableMobile: true,
+            appendTo: document.body,        // evita que el popup quede oculto dentro del div
             onChange: function (selectedDates) {
                 if (selectedDates.length === 2) {
                     const fmt = d => d.toISOString().slice(0, 10);
                     statsDesde = fmt(selectedDates[0]);
                     statsHasta = fmt(selectedDates[1]);
+                    statsCustom = true;
                     actualizarDashboard(statsDesde, statsHasta);
                     document.getElementById('stats-range-clear').classList.add('visible');
-                    document.getElementById('stats-range-hint').textContent =
-                        'Del ' + selectedDates[0].toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) +
-                        ' al ' + selectedDates[1].toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const d0 = selectedDates[0].toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+                    const d1 = selectedDates[1].toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+                    document.getElementById('stats-range-hint').textContent = 'Del ' + d0 + ' al ' + d1;
                 }
             },
         });
 
         document.getElementById('stats-range-clear').addEventListener('click', function () {
+            statsCustom = false;
             statsDesde = null;
             statsHasta = null;
-            document.querySelector('#stats-range-picker')._flatpickr.clear();
+            const fp = document.getElementById('stats-range-picker')._flatpickr;
+            fp.clear();
             this.classList.remove('visible');
-            document.getElementById('stats-range-hint').textContent = 'Mostrando mes actual';
-            actualizarDashboard(null, null);
+            document.getElementById('stats-range-hint').textContent = 'Mostrando el día del timeline';
+            chekaLoad(chekaDate); // recargar: chekaRender actualiza las cards
         });
-    });
+    }
 
-    /* desde/hasta = 'YYYY-MM-DD' o null para usar mes actual */
+    /* desde/hasta = 'YYYY-MM-DD' */
     function actualizarDashboard(desde, hasta) {
         let url = '<?= Url::to(['site/get-dashboard-stats']) ?>';
         if (desde && hasta) url += '?desde=' + desde + '&hasta=' + hasta;
