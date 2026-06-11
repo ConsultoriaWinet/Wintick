@@ -2336,7 +2336,7 @@ function saveTicket(row) {
                 Swal.fire({
                     icon: 'success',
                     title: '¡Éxito!',
-                    text: 'Ticket guardado: ' + ticket.Folio,
+                    text: 'Ticket guardado: ' + ((data.folios && data.folios[0]) || ticket.Folio),
                     showConfirmButton: false,
                     timer: 100,
                     timerProgressBar: true,

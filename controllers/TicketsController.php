@@ -552,9 +552,12 @@ class TicketsController extends Controller
 
         try {
             $usuarioActual = \Yii::$app->user->identity->email;
+            $foliosCreados = [];
             foreach ($tickets as $ticketData) {
                 $ticket = new Tickets();
-                $ticket->Folio = $ticketData['Folio'] ?? null;
+                // Folio temporal único: el definitivo se asigna tras el save con el id
+                // auto-increment. Así no colisiona cuando varios usuarios guardan a la vez.
+                $ticket->Folio = 'TMP-' . uniqid();
                 $ticket->Cliente_id = $ticketData['Cliente_id'] ?? null;
                 $ticket->Sistema_id = $ticketData['Sistema_id'] ?? null;
                 $ticket->Servicio_id = $ticketData['Servicio_id'] ?? null;
@@ -574,6 +577,7 @@ class TicketsController extends Controller
                 // Folio definitivo basado en el ID real
                 $ticket->Folio = str_pad($ticket->id, 4, '0', STR_PAD_LEFT);
                 $ticket->save(false);
+                $foliosCreados[] = $ticket->Folio;
 
                 // ✅ CREAR NOTIFICACIÓN CUANDO SE ASIGNA
                 if ($ticket->Asignado_a) {
@@ -587,8 +591,8 @@ class TicketsController extends Controller
                 }
             }
 
-            DevLog::log(DevLog::TIPO_CREAR, count($tickets) . ' ticket(s) creados en lote', ['total' => count($tickets)], 'tickets', null, 'Tickets');
-            return ['success' => true];
+            DevLog::log(DevLog::TIPO_CREAR, count($tickets) . ' ticket(s) creados en lote', ['total' => count($tickets), 'folios' => $foliosCreados], 'tickets', null, 'Tickets');
+            return ['success' => true, 'folios' => $foliosCreados];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
