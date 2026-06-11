@@ -1212,7 +1212,7 @@ $this->params['fullWidth'] = true;
 
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="card text-white bg-primary">
+                        <div class="card text-white bg-primary card-total">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -1230,7 +1230,7 @@ $this->params['fullWidth'] = true;
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card text-white bg-info">
+                        <div class="card text-white bg-info card-abiertos">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -1251,7 +1251,7 @@ $this->params['fullWidth'] = true;
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card text-white bg-warning">
+                        <div class="card text-white bg-warning card-proceso">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -1272,7 +1272,7 @@ $this->params['fullWidth'] = true;
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card text-white bg-success">
+                        <div class="card text-white bg-success card-cerrados">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -2173,6 +2173,97 @@ $this->params['fullWidth'] = true;
 
         .fc-header-toolbar {
             display: none !important;
+        }
+
+        /* ── Colores intensos SOLO para el Monitor ── */
+        /* Cards */
+        .card-total {
+            background: linear-gradient(135deg, #b0b7bf, #8a929b) !important;
+        }
+
+        .card-abiertos {
+            background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+        }
+
+        .card-proceso {
+            background: linear-gradient(135deg, #fbbf24, #d97706) !important;
+        }
+
+        .card-cerrados {
+            background: linear-gradient(135deg, #1e40af, #1e3a8a) !important;
+        }
+
+        /* Bloques del timeline: sólidos e intensos */
+        .chk-abierto {
+            background: #16a34a !important;
+            color: #fff !important;
+        }
+
+        .chk-programado {
+            background: #0d9488 !important;
+            color: #fff !important;
+        }
+
+        .chk-proceso {
+            background: #f59e0b !important;
+            color: #fff !important;
+        }
+
+        .chk-contpaqi {
+            background: #b45309 !important;
+            color: #fff !important;
+        }
+
+        .chk-cerrado {
+            background: #1e3a8a !important;
+            color: #fff !important;
+        }
+
+        .chk-default {
+            background: #4338ca !important;
+            color: #fff !important;
+        }
+
+        .cheka-ticket-block .cheka-blk-time,
+        .cheka-ticket-block .cheka-blk-client {
+            opacity: .9 !important;
+        }
+
+        /* Panel del día: badges intensos */
+        .dp-e-abierto {
+            background: #16a34a !important;
+            color: #fff !important;
+        }
+
+        .dp-e-abierto::before {
+            background: #fff !important;
+        }
+
+        .dp-e-proceso {
+            background: #f59e0b !important;
+            color: #fff !important;
+        }
+
+        .dp-e-proceso::before {
+            background: #fff !important;
+        }
+
+        .dp-e-cerrado {
+            background: #1e3a8a !important;
+            color: #fff !important;
+        }
+
+        .dp-e-cerrado::before {
+            background: #fff !important;
+        }
+
+        .dp-e-programado {
+            background: #0d9488 !important;
+            color: #fff !important;
+        }
+
+        .dp-e-programado::before {
+            background: #fff !important;
         }
     </style>
 <?php endif; ?>
