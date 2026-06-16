@@ -827,9 +827,9 @@ JS;
         // URLs desde Yii
         const NOTIF_SOUND_URL = <?= json_encode(Yii::getAlias('@web/sounds/notify.mp3')) ?>;
 
-        const NOTIFS_URL = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
-        const NOTIFS_STREAM_URL = <?= json_encode(Url::to(['/tickets/notificaciones-stream'])) ?>;
-        const MARK_ONE_URL = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
+        const NOTIFS_URL         = <?= json_encode(Url::to(['/tickets/obtener-notificaciones'])) ?>;
+        const RECORDATORIOS_URL  = <?= json_encode(Url::to(['/tickets/verificar-recordatorios'])) ?>;
+        const MARK_ONE_URL       = <?= json_encode(Url::to(['/tickets/marcar-notificacion'])) ?>;
         const MARK_ALL_URL = <?= json_encode(Url::to(['/tickets/marcar-todas-leidas'])) ?>;
         const TICKET_INDEX_URL = <?= json_encode(Url::to(['/tickets/index'])) ?>;
         const TICKET_VIEW_URL = <?= json_encode(Url::to(['/tickets/view'])) ?>;
@@ -858,10 +858,7 @@ JS;
         window.testSound = () => { playNotifSound(); console.log('🔊 Probando sonido:', NOTIF_SOUND_URL); };
 
         // ===== WEB NOTIFICATIONS =====
-        let sseSource = null;
         let lastNotifsSeen = new Set();
-        // Ya no usamos firstLoad — lastNotifsSeen se pre-puebla con las IDs existentes
-        // en cargarNotificacionesIniciales(), así el SSE solo dispara sonido para notifs NUEVAS.
         sessionStorage.removeItem('notifNoSuprimir');
 
         async function ensureNotificationPermission() {
@@ -872,10 +869,9 @@ JS;
 
         function inicializarNotificaciones() {
             ensureNotificationPermission();
-            // Cargar notificaciones existentes al abrir la pagina
             cargarNotificacionesIniciales();
-            // Conectar SSE para recibir nuevas en tiempo real
-            conectarSSE();
+            // Polling cada 8 segundos en lugar de SSE (SSE no funciona bien en IIS/Apache Windows)
+            setInterval(pollNotificaciones, 8000);
         }
 
         function cargarNotificacionesIniciales() {
@@ -899,47 +895,38 @@ JS;
                 .catch(err => console.error('Error cargando notificaciones iniciales:', err));
         }
 
-        function conectarSSE() {
-            if (sseSource) {
-                sseSource.close();
-            }
+        function pollNotificaciones() {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-            sseSource = new EventSource(NOTIFS_STREAM_URL);
+            // Primero verificar recordatorios, luego obtener notificaciones
+            fetch(RECORDATORIOS_URL, { method: 'POST', headers: { 'X-CSRF-Token': token } })
+                .catch(() => {})
+                .finally(() => {
+                    fetch(NOTIFS_URL, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-Token': token, 'Content-Type': 'application/json' }
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (!data || !data.success) return;
+                            const todas = Array.isArray(data.notificaciones) ? data.notificaciones : [];
 
-            sseSource.addEventListener('notificacion', function (e) {
-                try {
-                    const todas = JSON.parse(e.data);
-                    if (Array.isArray(todas) && todas.length > 0) {
-                        // Actualizar campanita con el estado fresco del servidor
-                        cargarNotificacionesIniciales();
+                            mostrarNotificaciones(todas);
 
-                        // Filtrar SOLO las que no estaban en DB cuando cargó la página
-                        const realmente_nuevas = todas.filter(n => !lastNotifsSeen.has(String(n.id)));
+                            const realmente_nuevas = todas.filter(n => !lastNotifsSeen.has(String(n.id)));
+                            if (realmente_nuevas.length > 0) {
+                                dispararAlertas(realmente_nuevas);
 
-                        // Sonido + notif del SO solo para las nuevas de verdad
-                        dispararAlertas(realmente_nuevas);
-
-                        // Avisar a tickets/index SOLO si hay notifs nuevas que afectan la tabla
-                        // (evita el loop de toast infinito al recargar la página)
-                        if (realmente_nuevas.length > 0) {
-                            const afectaTabla = realmente_nuevas.some(n =>
-                                ['asignado', 'actualizado', 'estado_cambio', 'comentario'].includes(n.tipo)
-                            );
-                            if (afectaTabla) {
-                                window.dispatchEvent(new CustomEvent('wintick:tickets-updated', { detail: realmente_nuevas }));
+                                const afectaTabla = realmente_nuevas.some(n =>
+                                    ['asignado', 'actualizado', 'estado_cambio', 'comentario'].includes(n.tipo)
+                                );
+                                if (afectaTabla) {
+                                    window.dispatchEvent(new CustomEvent('wintick:tickets-updated', { detail: realmente_nuevas }));
+                                }
                             }
-                        }
-                    }
-                } catch (err) {
-                    console.error('SSE parse error:', err);
-                }
-            });
-
-            sseSource.onerror = function () {
-                // Si la conexion cae, esperar 5s y reconectar automaticamente
-                sseSource.close();
-                setTimeout(conectarSSE, 5000);
-            };
+                        })
+                        .catch(() => {});
+                });
         }
 
         function dispararAlertas(notificaciones) {

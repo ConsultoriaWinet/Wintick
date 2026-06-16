@@ -77,27 +77,28 @@ class SiteController extends Controller
         $esMonitor = !Yii::$app->user->isGuest
             && Yii::$app->user->identity->rol === 'Monitor';
 
-        $inicio = date('Y-m-01 00:00:00');
-        $fin = date('Y-m-t 23:59:59');
+        // Las cards muestran los tickets de HOY por HoraInicio (igual que el timeline Cheka)
+        $inicio = date('Y-m-d 00:00:00');
+        $fin = date('Y-m-d 23:59:59');
 
         $estadisticasTickets = [
             'total' => Tickets::find()
-                ->where(['between', 'Fecha_creacion', $inicio, $fin])
+                ->where(['between', 'HoraInicio', $inicio, $fin])
                 ->count(),
 
             'abiertos' => Tickets::find()
                 ->where(['Estado' => 'ABIERTO'])
-                ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+                ->andWhere(['between', 'HoraInicio', $inicio, $fin])
                 ->count(),
 
             'enProceso' => Tickets::find()
                 ->where(['Estado' => 'EN PROCESO'])
-                ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+                ->andWhere(['between', 'HoraInicio', $inicio, $fin])
                 ->count(),
 
             'cerrados' => Tickets::find()
                 ->where(['Estado' => 'CERRADO'])
-                ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+                ->andWhere(['between', 'HoraInicio', $inicio, $fin])
                 ->count(),
         ];
 
@@ -215,27 +216,27 @@ class SiteController extends Controller
             $inicio = $desde . ' 00:00:00';
             $fin    = $hasta . ' 23:59:59';
         } else {
-            $inicio = date('Y-m-01 00:00:00');
-            $fin    = date('Y-m-t 23:59:59');
+            $inicio = date('Y-m-d 00:00:00');
+            $fin    = date('Y-m-d 23:59:59');
         }
 
         $total = Tickets::find()
-            ->where(['between', 'Fecha_creacion', $inicio, $fin])
+            ->where(['between', 'HoraInicio', $inicio, $fin])
             ->count();
 
         $abiertos = Tickets::find()
             ->where(['Estado' => 'ABIERTO'])
-            ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+            ->andWhere(['between', 'HoraInicio', $inicio, $fin])
             ->count();
 
         $enProceso = Tickets::find()
             ->where(['Estado' => 'EN PROCESO'])
-            ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+            ->andWhere(['between', 'HoraInicio', $inicio, $fin])
             ->count();
 
         $cerrados = Tickets::find()
             ->where(['Estado' => 'CERRADO'])
-            ->andWhere(['between', 'Fecha_creacion', $inicio, $fin])
+            ->andWhere(['between', 'HoraInicio', $inicio, $fin])
             ->count();
 
         return [
