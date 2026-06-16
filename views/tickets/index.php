@@ -352,6 +352,24 @@ $this->registerCss('
     font-size: 12px;
 }
 
+.service-card{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding:14px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    background:#fafafa;
+    height:100%;
+    min-height:120px;
+}
+
+.service-card i{
+    font-size:18px;
+    color:#8BA590;
+    margin-top:3px;
+}
+
 ');
 
 
@@ -553,7 +571,16 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                 <tr>
                     <th>Folio</th>
                     <th>Asunto · Cliente</th>
-                    <th>Sistema · Servicio</th>
+                    <th>
+    Sistema · Servicio
+    <a href="#"
+       data-bs-toggle="modal"
+       data-bs-target="#modalInfoServicios"
+       onclick="return false;"
+       style="color:#8BA590;margin-left:4px;">
+        <i class="fas fa-info-circle"></i>
+    </a>
+</th>
                     <th>Prioridad</th>
                     <th>Asignado</th>
                     <th>Estado</th>
@@ -1975,6 +2002,104 @@ body.drawer-open #main > .container {
 <div id="imgLightbox" onclick="closeLightbox()">
     <img id="imgLightboxSrc" src="" alt="imagen ampliada">
 </div>
+
+<div class="modal fade" id="modalInfoServicios" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Gestión de Hardware, Gestión de Software, Accesos y Cuentas, Redes y Conectividad,  Solicitudes Generales y/o Entrenamiento, Desarrollos.
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-desktop"></i>
+                            <div>
+                                <strong>1. Hardware (HW-Equipos físicos)</strong><br>
+                                Equipos de cómputo, periféricos, impresoras y escáneres.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-laptop-code"></i>
+                            <div>
+                                <strong>2. Software (SW-Programas y aplicaciones)</strong><br>
+                                Sistemas operativos, Aplicaciones, Sistemas de Información y Herramientas específicos.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-server"></i>
+                            <div>
+                                <strong>3. Servicio (IS-Information Systems)</strong><br>
+                                Área Especializada de Consultoría, Implementaciones, Migraciones.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-graduation-cap"></i>
+                            <div>
+                                <strong>4. Solicitudes Generales y/o Entrenamiento</strong><br>
+                                Solicitud de equipos, Asesoría y Capacitación.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-code"></i>
+                            <div>
+                                <strong>5. Desarrollos</strong><br>
+                                Nuevos requerimientos y adecuaciones.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-user-lock"></i>
+                            <div>
+                                <strong>6. Accesos y Cuentas (Gestión de identidad/Control Acceso)</strong><br>
+                                Restablecimiento de contraseñas, Nuevos usuarios, Permisos y accesos.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="service-card">
+                            <i class="fas fa-wifi"></i>
+                            <div>
+                                <strong>7. Redes y Conectividad</strong><br>
+                                Acceso a Internet, VPN, Redes inalámbricas.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 window.WINTICK_USERS = <?= json_encode(array_map(function($u){
     $avatar = $u['avatar'] ?? null;
