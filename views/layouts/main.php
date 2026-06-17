@@ -608,6 +608,12 @@ $this->registerCssFile('@web/css/theme.css');
                         'encode' => false,
                     ] : null,
 
+                    (!Yii::$app->user->isGuest && (Yii::$app->user->identity->rol ?? '') === 'Desarrolladores') ? [
+                        'label' => '<i class="ph-duotone ph-database"></i> Catálogos',
+                        'url' => ['/catalogos/index'],
+                        'encode' => false,
+                    ] : null,
+
                 ])
             ]);
             ?>
