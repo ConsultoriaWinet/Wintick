@@ -53,7 +53,13 @@
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l /c/laragon/www/Wintick/controllers/TicketsController.php)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(sed -i \"s/'Usuarios'/'usuarios'/g; s/'Tickets'/'tickets'/g; s/'Clientes'/'clientes'/g; s/'Sistemas'/'sistemas'/g; s/'Servicios'/'servicios'/g; s/'Notificaciones'/'notificaciones'/g\" *.php)",
+      "Bash(sed -i 's/`Usuarios`/`usuarios`/g; s/`Tickets`/`tickets`/g; s/`Clientes`/`clientes`/g; s/`Sistemas`/`sistemas`/g; s/`Servicios`/`servicios`/g; s/`Notificaciones`/`notificaciones`/g' *.php)",
+      "Bash(git fetch *)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)",
+      "Bash(cd /c/laragon/www/Wintick/controllers && ls)"
     ]
   }
 }
