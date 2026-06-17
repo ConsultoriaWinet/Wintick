@@ -16,7 +16,7 @@ class m251118_164351_Sistemas extends Migration
         }
 
         // 1. Crear la tabla
-        $this->createTable('Sistemas', [
+        $this->createTable('sistemas', [
             'id' => $this->primaryKey(),
             'Nombre' => $this->string()->notNull()->unique(),
             'created_at' => $this->integer()->notNull(),
@@ -50,7 +50,7 @@ class m251118_164351_Sistemas extends Migration
         }
 
         // 3. Insertar los datos en lote
-        $this->batchInsert('Sistemas', ['Nombre', 'created_at', 'updated_at'], $rows);
+        $this->batchInsert('sistemas', ['Nombre', 'created_at', 'updated_at'], $rows);
     }
 
     /**
@@ -58,6 +58,6 @@ class m251118_164351_Sistemas extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable('Sistemas');
+        $this->dropTable('sistemas');
     }
 }

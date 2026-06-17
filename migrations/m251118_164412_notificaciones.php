@@ -26,7 +26,7 @@ class m251118_164412_notificaciones extends Migration
     // Use up()/down() to run migration code without a transaction.
     public function up()
     {
-        $this->createTable('Notificaciones', [
+        $this->createTable('notificaciones', [
             'id' => $this->primaryKey(),
             'usuario_id' => $this->integer()->notNull(),
             'ticket_id' => $this->integer(),

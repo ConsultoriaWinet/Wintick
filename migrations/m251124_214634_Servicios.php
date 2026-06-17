@@ -15,7 +15,7 @@ class m251124_214634_Servicios extends Migration
         }
 
         // 1. Crear la tabla
-        $this->createTable('Servicios', [
+        $this->createTable('servicios', [
             'id' => $this->primaryKey(),
             'Nombre' => $this->string()->notNull()->unique(),
             'created_at' => $this->integer()->notNull(),
@@ -40,7 +40,7 @@ class m251124_214634_Servicios extends Migration
         }
 
         // 3. Insertar los datos en lote
-        $this->batchInsert('Servicios', ['Nombre', 'created_at', 'updated_at'], $rows);
+        $this->batchInsert('servicios', ['Nombre', 'created_at', 'updated_at'], $rows);
     }
 
     /**
@@ -48,6 +48,6 @@ class m251124_214634_Servicios extends Migration
      */
     public function safeDown()
     {
-        $this->dropTable('Servicios');
+        $this->dropTable('servicios');
     }
 }

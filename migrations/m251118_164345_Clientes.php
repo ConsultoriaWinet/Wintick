@@ -26,7 +26,7 @@ class m251118_164345_Clientes extends Migration
     // Use up()/down() to run migration code without a transaction.
     public function up()
     {
-        $this->createTable('Clientes', [
+        $this->createTable('clientes', [
             'id' => $this->primaryKey(),
             'Nombre' => $this->string()->notNull(),         //Nombre de la empresa
             'Razon_social' => $this->string()->notNull(),   //Nombre de la empresa registrado en el CSF

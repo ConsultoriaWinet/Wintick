@@ -26,7 +26,7 @@ class m251118_164331_Tickets extends Migration
     // Use up()/down() to run migration code without a transaction.
     public function up()
     {
-        $this->createTable('Tickets', [
+        $this->createTable('tickets', [
             'id' => $this->primaryKey(),
             "Folio" => $this->string()->notNull()->unique(),
             "Usuario_reporta" => $this->string()->notNull(),                //USUARIO QUE REPORTA
@@ -51,7 +51,7 @@ class m251118_164331_Tickets extends Migration
 
     public function down()
     {
-        $this->dropTable('Tickets');
+        $this->dropTable('tickets');
         echo "m251118_164331_Tickets cannot be reverted.\n";
 
         return false;
