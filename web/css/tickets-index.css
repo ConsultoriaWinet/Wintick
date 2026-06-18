@@ -1099,8 +1099,8 @@ body.drawer-open #main > .container {
     align-items:center; justify-content:center; font-size:14px; transition:all 0.2s;
 }
 .swal-icon-btn:hover { background:rgba(255,255,255,0.38); transform:translateY(-1px); }
-.swal2-actions { display:none!important; }
-.swal2-close { display:none!important; }
+.swal-ticket-detalle .swal2-actions { display:none!important; }
+.swal-ticket-detalle .swal2-close { display:none!important; }
 .swal-icon-btn-sol { border-color:rgba(255,220,100,0.8); color:#fde68a; }
 .swal-icon-btn-sol:hover { background:rgba(253,230,138,0.25); }
 .swal-mode-bar {

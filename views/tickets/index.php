@@ -2897,6 +2897,7 @@ document.querySelectorAll('tr.existing-row').forEach(row => {
             showCloseButton: false,
             focusConfirm: false,
             padding: 0,
+            customClass: { popup: 'swal-ticket-detalle' },
             didOpen: (popup) => {
                 const closeBtn = popup.querySelector('#swal-view-close');
                 if (closeBtn) closeBtn.addEventListener('click', () => Swal.close());
