@@ -40,11 +40,11 @@ $config = [
             // Configuración de correo con Zoho Mail
             'transport' => [
                 'class' => 'Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport',
-                'scheme' => 'smtps', // SSL
+                'scheme' => 'smtp', // STARTTLS en 587 (Hetzner bloquea 25 y 465, no 587)
                 'host' => 'smtppro.zoho.com',
                 'username' => 'consultoria@winetpc.com',
                 'password' => 'H8EXh51ffYqq',
-                'port' => 465,
+                'port' => 587,
                 'streamOptions' => [
                     'ssl' => [
                         'allow_self_signed' => false,

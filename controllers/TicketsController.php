@@ -1305,7 +1305,24 @@ class TicketsController extends Controller
         }
     }
 
+    /**
+     * Difiere el envío del correo hasta DESPUÉS de enviar la respuesta al
+     * navegador. Así la creación/edición del ticket NO espera al SMTP (Zoho
+     * puede tardar varios segundos; antes bloqueaba toda la petición ~56s).
+     */
     private function enviarCorreoAsignacion($usuario_id, $ticket_id)
+    {
+        \Yii::$app->response->on(\yii\web\Response::EVENT_AFTER_SEND, function () use ($usuario_id, $ticket_id) {
+            // Cierra la conexión con el navegador (PHP-FPM) para no hacerlo esperar
+            if (function_exists('fastcgi_finish_request')) {
+                @fastcgi_finish_request();
+            }
+            $this->enviarCorreoAsignacionAhora($usuario_id, $ticket_id);
+        });
+        return true;
+    }
+
+    private function enviarCorreoAsignacionAhora($usuario_id, $ticket_id)
     {
         try {
             $usuario = Usuarios::findOne($usuario_id);
