@@ -77,7 +77,6 @@ class TicketsController extends Controller
             'obtener-comentarios',
             'contar-comentarios',
             'update-fecha',
-            'notificaciones-stream',
             'verificar-recordatorios',
         ];
 
@@ -1150,123 +1149,6 @@ class TicketsController extends Controller
         }
     }
 
-    /**
-     * Stream de notificaciones en tiempo real via Server-Sent Events (SSE).
-     * El navegador se conecta una vez y recibe eventos cada vez que hay notificaciones nuevas.
-     */
-    public function actionNotificacionesStream()
-    {
-        if (\Yii::$app->user->isGuest) {
-            header('HTTP/1.1 401 Unauthorized');
-            exit;
-        }
-
-        $userId = \Yii::$app->user->id;
-
-        // Deshabilitar el manejo de respuesta de Yii, tomamos control directo
-        \Yii::$app->response->isSent = true;
-
-        // CRÍTICO: liberar el lock de sesión PHP antes del loop.
-        // Sin esto, el SSE bloquea la sesión indefinidamente y cualquier
-        // otro click del usuario queda esperando → se congela la app.
-        \Yii::$app->session->close();
-
-        // Headers SSE
-        header('Content-Type: text/event-stream');
-        header('Cache-Control: no-cache');
-        header('X-Accel-Buffering: no'); // necesario en nginx/proxies
-
-        // Deshabilitar timeout y buffering de PHP
-        set_time_limit(0);
-        ini_set('output_buffering', 'off');
-        ini_set('zlib.output_compression', false);
-        if (function_exists('apache_setenv')) {
-            apache_setenv('no-gzip', '1');
-        }
-
-        // Vaciar cualquier buffer activo de Yii / PHP antes de entrar al loop SSE
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-        ob_implicit_flush(true);
-
-        $ultimoIdVisto = 0;
-
-        // Enviar un comentario inicial para confirmar conexión
-        echo ": conectado\n\n";
-        flush();
-
-        while (true) {
-            // Verificar que el cliente sigue conectado
-            if (connection_aborted()) {
-                break;
-            }
-
-            try {
-                // Asegurar conexión activa (puede haberse cerrado en iteración anterior)
-                if (!\Yii::$app->db->isActive) {
-                    \Yii::$app->db->open();
-                }
-
-                // Buscar notificaciones nuevas no leídas desde el último id visto
-                $query = Notificaciones::find()
-                    ->where(['usuario_id' => $userId, 'leida' => 0])
-                    ->orderBy(['id' => SORT_ASC])   // ASC: las más antiguas primero, correcta
-                    ->limit(20);
-
-                if ($ultimoIdVisto > 0) {
-                    $query->andWhere(['>', 'id', $ultimoIdVisto]);
-                }
-
-                $notificaciones = $query->all();
-
-                if (!empty($notificaciones)) {
-                    $data = [];
-                    foreach ($notificaciones as $notif) {
-                        $data[] = [
-                            'id'        => $notif->id,
-                            'tipo'      => $notif->tipo ?? 'asignado',
-                            'titulo'    => $notif->titulo,
-                            'mensaje'   => $notif->mensaje,
-                            'leida'     => false,
-                            'fecha'     => date('d/m H:i', strtotime($notif->fecha_creacion)),
-                            'ticket_id' => $notif->ticket_id,
-                            'url'       => \yii\helpers\Url::to([
-                                'tickets/index',
-                                'openComments' => 1,
-                                'ticket_id'    => $notif->ticket_id,
-                                'notif_id'     => $notif->id,
-                            ]),
-                        ];
-                        if ($notif->id > $ultimoIdVisto) {
-                            $ultimoIdVisto = $notif->id;
-                        }
-                    }
-
-                    echo "event: notificacion\n";
-                    echo "data: " . json_encode($data) . "\n\n";
-                    flush();
-                } else {
-                    // Heartbeat para mantener la conexion viva (evita timeout del navegador)
-                    echo ": heartbeat\n\n";
-                    flush();
-                }
-
-                // Cerrar conexion BD para no tenerla abierta durante el sleep
-                \Yii::$app->db->close();
-
-            } catch (\Exception $e) {
-                // Si algo falla, mandar heartbeat y continuar en la siguiente iteración
-                echo ": error-retry\n\n";
-                flush();
-                try { \Yii::$app->db->close(); } catch (\Exception $_) {}
-            }
-
-            sleep(3);
-        }
-
-        exit;
-    }
 
     /**
      * Crear notificación (función privada)
