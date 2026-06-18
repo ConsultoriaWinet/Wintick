@@ -1,0 +1,1100 @@
+    /* ─── Página completa sin container ─────────────────────── */
+    .site-index {
+        margin: 0;
+    }
+
+    /* ─── Wrapper principal: sidebar + área central ──────────── */
+    .dashboard-wrap {
+        display: flex;
+        height: calc(100vh - 62px);
+        min-height: 520px;
+        overflow: hidden;
+        margin-top: 54px;
+        /* navbar fijo ~62px - body padding-top 8px */
+    }
+
+    /* ─── Sidebar consultores ────────────────────────────────── */
+    .consultores-sidebar {
+        width: 210px;
+        min-width: 190px;
+        flex-shrink: 0;
+        padding: 14px 8px;
+        border-right: 1px solid var(--border, #e5e7eb);
+        overflow-y: auto;
+        background: var(--surface, #fff);
+    }
+
+    .consultores-sidebar h3 {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--text-3, #9ca3af);
+        letter-spacing: .07em;
+        text-transform: uppercase;
+        margin: 0 0 10px 6px;
+    }
+
+    .consultor-item {
+        padding: 6px 9px;
+        margin-bottom: 2px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--text, #111827);
+        font-size: 13px;
+        transition: background .15s;
+        user-select: none;
+    }
+
+    .consultor-item:hover {
+        background: var(--surface-2, #f9fafb);
+    }
+
+    .consultor-item.active {
+        background: var(--accent-light, #eff6ff);
+        font-weight: 600;
+        color: var(--accent-dark, #1d4ed8);
+    }
+
+    /* Avatar con anillo de color */
+    .consultor-av {
+        position: relative;
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+    }
+
+    .consultor-av img,
+    .consultor-av .av-initials {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        object-fit: cover;
+    }
+
+    .consultor-av .av-initials {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .consultor-av::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2.5px solid var(--av-ring, #6b7280);
+    }
+
+    /* ─── Área central (calendario + encabezado) ─────────────── */
+    #cal-area {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #cal-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px 6px;
+        flex-shrink: 0;
+    }
+
+    #cal-topbar h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    #cal-topbar .hint {
+        font-size: 11px;
+        color: var(--text-3, #9ca3af);
+    }
+
+    #calendar-container {
+        flex: 1;
+        min-height: 0;
+        padding: 4px 14px 10px;
+        overflow: hidden;
+    }
+
+    /* FullCalendar overrides */
+    .fc .fc-toolbar-title {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: var(--text, #111827);
+    }
+
+    .fc .fc-button {
+        background: var(--surface-2, #f3f4f6) !important;
+        border: 1px solid var(--border, #e5e7eb) !important;
+        color: var(--text, #374151) !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        padding: 4px 10px !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        transition: background .15s !important;
+    }
+
+    .fc .fc-button:hover {
+        background: var(--accent-light, #eff6ff) !important;
+        color: var(--accent-dark, #1d4ed8) !important;
+    }
+
+    .fc .fc-button-active,
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+        background: var(--accent, #3b82f6) !important;
+        color: #fff !important;
+        border-color: var(--accent, #3b82f6) !important;
+    }
+
+    .fc .fc-today-button {
+        opacity: 1 !important;
+    }
+
+    .fc th {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        color: var(--text-3, #6b7280);
+        letter-spacing: .05em;
+    }
+
+    .fc .fc-daygrid-day-number {
+        font-size: 12px !important;
+        font-weight: 600;
+        color: var(--text-2, #374151);
+        padding: 3px 6px !important;
+    }
+
+    .fc .fc-day-today {
+        background: #eff6ff !important;
+    }
+
+    .fc .fc-day-today .fc-daygrid-day-number {
+        color: var(--accent, #3b82f6) !important;
+        font-weight: 800;
+    }
+
+    .fc .fc-daygrid-event {
+        border-radius: 4px !important;
+        font-size: 10.5px !important;
+        padding: 1px 4px !important;
+        font-weight: 500 !important;
+        border: none !important;
+    }
+
+    .fc .fc-event-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .fc .fc-list-event:hover td {
+        background: var(--accent-light, #eff6ff) !important;
+    }
+
+    .fc .fc-scrollgrid {
+        border-color: var(--border, #e5e7eb) !important;
+    }
+
+    .fc .fc-scrollgrid td,
+    .fc .fc-scrollgrid th {
+        border-color: var(--border, #e5e7eb) !important;
+    }
+
+    .fc .fc-daygrid-day-frame {
+        cursor: pointer;
+    }
+
+    .fc .fc-daygrid-day-frame:active {
+        background: rgba(59, 130, 246, .05);
+    }
+
+    /* ─── Filtro de fechas de las cards ─────────────────────────── */
+    .stats-date-filter {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 14px;
+        padding: 0 2px;
+    }
+
+    .stats-date-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 10px;
+        padding: 0 10px;
+        gap: 8px;
+        height: 38px;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .stats-date-wrap:focus-within {
+        border-color: #8BA590;
+        box-shadow: 0 0 0 3px rgba(139,165,144,.15);
+    }
+
+    .stats-date-icon {
+        color: #8BA590;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    .stats-date-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 12.5px;
+        color: var(--text, #111827);
+        font-weight: 500;
+        min-width: 200px;
+        cursor: pointer;
+    }
+
+    .stats-date-input::placeholder {
+        color: var(--text-3, #9ca3af);
+        font-weight: 400;
+    }
+
+    .stats-date-clear {
+        border: none;
+        background: none;
+        color: var(--text-3, #9ca3af);
+        cursor: pointer;
+        padding: 0;
+        font-size: 11px;
+        line-height: 1;
+        display: none;
+        transition: color .15s;
+    }
+
+    .stats-date-clear:hover { color: #dc2626; }
+    .stats-date-clear.visible { display: flex; align-items: center; }
+
+    .stats-date-hint {
+        font-size: 11px;
+        color: var(--text-3, #9ca3af);
+        white-space: nowrap;
+    }
+
+    /* Flatpickr override: color acento del aplicativo */
+    .flatpickr-day.selected,
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange,
+    .flatpickr-day.selected:hover,
+    .flatpickr-day.startRange:hover,
+    .flatpickr-day.endRange:hover {
+        background: #8BA590 !important;
+        border-color: #8BA590 !important;
+    }
+
+    .flatpickr-day.inRange {
+        background: rgba(139,165,144,.18) !important;
+        border-color: rgba(139,165,144,.18) !important;
+        box-shadow: -5px 0 0 rgba(139,165,144,.18), 5px 0 0 rgba(139,165,144,.18) !important;
+    }
+
+    .flatpickr-day.today {
+        border-color: #8BA590 !important;
+    }
+
+    /* ─── Vista Cheka (timeline por consultor) ──────────────────── */
+    #cheka-view {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        background: var(--surface-2, #f9fafb);
+    }
+
+    /* Cuando Cheka está activo: ocultar TODO el contenido del FC (toolbar + body) */
+    #cal-area.cheka-on #calendar-container {
+        display: none;
+    }
+
+    #cal-area.cheka-on #cheka-view {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+    }
+
+    /* Header de navegación */
+    .cheka-topbar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+        flex-shrink: 0;
+        min-height: 50px;
+        padding: 8px 16px;
+    }
+
+    .cheka-nav-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        border: 1px solid var(--border, #e5e7eb);
+        background: var(--surface, #fff);
+        color: var(--text-2, #374151);
+        cursor: pointer;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .15s;
+    }
+
+    .cheka-nav-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
+    }
+
+    .cheka-hoy-btn {
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .cheka-hoy-btn:hover {
+        background: var(--surface-2, #f3f4f6);
+    }
+
+    .cheka-date-label {
+        font-weight: 700;
+        color: #111827;
+        min-width: 280px;
+        flex: 1;
+        text-align: left;
+        font-size: 32px;
+
+    }
+
+    .cheka-now-pill {
+        margin-left: auto;
+        background: #ecfdf5;
+        color: #16a34a;
+        border: 1px solid #86efac;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .cheka-now-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #16a34a;
+        animation: chekaPulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes chekaPulse {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1)
+        }
+
+        50% {
+            opacity: .5;
+            transform: scale(.7)
+        }
+    }
+
+    /* Grid scroll wrapper */
+    #cheka-scroll {
+        flex: 1;
+        width: 100%;
+        overflow: auto;
+        position: relative;
+    }
+
+    /* Grid (sticky left column + scrollable timeline) */
+    .cheka-grid {
+        display: grid;
+        grid-template-columns: 168px 1fr;
+        min-height: 100%;
+        align-content: start;
+        width: 100%;
+        /* evita que las filas se estiren y bajen el contenido */
+    }
+
+    /* Columna izquierda: header + filas */
+    .cheka-left-header {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background: var(--surface, #fff);
+        border-right: 1px solid var(--border, #e5e7eb);
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        padding: 8px 12px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-3, #9ca3af);
+    }
+
+    .cheka-user-cell {
+        position: sticky;
+        left: 0;
+        z-index: 8;
+        background: var(--surface, #fff);
+        border-right: 1px solid var(--border, #e5e7eb);
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        padding: 10px 12px;
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        min-height: 68px;
+    }
+
+    .cheka-av {
+        position: relative;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+    }
+
+    .cheka-av-inner {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        object-fit: cover;
+        overflow: hidden;
+    }
+
+    .cheka-av::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2.5px solid var(--av-clr, #6b7280);
+    }
+
+    .cheka-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .cheka-user-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--text, #111827);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cheka-user-meta {
+        font-size: 10.5px;
+        color: var(--text-3, #9ca3af);
+        margin-top: 1px;
+    }
+
+    /* Timeline: header de horas */
+    .cheka-time-header {
+        position: sticky;
+        top: 0;
+        z-index: 9;
+        background: var(--surface, #fff);
+        border-bottom: 2px solid var(--border, #e5e7eb);
+        display: flex;
+        height: 36px;
+    }
+
+    .cheka-hour-label {
+        flex-shrink: 0;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-3, #6b7280);
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding-left: 4px;
+        border-right: 1px solid var(--border, #e5e7eb);
+        box-sizing: border-box;
+    }
+
+    /* Filas de timeline */
+    .cheka-row-timeline {
+        position: relative;
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+    }
+
+    .cheka-row-bg-hours {
+        position: absolute;
+        inset: 0;
+        display: flex;
+    }
+
+    .cheka-row-hour-seg {
+        flex-shrink: 0;
+        border-right: 1px solid var(--border, #f3f4f6);
+        box-sizing: border-box;
+        height: 100%;
+    }
+
+    .cheka-row-hour-seg:nth-child(even) {
+        background: rgba(0, 0, 0, .012);
+    }
+
+    /* Bloques de ticket */
+    .cheka-ticket-block {
+        position: absolute;
+        border-radius: 5px;
+        padding: 0 7px;
+        cursor: pointer;
+        overflow: hidden;
+        transition: filter .12s, box-shadow .12s, z-index 0s;
+        z-index: 2;
+        min-width: 56px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .cheka-ticket-block:hover {
+        filter: brightness(.93);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+        z-index: 10;
+        overflow: visible;
+        /* muestra cliente al hacer hover */
+    }
+
+    .cheka-blk-time {
+        font-size: 9px;
+        font-weight: 800;
+        opacity: .75;
+        flex-shrink: 0;
+    }
+
+    .cheka-blk-sep {
+        opacity: .35;
+        font-size: 9px;
+        flex-shrink: 0;
+    }
+
+    .cheka-blk-folio {
+        font-size: 10.5px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .cheka-blk-client {
+        font-size: 10px;
+        opacity: .75;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        /* permite que se recorte en estado normal */
+    }
+
+    /* Línea de tiempo actual */
+    #cheka-now-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dc2626;
+        z-index: 20;
+        pointer-events: none;
+    }
+
+    #cheka-now-line::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #dc2626;
+    }
+
+    /* Estado colores bloque */
+    .chk-abierto {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .chk-programado {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .chk-proceso {
+        background: #fef9c3;
+        color: #a16207;
+    }
+
+    .chk-contpaqi {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .chk-cerrado {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .chk-default {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    /* Botón Cheka en topbar del calendario */
+    #cheka-cal-toggle {
+        padding: 5px 13px;
+        border-radius: 7px;
+        border: 1px solid var(--border, #e5e7eb);
+        background: var(--surface-2, #f3f4f6);
+        color: var(--text-2, #374151);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all .15s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    #cheka-cal-toggle:hover {
+        background: var(--accent-light, #eff6ff);
+        color: var(--accent-dark, #1d4ed8);
+    }
+
+    #cheka-cal-toggle.active {
+        background: var(--accent, #3b82f6);
+        color: #fff;
+        border-color: var(--accent, #3b82f6);
+    }
+
+    /* ─── Panel día — FUERA del calendario, posición fija ──────── */
+    #day-panel {
+        position: fixed;
+        top: 62px;
+        right: 0;
+        width: 0;
+        height: calc(100vh - 62px);
+        overflow: hidden;
+        transition: width .25s ease;
+        background: var(--surface, #fff);
+        border-left: 1px solid var(--border, #e5e7eb);
+        box-shadow: -4px 0 20px rgba(0, 0, 0, .08);
+        display: flex;
+        flex-direction: column;
+        z-index: 200;
+    }
+
+    #day-panel.open {
+        width: 360px;
+    }
+
+    .dp-header {
+        padding: 14px 16px 11px;
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .dp-date-box {
+        background: var(--accent, #3b82f6);
+        color: #fff;
+        border-radius: 10px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
+    .dp-date-box .dp-day {
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .dp-date-box .dp-mon {
+        font-size: 9.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-top: 1px;
+    }
+
+    .dp-header-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .dp-header-info h4 {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--text, #111827);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dp-header-info .dp-count {
+        margin-top: 2px;
+        font-size: 11.5px;
+        color: var(--text-3, #6b7280);
+    }
+
+    .dp-close {
+        width: 26px;
+        height: 26px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--text-3, #9ca3af);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        flex-shrink: 0;
+        font-size: 13px;
+        transition: background .15s;
+    }
+
+    .dp-close:hover {
+        background: var(--surface-2, #f3f4f6);
+        color: var(--text, #374151);
+    }
+
+    #day-panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .dp-ticket {
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 10px;
+        padding: 9px 11px;
+        cursor: pointer;
+        transition: box-shadow .15s, border-color .15s;
+        background: var(--surface, #fff);
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .dp-ticket:hover {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+        border-color: var(--accent, #3b82f6);
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .dp-ticket-top {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 5px;
+    }
+
+    .dp-folio {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: var(--text, #111827);
+        flex: 1;
+    }
+
+    .dp-hora {
+        font-size: 10.5px;
+        color: var(--text-3, #9ca3af);
+        white-space: nowrap;
+    }
+
+    .dp-desc {
+        font-size: 11.5px;
+        color: var(--text-2, #374151);
+        line-height: 1.4;
+        margin-bottom: 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .dp-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .dp-cliente {
+        font-size: 10.5px;
+        color: var(--text-3, #6b7280);
+        font-weight: 500;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dp-asignado {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .dp-av {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .dp-avname {
+        font-size: 10.5px;
+        color: var(--text-3, #6b7280);
+    }
+
+    .dp-estado {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .dp-estado::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dp-e-abierto {
+        background: #EFF6FF;
+        color: #2563EB;
+    }
+
+    .dp-e-abierto::before {
+        background: #2563EB;
+    }
+
+    .dp-e-programado {
+        background: #F0FDF4;
+        color: #16A34A;
+    }
+
+    .dp-e-programado::before {
+        background: #16A34A;
+    }
+
+    .dp-e-proceso {
+        background: #FFFBEB;
+        color: #D97706;
+    }
+
+    .dp-e-proceso::before {
+        background: #D97706;
+    }
+
+    .dp-e-espera {
+        background: #F5F3FF;
+        color: #7C3AED;
+    }
+
+    .dp-e-espera::before {
+        background: #7C3AED;
+    }
+
+    .dp-e-contpaqi {
+        background: #FFFBEB;
+        color: #B45309;
+    }
+
+    .dp-e-contpaqi::before {
+        background: #B45309;
+    }
+
+    .dp-e-cerrado {
+        background: #F1F5F9;
+        color: #475569;
+    }
+
+    .dp-e-cerrado::before {
+        background: #475569;
+    }
+
+    .dp-e-cancelado {
+        background: #F3F4F6;
+        color: #6B7280;
+    }
+
+    .dp-e-cancelado::before {
+        background: #6B7280;
+    }
+
+    .dp-prio {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dp-prio-alta {
+        background: #ef4444;
+    }
+
+    .dp-prio-media {
+        background: #f59e0b;
+    }
+
+    .dp-prio-baja {
+        background: #22c55e;
+    }
+
+    .dp-prio-def {
+        background: #9ca3af;
+    }
+
+    .dp-empty {
+        text-align: center;
+        padding: 36px 16px;
+        color: var(--text-3, #9ca3af);
+        font-size: 12.5px;
+    }
+
+    .dp-empty i {
+        font-size: 26px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .dp-loading {
+        text-align: center;
+        padding: 36px 16px;
+        color: var(--text-3, #9ca3af);
+        font-size: 12.5px;
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    .sidebar-toggle-btn {
+        display: none;
+        width: 100%;
+        padding: 8px 12px;
+        background: var(--surface-2, #f3f4f6);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text, #374151);
+        cursor: pointer;
+        margin-bottom: 8px;
+        text-align: left;
+    }
+
+    .sidebar-toggle-btn i {
+        margin-right: 7px;
+    }
+
+    .sidebar-lista {
+        display: flex;
+        flex-direction: column;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-wrap {
+            flex-direction: column;
+            height: auto;
+        }
+
+        .consultores-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border, #e5e7eb);
+        }
+
+        #day-panel {
+            top: 0;
+            height: 100vh;
+        }
+
+        #day-panel.open {
+            width: min(360px, 100vw);
+        }
+    }
+
+    @media (max-width: 767px) {
+        .sidebar-toggle-btn {
+            display: block;
+        }
+
+        .sidebar-lista.collapsed {
+            display: none;
+        }
+
+        .fc .fc-button {
+            padding: 3px 6px !important;
+            font-size: 11px !important;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 13px !important;
+        }
+
+        .fc .fc-toolbar {
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+    }

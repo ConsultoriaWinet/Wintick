@@ -2,6 +2,7 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$secrets = require __DIR__ . '/secrets.php';
 
 $config = [
     'id' => 'basic',
@@ -18,7 +19,7 @@ $config = [
             'class' => 'yii\rbac\DbManager',
         ],
         'request' => [
-            'cookieValidationKey' => 'fk3TG_tHdrVbcTFW13tFkkK5RmwTCPbe',
+            'cookieValidationKey' => $secrets['cookieValidationKey'],
             'enableCsrfValidation' => true,
         ],
         'cache' => [
@@ -42,8 +43,8 @@ $config = [
                 'class' => 'Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport',
                 'scheme' => 'smtp', // STARTTLS en 587 (Hetzner bloquea 25 y 465, no 587)
                 'host' => 'smtppro.zoho.com',
-                'username' => 'consultoria@winetpc.com',
-                'password' => 'H8EXh51ffYqq',
+                'username' => $secrets['mailer']['username'],
+                'password' => $secrets['mailer']['password'],
                 'port' => 587,
                 'streamOptions' => [
                     'ssl' => [

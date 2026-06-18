@@ -33,3 +33,6 @@ tests/_support/_generated
 /.vagrant
 .claude/worktrees/trusting-dubinsky-d5b753
 .claude/worktrees/eager-colden-08a0a2
+
+# Secretos de configuracion (no versionar)
+/config/secrets.php

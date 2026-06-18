@@ -1,10 +1,12 @@
 <?php
 
+$secrets = require __DIR__ . '/secrets.php';
+
 return [
     'class' => 'yii\db\Connection',
-    'dsn' => 'mysql:host=localhost:3307;dbname=wintickc',
-    'username' => 'root',
-    'password' => '',
+    'dsn' => $secrets['db']['dsn'],
+    'username' => $secrets['db']['username'],
+    'password' => $secrets['db']['password'],
     'charset' => 'utf8',
 
     // Schema cache options (for production environment)
