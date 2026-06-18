@@ -62,7 +62,8 @@
       "Bash(cd /c/laragon/www/Wintick/controllers && ls)",
       "Bash(grep -c \"\\\\\\\\\\\\\\\\'\")",
       "Bash(grep -nE \"content:|font-family|\\\\\\\\\\\\\\\\'\")",
-      "Bash(echo \"=== exit: $? ===\")"
+      "Bash(echo \"=== exit: $? ===\")",
+      "WebFetch(domain:cdn.jsdelivr.net)"
     ]
   }
 }
