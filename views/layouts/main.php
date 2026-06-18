@@ -30,7 +30,8 @@ $this->registerCssFile('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/gsap.min.js', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/TextPlugin.min.js', ['position' => \yii\web\View::POS_HEAD]);
-$this->registerCssFile('https://unpkg.com/phosphor-icons@1.4.1/src/css/phosphor.css', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerCssFile('https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css', ['position' => \yii\web\View::POS_HEAD]);
+$this->registerCssFile('https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/duotone/style.css', ['position' => \yii\web\View::POS_HEAD]);
 
 $this->registerCssFile('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 $this->registerCssFile('@web/css/theme.css');
