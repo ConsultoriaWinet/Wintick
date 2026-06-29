@@ -35,28 +35,28 @@ class TicketsController extends Controller
     /**
      * @inheritDoc
      */
-        public function behaviors()
-        {
-            return array_merge(parent::behaviors(), [
-                'access' => [
-                    'class' => AccessControl::class,
-                    // Sin 'only' → aplica a TODAS las acciones del controlador
-                    'rules' => [
-                        [
-                            'allow' => true,
-                            'roles' => ['@'],  // cualquier usuario autenticado
-                        ],
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+            'access' => [
+                'class' => AccessControl::class,
+                // Sin 'only' → aplica a TODAS las acciones del controlador
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],  // cualquier usuario autenticado
                     ],
                 ],
-                'verbs' => [
-                    'class' => VerbFilter::class,
-                    'actions' => [
-                        'get-tickets'   => ['GET'],
-                        'update-fecha'  => ['POST'],
-                    ],
+            ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'get-tickets' => ['GET'],
+                    'update-fecha' => ['POST'],
                 ],
-            ]);
-        }
+            ],
+        ]);
+    }
 
     /**
      * Deshabilita CSRF para endpoints que reciben JSON crudo desde JS.
@@ -92,56 +92,56 @@ class TicketsController extends Controller
      *
      * @return string
      */
-   public function actionIndex()
-{
-    $searchModel  = new TicketsSearch();
-    $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+    public function actionIndex()
+    {
+        $searchModel = new TicketsSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
-    $request = Yii::$app->request;
+        $request = Yii::$app->request;
 
-    // Para la vista - obtener el parámetro asignado_a si existe
-    $asignadoParam = $request->get('asignado_a', null);
-    if ($asignadoParam === null) {
-        $asignadoFiltro = Yii::$app->user->isGuest ? '' : Yii::$app->user->id;
-    } else {
-        $asignadoFiltro = $asignadoParam;
+        // Para la vista - obtener el parámetro asignado_a si existe
+        $asignadoParam = $request->get('asignado_a', null);
+        if ($asignadoParam === null) {
+            $asignadoFiltro = Yii::$app->user->isGuest ? '' : Yii::$app->user->id;
+        } else {
+            $asignadoFiltro = $asignadoParam;
+        }
+
+        $clientes = Clientes::find()
+            ->select(['id', 'Nombre', 'Prioridad', 'Tipo_servicio'])
+            ->orderBy(['Nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
+
+        $sistemas = Sistemas::find()
+            ->select(['id', 'Nombre'])
+            ->orderBy(['Nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
+
+        $servicios = Servicios::find()
+            ->select(['id', 'Nombre'])
+            ->orderBy(['Nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
+
+        $Usuarios = Usuarios::find()
+            ->select(['id', 'Nombre', 'email'])
+            ->orderBy(['Nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
+
+        // ====== RENDER ======
+        return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+            'clientes' => $clientes,
+            'sistemas' => $sistemas,
+            'servicios' => $servicios,
+            'Usuarios' => $Usuarios,
+            'asignadoFiltro' => $asignadoFiltro,
+        ]);
     }
-
-    $clientes  = Clientes::find()
-        ->select(['id', 'Nombre', 'Prioridad', 'Tipo_servicio'])
-        ->orderBy(['Nombre' => SORT_ASC])
-        ->asArray()
-        ->all();
-
-    $sistemas = Sistemas::find()
-        ->select(['id', 'Nombre'])
-        ->orderBy(['Nombre' => SORT_ASC])
-        ->asArray()
-        ->all();
-
-    $servicios = Servicios::find()
-        ->select(['id', 'Nombre'])
-        ->orderBy(['Nombre' => SORT_ASC])
-        ->asArray()
-        ->all();
-
-    $Usuarios = Usuarios::find()
-        ->select(['id', 'Nombre', 'email'])
-        ->orderBy(['Nombre' => SORT_ASC])
-        ->asArray()
-        ->all();
-
-    // ====== RENDER ======
-    return $this->render('index', [
-        'searchModel'     => $searchModel,
-        'dataProvider'    => $dataProvider,
-        'clientes'        => $clientes,
-        'sistemas'        => $sistemas,
-        'servicios'       => $servicios,
-        'Usuarios'        => $Usuarios,
-        'asignadoFiltro'  => $asignadoFiltro, 
-    ]);
-}
     /**
      * Displays a single Tickets model.
      * @param int $id ID
@@ -150,7 +150,7 @@ class TicketsController extends Controller
      */
     public function actionView($id)
     {
-        $model    = $this->findModel($id);
+        $model = $this->findModel($id);
         $historial = null;
 
         if (!Yii::$app->user->isGuest) {
@@ -165,7 +165,7 @@ class TicketsController extends Controller
         }
 
         return $this->render('view', [
-            'model'    => $model,
+            'model' => $model,
             'historial' => $historial,
         ]);
     }
@@ -204,15 +204,15 @@ class TicketsController extends Controller
             if (strlen($fechaDatetime) === 10) {
                 $fechaDatetime .= ' ' . date('H:i:s');
             }
-            $model->Fecha_creacion      = $fechaDatetime;
+            $model->Fecha_creacion = $fechaDatetime;
             $model->Fecha_actualizacion = $fechaDatetime;
-            $model->HoraInicio          = $fechaDatetime;
-            $model->HoraProgramada      = date('Y-m-d H:i:s');
+            $model->HoraInicio = $fechaDatetime;
+            $model->HoraProgramada = date('Y-m-d H:i:s');
 
             Yii::$app->session->setFlash('fechaDesdeCalendario', $fechaSeleccionada);
             $desdeCalendario = true;
         } else {
-            $model->Fecha_creacion      = date('Y-m-d H:i:s');
+            $model->Fecha_creacion = date('Y-m-d H:i:s');
             $model->Fecha_actualizacion = date('Y-m-d H:i:s');
         }
 
@@ -252,16 +252,18 @@ class TicketsController extends Controller
                     DevLog::TIPO_CREAR,
                     "Ticket [{$model->Folio}] creado — cliente ID {$model->Cliente_id} | sistema ID {$model->Sistema_id} | asignado a usuario ID {$model->Asignado_a}",
                     [
-                        'folio'       => $model->Folio,
-                        'estado'      => $model->Estado,
-                        'prioridad'   => $model->Prioridad,
-                        'cliente_id'  => $model->Cliente_id,
-                        'sistema_id'  => $model->Sistema_id,
+                        'folio' => $model->Folio,
+                        'estado' => $model->Estado,
+                        'prioridad' => $model->Prioridad,
+                        'cliente_id' => $model->Cliente_id,
+                        'sistema_id' => $model->Sistema_id,
                         'servicio_id' => $model->Servicio_id,
-                        'asignado_a'  => $model->Asignado_a,
+                        'asignado_a' => $model->Asignado_a,
                         'descripcion' => mb_substr($model->Descripcion ?? '', 0, 300),
                     ],
-                    'tickets', $model->id, 'Tickets'
+                    'tickets',
+                    $model->id,
+                    'Tickets'
                 );
 
                 Yii::$app->session->setFlash('success', 'Ticket creado exitosamente.');
@@ -270,9 +272,9 @@ class TicketsController extends Controller
         } else {
             $model->loadDefaultValues();
         }
-        
+
         return $this->render('create', [
-            'model'           => $model,
+            'model' => $model,
             'consultoresList' => $consultoresList,
             'desdeCalendario' => $desdeCalendario,
         ]);
@@ -286,10 +288,10 @@ class TicketsController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $body  = Yii::$app->request->rawBody;
-        $data  = json_decode($body, true);
-        $id    = isset($data['id'])    ? (int)$data['id']    : null;
-        $start = isset($data['start']) ? $data['start']      : null;
+        $body = Yii::$app->request->rawBody;
+        $data = json_decode($body, true);
+        $id = isset($data['id']) ? (int) $data['id'] : null;
+        $start = isset($data['start']) ? $data['start'] : null;
 
         if (!$id || !$start) {
             Yii::$app->response->statusCode = 400;
@@ -305,7 +307,7 @@ class TicketsController extends Controller
         // Convertir ISO 8601 a formato MySQL (YYYY-MM-DD HH:MM:SS)
         $fechaDatetime = date('Y-m-d H:i:s', strtotime($start));
 
-        $model->HoraInicio          = $fechaDatetime;
+        $model->HoraInicio = $fechaDatetime;
         $model->Fecha_actualizacion = date('Y-m-d H:i:s');
 
         if ($model->save(false)) {
@@ -329,20 +331,20 @@ class TicketsController extends Controller
         $model = $this->findModel($id);
 
         // Guardar valores originales ANTES del load() para proteger campos y detectar cambios
-        $asignadoAntes  = $model->Asignado_a;
-        $estadoAntes    = $model->Estado;
+        $asignadoAntes = $model->Asignado_a;
+        $estadoAntes = $model->Estado;
         $prioridadAntes = $model->Prioridad;
-        $clienteAntes   = $model->Cliente_id;
-        $sistemaAntes   = $model->Sistema_id;
-        $servicioAntes  = $model->Servicio_id;
-        $solucionOrig   = $model->Solucion;
-        $tiempoEfOrig   = $model->TiempoEfectivo;
-        $horaFinOrig    = $model->HoraFinalizo;
+        $clienteAntes = $model->Cliente_id;
+        $sistemaAntes = $model->Sistema_id;
+        $servicioAntes = $model->Servicio_id;
+        $solucionOrig = $model->Solucion;
+        $tiempoEfOrig = $model->TiempoEfectivo;
+        $horaFinOrig = $model->HoraFinalizo;
 
-        $clientes  = Clientes::find()->select(['id', 'Nombre'])->asArray()->all();
-        $sistemas  = Sistemas::find()->select(['id', 'Nombre'])->asArray()->all();
+        $clientes = Clientes::find()->select(['id', 'Nombre'])->asArray()->all();
+        $sistemas = Sistemas::find()->select(['id', 'Nombre'])->asArray()->all();
         $servicios = Servicios::find()->select(['id', 'Nombre'])->asArray()->all();
-        $usuarios  = Usuarios::find()->select(['id', 'Nombre', 'email'])->asArray()->all();
+        $usuarios = Usuarios::find()->select(['id', 'Nombre', 'email'])->asArray()->all();
 
         if ($model->load(Yii::$app->request->post())) {
             // datetime-local envía "YYYY-MM-DDTHH:MM" → convertir a "YYYY-MM-DD HH:MM:SS"
@@ -353,27 +355,29 @@ class TicketsController extends Controller
             }
 
             // Bloquear cierre desde esta vista — debe hacerse desde index con el flujo completo
-            if (mb_strtolower(trim($estadoAntes)) !== 'cerrado' &&
-                mb_strtolower(trim($model->Estado)) === 'cerrado') {
+            if (
+                mb_strtolower(trim($estadoAntes)) !== 'cerrado' &&
+                mb_strtolower(trim($model->Estado)) === 'cerrado'
+            ) {
                 $model->Estado = $estadoAntes;
                 Yii::$app->session->setFlash('error', 'Para cerrar un ticket debes hacerlo desde la lista de tickets (incluye solución, tiempo efectivo y fecha de cierre).');
             }
 
             // Los campos de cierre solo se asignan por actionSaveSolution — nunca desde aquí
-            $model->Solucion       = $solucionOrig;
+            $model->Solucion = $solucionOrig;
             $model->TiempoEfectivo = $tiempoEfOrig;
-            $model->HoraFinalizo   = $horaFinOrig;
+            $model->HoraFinalizo = $horaFinOrig;
 
             if ($model->save()) {
-                $userId = (int)Yii::$app->user->id;
+                $userId = (int) Yii::$app->user->id;
 
                 // Historial de cambios
-                \app\models\TicketHistorial::registrar($model->id, $userId, 'Estado',      $estadoAntes,    $model->Estado);
-                \app\models\TicketHistorial::registrar($model->id, $userId, 'Prioridad',   $prioridadAntes, $model->Prioridad);
-                \app\models\TicketHistorial::registrar($model->id, $userId, 'Asignado_a',  $asignadoAntes,  $model->Asignado_a);
-                \app\models\TicketHistorial::registrar($model->id, $userId, 'Cliente_id',  $clienteAntes,   $model->Cliente_id);
-                \app\models\TicketHistorial::registrar($model->id, $userId, 'Sistema_id',  $sistemaAntes,   $model->Sistema_id);
-                \app\models\TicketHistorial::registrar($model->id, $userId, 'Servicio_id', $servicioAntes,  $model->Servicio_id);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Estado', $estadoAntes, $model->Estado);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Prioridad', $prioridadAntes, $model->Prioridad);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Asignado_a', $asignadoAntes, $model->Asignado_a);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Cliente_id', $clienteAntes, $model->Cliente_id);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Sistema_id', $sistemaAntes, $model->Sistema_id);
+                \app\models\TicketHistorial::registrar($model->id, $userId, 'Servicio_id', $servicioAntes, $model->Servicio_id);
 
                 // Si cambió la asignación a una nueva persona
                 if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
@@ -401,17 +405,19 @@ class TicketsController extends Controller
                     DevLog::TIPO_ACTUALIZAR,
                     "Ticket [{$model->Folio}] actualizado — estado: [{$estadoAntes}→{$model->Estado}] | prioridad: [{$prioridadAntes}→{$model->Prioridad}] | asignado: [{$asignadoAntes}→{$model->Asignado_a}]",
                     [
-                        'folio'             => $model->Folio,
-                        'estado_antes'      => $estadoAntes,
-                        'estado_despues'    => $model->Estado,
-                        'prioridad_antes'   => $prioridadAntes,
+                        'folio' => $model->Folio,
+                        'estado_antes' => $estadoAntes,
+                        'estado_despues' => $model->Estado,
+                        'prioridad_antes' => $prioridadAntes,
                         'prioridad_despues' => $model->Prioridad,
-                        'asignado_antes'    => $asignadoAntes,
-                        'asignado_despues'  => $model->Asignado_a,
-                        'cliente_antes'     => $clienteAntes,
-                        'cliente_despues'   => $model->Cliente_id,
+                        'asignado_antes' => $asignadoAntes,
+                        'asignado_despues' => $model->Asignado_a,
+                        'cliente_antes' => $clienteAntes,
+                        'cliente_despues' => $model->Cliente_id,
                     ],
-                    'tickets', $model->id, 'Tickets'
+                    'tickets',
+                    $model->id,
+                    'Tickets'
                 );
 
                 return $this->redirect(['view', 'id' => $model->id]);
@@ -438,11 +444,11 @@ class TicketsController extends Controller
     {
         try {
             $model = $this->findModel($id);
-            $folio     = $model->Folio;
+            $folio = $model->Folio;
             $asignadoA = $model->Asignado_a;
-            $estado    = $model->Estado;
-            $solucion  = $model->Solucion;
-            $tiempoEf  = $model->TiempoEfectivo;
+            $estado = $model->Estado;
+            $solucion = $model->Solucion;
+            $tiempoEf = $model->TiempoEfectivo;
             $clienteId = $model->Cliente_id;
 
             if ($model->delete()) {
@@ -450,7 +456,7 @@ class TicketsController extends Controller
                 if ($estado === 'CERRADO' && $solucion && $tiempoEf && $clienteId) {
                     $cliente = Clientes::findOne($clienteId);
                     if ($cliente) {
-                        $minTicket  = $this->roundUpTo15($this->hmToMinutes($tiempoEf));
+                        $minTicket = $this->roundUpTo15($this->hmToMinutes($tiempoEf));
                         $minCliente = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
                         $cliente->updateAttributes(['Tiempo' => $this->minutesToHM($minCliente + $minTicket)]);
                     }
@@ -459,13 +465,15 @@ class TicketsController extends Controller
                     DevLog::TIPO_ELIMINAR,
                     "Ticket [{$folio}] ELIMINADO — ID #{$id} | asignado a usuario ID {$asignadoA}",
                     [
-                        'ticket_id'   => $id,
-                        'folio'       => $folio,
-                        'asignado_a'  => $asignadoA,
-                        'estado'      => $model->Estado,
-                        'cliente_id'  => $model->Cliente_id,
+                        'ticket_id' => $id,
+                        'folio' => $folio,
+                        'asignado_a' => $asignadoA,
+                        'estado' => $model->Estado,
+                        'cliente_id' => $model->Cliente_id,
                     ],
-                    'tickets', $id, 'Tickets'
+                    'tickets',
+                    $id,
+                    'Tickets'
                 );
 
                 // ✅ CREAR NOTIFICACIÓN AL ELIMINAR
@@ -478,7 +486,7 @@ class TicketsController extends Controller
                         $id
                     );
                 }
-                
+
                 if (Yii::$app->request->isAjax) {
                     Yii::$app->response->format = Response::FORMAT_JSON;
                     return ['success' => true, 'message' => "Ticket {$folio} eliminado correctamente"];
@@ -609,14 +617,14 @@ class TicketsController extends Controller
             return ['success' => false, 'message' => 'Ticket no encontrado'];
         }
 
-        $nuevoEstado = (string)($data['estado'] ?? $ticket->Estado);
+        $nuevoEstado = (string) ($data['estado'] ?? $ticket->Estado);
 
         // CERRADO solo se procesa vía actionSaveSolution (incluye solución + notificaciones).
         if (mb_strtolower(trim($nuevoEstado)) === 'cerrado') {
             return ['success' => false, 'message' => 'Para cerrar un ticket usa el modal de solución.'];
         }
 
-        $estadoAnterior = (string)$ticket->Estado;
+        $estadoAnterior = (string) $ticket->Estado;
         $ticket->Estado = $nuevoEstado;
 
         if (!$ticket->save()) {
@@ -624,7 +632,7 @@ class TicketsController extends Controller
         }
 
         // Historial
-        \app\models\TicketHistorial::registrar($ticket->id, (int)Yii::$app->user->id, 'Estado', $estadoAnterior, $ticket->Estado);
+        \app\models\TicketHistorial::registrar($ticket->id, (int) Yii::$app->user->id, 'Estado', $estadoAnterior, $ticket->Estado);
 
         DevLog::log(DevLog::TIPO_ACTUALIZAR, "Ticket [{$ticket->Folio}] estado cambiado: {$estadoAnterior} → {$ticket->Estado}", ['folio' => $ticket->Folio, 'estado_antes' => $estadoAnterior, 'estado_nuevo' => $ticket->Estado], 'tickets', $ticket->id, 'Tickets');
 
@@ -632,7 +640,7 @@ class TicketsController extends Controller
         if ($estadoAnterior !== $ticket->Estado && $ticket->Asignado_a) {
             $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
             $this->crearNotificacion(
-                (int)$ticket->Asignado_a,
+                (int) $ticket->Asignado_a,
                 'estado_cambio',
                 'Cambio de estado: ' . $ticket->Folio,
                 $usuarioActualEmail . ' cambió el estado a ' . $ticket->Estado,
@@ -656,21 +664,21 @@ class TicketsController extends Controller
             return ['success' => false, 'message' => 'Datos inválidos'];
         }
 
-        $model = Tickets::findOne((int)$data['id']);
+        $model = Tickets::findOne((int) $data['id']);
         if (!$model) {
             return ['success' => false, 'message' => 'Ticket no encontrado'];
         }
 
         // Guardar originales antes de modificar
-        $estadoAntes    = $model->Estado;
+        $estadoAntes = $model->Estado;
         $prioridadAntes = $model->Prioridad;
-        $asignadoAntes  = $model->Asignado_a;
-        $clienteAntes   = $model->Cliente_id;
-        $sistemaAntes   = $model->Sistema_id;
-        $servicioAntes  = $model->Servicio_id;
-        $solucionOrig   = $model->Solucion;
-        $tiempoEfOrig   = $model->TiempoEfectivo;
-        $horaFinOrig    = $model->HoraFinalizo;
+        $asignadoAntes = $model->Asignado_a;
+        $clienteAntes = $model->Cliente_id;
+        $sistemaAntes = $model->Sistema_id;
+        $servicioAntes = $model->Servicio_id;
+        $solucionOrig = $model->Solucion;
+        $tiempoEfOrig = $model->TiempoEfectivo;
+        $horaFinOrig = $model->HoraFinalizo;
 
         // Aplicar campos permitidos
         $camposPermitidos = ['Estado', 'Prioridad', 'Asignado_a', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Usuario_reporta', 'HoraProgramada', 'HoraInicio', 'Descripcion'];
@@ -686,27 +694,27 @@ class TicketsController extends Controller
         }
 
         // Proteger campos de cierre
-        $model->Solucion       = $solucionOrig;
+        $model->Solucion = $solucionOrig;
         $model->TiempoEfectivo = $tiempoEfOrig;
-        $model->HoraFinalizo   = $horaFinOrig;
+        $model->HoraFinalizo = $horaFinOrig;
 
         if (!$model->save()) {
             return ['success' => false, 'errors' => $model->errors];
         }
 
-        $userId = (int)Yii::$app->user->id;
-        \app\models\TicketHistorial::registrar($model->id, $userId, 'Estado',      $estadoAntes,    $model->Estado);
-        \app\models\TicketHistorial::registrar($model->id, $userId, 'Prioridad',   $prioridadAntes, $model->Prioridad);
-        \app\models\TicketHistorial::registrar($model->id, $userId, 'Asignado_a',  $asignadoAntes,  $model->Asignado_a);
-        \app\models\TicketHistorial::registrar($model->id, $userId, 'Cliente_id',  $clienteAntes,   $model->Cliente_id);
-        \app\models\TicketHistorial::registrar($model->id, $userId, 'Sistema_id',  $sistemaAntes,   $model->Sistema_id);
-        \app\models\TicketHistorial::registrar($model->id, $userId, 'Servicio_id', $servicioAntes,  $model->Servicio_id);
+        $userId = (int) Yii::$app->user->id;
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Estado', $estadoAntes, $model->Estado);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Prioridad', $prioridadAntes, $model->Prioridad);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Asignado_a', $asignadoAntes, $model->Asignado_a);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Cliente_id', $clienteAntes, $model->Cliente_id);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Sistema_id', $sistemaAntes, $model->Sistema_id);
+        \app\models\TicketHistorial::registrar($model->id, $userId, 'Servicio_id', $servicioAntes, $model->Servicio_id);
 
         if ($asignadoAntes !== $model->Asignado_a && $model->Asignado_a) {
-            $this->crearNotificacion((int)$model->Asignado_a, 'asignado', 'Nuevo ticket asignado', 'Se te ha asignado el ticket: ' . $model->Folio, $model->id);
+            $this->crearNotificacion((int) $model->Asignado_a, 'asignado', 'Nuevo ticket asignado', 'Se te ha asignado el ticket: ' . $model->Folio, $model->id);
         }
         if ($estadoAntes !== $model->Estado && $model->Asignado_a) {
-            $this->crearNotificacion((int)$model->Asignado_a, 'actualizado', 'Estado del ticket actualizado', 'El ticket ' . $model->Folio . ' cambió de estado a: ' . $model->Estado, $model->id);
+            $this->crearNotificacion((int) $model->Asignado_a, 'actualizado', 'Estado del ticket actualizado', 'El ticket ' . $model->Folio . ' cambió de estado a: ' . $model->Estado, $model->id);
         }
 
         DevLog::log(DevLog::TIPO_ACTUALIZAR, "Ticket [{$model->Folio}] actualizado rápido", ['folio' => $model->Folio, 'estado' => $model->Estado, 'prioridad' => $model->Prioridad], 'tickets', $model->id, 'Tickets');
@@ -715,246 +723,253 @@ class TicketsController extends Controller
     }
 
 
-        public function actionGetTicketData()
-        {
-            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    public function actionGetTicketData()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-            try {
-                $input = \Yii::$app->request->getRawBody();
-                $data = json_decode($input, true);
+        try {
+            $input = \Yii::$app->request->getRawBody();
+            $data = json_decode($input, true);
 
-                $ticket = Tickets::findOne($data['id'] ?? null);
-                if (!$ticket) {
-                    return ['success' => false, 'message' => 'Ticket no encontrado'];
-                }
-
-                // HoraInicio → datetime-local
-                $horaInicio = '';
-                if (!empty($ticket->HoraInicio)) {
-                    $horaInicio = date('Y-m-d\TH:i', strtotime($ticket->HoraInicio));
-                }
-
-                // HoraFinalizo → datetime-local
-                $horaFinalizo = '';
-                if (!empty($ticket->HoraFinalizo)) {
-                    if (is_numeric($ticket->HoraFinalizo)) {
-                        $horaFinalizo = date('Y-m-d\TH:i', (int)$ticket->HoraFinalizo);
-                    } else {
-                        $horaFinalizo = date('Y-m-d\TH:i', strtotime($ticket->HoraFinalizo));
-                    }
-                }
-
-                return [
-                    'success' => true,
-                    'ticket' => [
-                        'HoraInicio'      => $horaInicio,
-                        'HoraFinalizo'    => $horaFinalizo,
-                        'Solucion'        => $ticket->Solucion ?? '',
-                        'TiempoEfectivo'  => $ticket->TiempoEfectivo ?? '',
-                    ]
-                ];
-            } catch (\Exception $e) {
-                return ['success' => false, 'error' => $e->getMessage()];
+            $ticket = Tickets::findOne($data['id'] ?? null);
+            if (!$ticket) {
+                return ['success' => false, 'message' => 'Ticket no encontrado'];
             }
+
+            // HoraInicio → datetime-local
+            $horaInicio = '';
+            if (!empty($ticket->HoraInicio)) {
+                $horaInicio = date('Y-m-d\TH:i', strtotime($ticket->HoraInicio));
+            }
+
+            // HoraFinalizo → datetime-local
+            $horaFinalizo = '';
+            if (!empty($ticket->HoraFinalizo)) {
+                if (is_numeric($ticket->HoraFinalizo)) {
+                    $horaFinalizo = date('Y-m-d\TH:i', (int) $ticket->HoraFinalizo);
+                } else {
+                    $horaFinalizo = date('Y-m-d\TH:i', strtotime($ticket->HoraFinalizo));
+                }
+            }
+
+            return [
+                'success' => true,
+                'ticket' => [
+                    'HoraInicio' => $horaInicio,
+                    'HoraFinalizo' => $horaFinalizo,
+                    'Solucion' => $ticket->Solucion ?? '',
+                    'TiempoEfectivo' => $ticket->TiempoEfectivo ?? '',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+
+    public function actionSaveSolution()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $data = json_decode(\Yii::$app->request->getRawBody(), true);
+
+        if (empty($data['id'])) {
+            return ['success' => false, 'message' => 'ID de ticket no recibido'];
         }
 
+        $db = Yii::$app->db;
+        $transaction = $db->beginTransaction();
 
-        public function actionSaveSolution()
-        {
-            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-            $data = json_decode(\Yii::$app->request->getRawBody(), true);
-
-            if (empty($data['id'])) {
-                return ['success' => false, 'message' => 'ID de ticket no recibido'];
-            }
-
-            $db = Yii::$app->db;
-            $transaction = $db->beginTransaction();
-
-            try {
-                /** @var Tickets $ticket */
-                $ticket = Tickets::findOne($data['id']);
-                if (!$ticket) {
-                    $transaction->rollBack();
-                    return ['success' => false, 'message' => 'Ticket no encontrado'];
-                }
-
-                // 1) Minutos viejos y nuevos (formato H.MM -> minutos) + redondeo a 15
-                $viejoMin = $this->roundUpTo15($this->hmToMinutes($ticket->TiempoEfectivo ?? '0.00'));
-                $nuevoMin = $this->roundUpTo15($this->hmToMinutes($data['tiempoEfectivo'] ?? '0.00'));
-
-                // 2) Setear campos del ticket
-                $ticket->Solucion       = $data['solucion'] ?? null;
-                $ticket->TiempoEfectivo = $this->minutesToHM($nuevoMin);
-                $ticket->Estado         = 'CERRADO'; // cerrar atómicamente con la solución
-
-                if (!empty($data['horaFinalizo'])) {
-                    $timestamp = strtotime($data['horaFinalizo']);
-                    if ($timestamp === false) {
-                        $transaction->rollBack();
-                        return ['success' => false, 'message' => 'Formato de fecha inválido para horaFinalizo'];
-                    }
-                    $ticket->HoraFinalizo = date('Y-m-d H:i:s', $timestamp);
-                }
-
-                // 3) Guardar ticket
-                if (!$ticket->save()) {
-                    $transaction->rollBack();
-                    return ['success' => false, 'message' => 'Error al guardar ticket', 'errors' => $ticket->errors];
-                }
-
-                // 4) Delta en MINUTOS → actualizar tiempo del cliente
-                $deltaMin = $nuevoMin - $viejoMin;
-
-                if ($deltaMin !== 0 && !empty($ticket->Cliente_id)) {
-                    $cliente = Clientes::findOne($ticket->Cliente_id);
-                    if ($cliente) {
-                        $clienteMinAntes = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
-                        $nuevoTiempo     = $this->minutesToHM($clienteMinAntes - $deltaMin);
-
-                        Yii::$app->db->createCommand()
-                            ->update('clientes', ['Tiempo' => $nuevoTiempo], ['id' => $cliente->id])
-                            ->execute();
-                    }
-                }
-
-                // Historial: registrar cierre
-                $userId = (int)Yii::$app->user->id;
-                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'Estado',          'ABIERTO',                   'CERRADO');
-                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'Solucion',        '',                          $ticket->Solucion ?? '');
-                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'TiempoEfectivo',  $this->minutesToHM($viejoMin), $this->minutesToHM($nuevoMin));
-                \app\models\TicketHistorial::registrar($ticket->id, $userId, 'HoraFinalizo',    '',                          $ticket->HoraFinalizo ?? '');
-
-                $transaction->commit();
-
-                // Notificaciones — se envían DESPUÉS del commit, cuando la solución ya está guardada
-                $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
-
-                // 1) Notificar al consultor asignado del cambio de estado a CERRADO
-                if ($ticket->Asignado_a) {
-                    $this->crearNotificacion(
-                        (int)$ticket->Asignado_a,
-                        'estado_cambio',
-                        'Ticket cerrado: ' . $ticket->Folio,
-                        $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio . ' con solución.',
-                        $ticket->id
-                    );
-                }
-
-                // 2) Notificar a roles administrativos
-                $skip = [];
-                if (!empty($ticket->Asignado_a)) $skip[] = (int)$ticket->Asignado_a;
-                if (!Yii::$app->user->isGuest)    $skip[] = (int)Yii::$app->user->id;
-
-                $this->notificarRoles(
-                    ['Administracion', 'Administradores', 'Desarrolladores'],
-                    'ticket_cerrado',
-                    'Ticket cerrado: ' . $ticket->Folio,
-                    $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
-                    $ticket->id,
-                    $skip
-                );
-
-                DevLog::log(
-                    DevLog::TIPO_ACTUALIZAR,
-                    "Ticket [{$ticket->Folio}] CERRADO con solución — tiempo efectivo: {$ticket->TiempoEfectivo}",
-                    [
-                        'folio'           => $ticket->Folio,
-                        'solucion'        => mb_substr($ticket->Solucion ?? '', 0, 300),
-                        'hora_finalizo'   => $ticket->HoraFinalizo,
-                        'tiempo_efectivo' => $ticket->TiempoEfectivo,
-                        'delta_minutos'   => $deltaMin,
-                        'cliente_id'      => $ticket->Cliente_id,
-                    ],
-                    'tickets', $ticket->id, 'Tickets'
-                );
-
-                return [
-                    'success'      => true,
-                    'message'      => 'Solución guardada y ticket cerrado',
-                    'ticket_viejo' => $this->minutesToHM($viejoMin),
-                    'ticket_nuevo' => $this->minutesToHM($nuevoMin),
-                    'delta_min'    => $deltaMin,
-                ];
-
-            } catch (\Exception $e) {
+        try {
+            /** @var Tickets $ticket */
+            $ticket = Tickets::findOne($data['id']);
+            if (!$ticket) {
                 $transaction->rollBack();
-                return ['success' => false, 'message' => 'Error en servidor: ' . $e->getMessage()];
+                return ['success' => false, 'message' => 'Ticket no encontrado'];
             }
+
+            // 1) Minutos viejos y nuevos (formato H.MM -> minutos) + redondeo a 15
+            $viejoMin = $this->roundUpTo15($this->hmToMinutes($ticket->TiempoEfectivo ?? '0.00'));
+            $nuevoMin = $this->roundUpTo15($this->hmToMinutes($data['tiempoEfectivo'] ?? '0.00'));
+
+            // 2) Setear campos del ticket
+            $ticket->Solucion = $data['solucion'] ?? null;
+            $ticket->TiempoEfectivo = $this->minutesToHM($nuevoMin);
+            $ticket->Estado = 'CERRADO'; // cerrar atómicamente con la solución
+
+            if (!empty($data['horaFinalizo'])) {
+                $timestamp = strtotime($data['horaFinalizo']);
+                if ($timestamp === false) {
+                    $transaction->rollBack();
+                    return ['success' => false, 'message' => 'Formato de fecha inválido para horaFinalizo'];
+                }
+                $ticket->HoraFinalizo = date('Y-m-d H:i:s', $timestamp);
+            }
+
+            // 3) Guardar ticket
+            if (!$ticket->save()) {
+                $transaction->rollBack();
+                return ['success' => false, 'message' => 'Error al guardar ticket', 'errors' => $ticket->errors];
+            }
+
+            // 4) Delta en MINUTOS → actualizar tiempo del cliente
+            $deltaMin = $nuevoMin - $viejoMin;
+
+            if ($deltaMin !== 0 && !empty($ticket->Cliente_id)) {
+                $cliente = Clientes::findOne($ticket->Cliente_id);
+                if ($cliente) {
+                    $clienteMinAntes = $this->roundUpTo15($this->hmToMinutes($cliente->Tiempo ?? '0.00'));
+                    $nuevoTiempo = $this->minutesToHM($clienteMinAntes - $deltaMin);
+
+                    Yii::$app->db->createCommand()
+                        ->update('clientes', ['Tiempo' => $nuevoTiempo], ['id' => $cliente->id])
+                        ->execute();
+                }
+            }
+
+            // Historial: registrar cierre
+            $userId = (int) Yii::$app->user->id;
+            \app\models\TicketHistorial::registrar($ticket->id, $userId, 'Estado', 'ABIERTO', 'CERRADO');
+            \app\models\TicketHistorial::registrar($ticket->id, $userId, 'Solucion', '', $ticket->Solucion ?? '');
+            \app\models\TicketHistorial::registrar($ticket->id, $userId, 'TiempoEfectivo', $this->minutesToHM($viejoMin), $this->minutesToHM($nuevoMin));
+            \app\models\TicketHistorial::registrar($ticket->id, $userId, 'HoraFinalizo', '', $ticket->HoraFinalizo ?? '');
+
+            $transaction->commit();
+
+            // Notificaciones — se envían DESPUÉS del commit, cuando la solución ya está guardada
+            $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
+
+            // 1) Notificar al consultor asignado del cambio de estado a CERRADO
+            if ($ticket->Asignado_a) {
+                $this->crearNotificacion(
+                    (int) $ticket->Asignado_a,
+                    'estado_cambio',
+                    'Ticket cerrado: ' . $ticket->Folio,
+                    $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio . ' con solución.',
+                    $ticket->id
+                );
+            }
+
+            // 2) Notificar a roles administrativos
+            $skip = [];
+            if (!empty($ticket->Asignado_a))
+                $skip[] = (int) $ticket->Asignado_a;
+            if (!Yii::$app->user->isGuest)
+                $skip[] = (int) Yii::$app->user->id;
+
+            $this->notificarRoles(
+                ['Administracion', 'Administradores', 'Desarrolladores'],
+                'ticket_cerrado',
+                'Ticket cerrado: ' . $ticket->Folio,
+                $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
+                $ticket->id,
+                $skip
+            );
+
+            DevLog::log(
+                DevLog::TIPO_ACTUALIZAR,
+                "Ticket [{$ticket->Folio}] CERRADO con solución — tiempo efectivo: {$ticket->TiempoEfectivo}",
+                [
+                    'folio' => $ticket->Folio,
+                    'solucion' => mb_substr($ticket->Solucion ?? '', 0, 300),
+                    'hora_finalizo' => $ticket->HoraFinalizo,
+                    'tiempo_efectivo' => $ticket->TiempoEfectivo,
+                    'delta_minutos' => $deltaMin,
+                    'cliente_id' => $ticket->Cliente_id,
+                ],
+                'tickets',
+                $ticket->id,
+                'Tickets'
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Solución guardada y ticket cerrado',
+                'ticket_viejo' => $this->minutesToHM($viejoMin),
+                'ticket_nuevo' => $this->minutesToHM($nuevoMin),
+                'delta_min' => $deltaMin,
+            ];
+
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            return ['success' => false, 'message' => 'Error en servidor: ' . $e->getMessage()];
         }
+    }
 
 
 
 
     private function extractMentionEmails(string $text): array
-        {
-            // tokens: @[email:admin@gmail.com]
-            preg_match_all('/@\[(?:email):([^\]]+)\]/i', $text, $m);
-            $emails = array_map(fn($e) => mb_strtolower(trim($e)), $m[1] ?? []);
-            $emails = array_values(array_unique(array_filter($emails)));
-            return $emails;
-        }
-     protected function hmToMinutes($valor): int
-{
-    if ($valor === null) return 0;
-    $s = trim((string)$valor);
-    if ($s === '') return 0;
-
-    $s = str_replace(',', '.', $s);
-
-    // H:MM
-    if (preg_match('/^\s*(-?\d+)\s*:\s*(\d{1,2})\s*$/', $s, $m)) {
-        $h  = (int)$m[1];
-        $mm = (int)$m[2];
-        return ($h * 60) + ($h < 0 ? -$mm : $mm);
+    {
+        // tokens: @[email:admin@gmail.com]
+        preg_match_all('/@\[(?:email):([^\]]+)\]/i', $text, $m);
+        $emails = array_map(fn($e) => mb_strtolower(trim($e)), $m[1] ?? []);
+        $emails = array_values(array_unique(array_filter($emails)));
+        return $emails;
     }
+    protected function hmToMinutes($valor): int
+    {
+        if ($valor === null)
+            return 0;
+        $s = trim((string) $valor);
+        if ($s === '')
+            return 0;
 
-    //  H.MM donde MM son minutos (acepta "0.16", "1.30", ".16", "-.16")
-    if (preg_match('/^\s*(-?\d*)\.(\d{1,2})\s*$/', $s, $m)) {
-        $hStr = $m[1];
-        $mm   = (int)$m[2];
+        $s = str_replace(',', '.', $s);
 
-        // si viene ".16" => horas = 0
-        $h = ($hStr === '' || $hStr === '-') ? 0 : (int)$hStr;
-
-        // si viene "-.16" => horas = 0 pero con signo negativo
-        $isNeg = ($hStr === '-');
-
-        $min = ($h * 60) + $mm;
-        return $isNeg ? -$min : ($h < 0 ? -abs($min) : $min);
-    }
-
-    // Entero: "1" = 1 hora (60 min)
-    if (preg_match('/^\s*-?\d+\s*$/', $s)) {
-        return ((int)$s) * 60;
-    }
-
-    // Fallback: si viene "1.5" (decimal real) => horas * 60
-    if (preg_match('/-?\d+(\.\d+)?/', $s, $m)) {
-        return (int)round(((float)$m[0]) * 60);
-    }
-
-    return 0;
-}
-
-
-        protected function roundUpTo15(int $minutes): int
-        {
-            if ($minutes <= 0) return $minutes;
-            return (int)(ceil($minutes / 15) * 15);
+        // H:MM
+        if (preg_match('/^\s*(-?\d+)\s*:\s*(\d{1,2})\s*$/', $s, $m)) {
+            $h = (int) $m[1];
+            $mm = (int) $m[2];
+            return ($h * 60) + ($h < 0 ? -$mm : $mm);
         }
 
-        protected function minutesToHM(int $minutes): string
-        {
-            $sign = $minutes < 0 ? '-' : '';
-            $minutes = abs($minutes);
+        //  H.MM donde MM son minutos (acepta "0.16", "1.30", ".16", "-.16")
+        if (preg_match('/^\s*(-?\d*)\.(\d{1,2})\s*$/', $s, $m)) {
+            $hStr = $m[1];
+            $mm = (int) $m[2];
 
-            $h = intdiv($minutes, 60);
-            $m = $minutes % 60;
+            // si viene ".16" => horas = 0
+            $h = ($hStr === '' || $hStr === '-') ? 0 : (int) $hStr;
 
-            return $sign . $h . '.' . str_pad((string)$m, 2, '0', STR_PAD_LEFT);
+            // si viene "-.16" => horas = 0 pero con signo negativo
+            $isNeg = ($hStr === '-');
+
+            $min = ($h * 60) + $mm;
+            return $isNeg ? -$min : ($h < 0 ? -abs($min) : $min);
         }
+
+        // Entero: "1" = 1 hora (60 min)
+        if (preg_match('/^\s*-?\d+\s*$/', $s)) {
+            return ((int) $s) * 60;
+        }
+
+        // Fallback: si viene "1.5" (decimal real) => horas * 60
+        if (preg_match('/-?\d+(\.\d+)?/', $s, $m)) {
+            return (int) round(((float) $m[0]) * 60);
+        }
+
+        return 0;
+    }
+
+
+    protected function roundUpTo15(int $minutes): int
+    {
+        if ($minutes <= 0)
+            return $minutes;
+        return (int) (ceil($minutes / 15) * 15);
+    }
+
+    protected function minutesToHM(int $minutes): string
+    {
+        $sign = $minutes < 0 ? '-' : '';
+        $minutes = abs($minutes);
+
+        $h = intdiv($minutes, 60);
+        $m = $minutes % 60;
+
+        return $sign . $h . '.' . str_pad((string) $m, 2, '0', STR_PAD_LEFT);
+    }
 
 
 
@@ -973,15 +988,16 @@ class TicketsController extends Controller
         $exists = Notificaciones::find()
             ->where([
                 'usuario_id' => $usuarioId,
-                'ticket_id'  => $ticket->id,
-                'tipo'       => 'mencion',
+                'ticket_id' => $ticket->id,
+                'tipo' => 'mencion',
                 // Si NO tienes un campo "ref_id" o similar, puedes quitar esta parte.
                 // 'ref_id'  => $comentarioId,
             ])
             ->andWhere(['>=', 'fecha_creacion', date('Y-m-d H:i:s', time() - 60)]) // anti-duplicado básico 60s
             ->exists();
 
-        if ($exists) return;
+        if ($exists)
+            return;
 
         $actor = Yii::$app->user->identity;
         $actorNombre = $actor->Nombre ?? $actor->email ?? 'Alguien';
@@ -1010,8 +1026,8 @@ class TicketsController extends Controller
             return ['success' => false];
         }
 
-        $userId = (int)\Yii::$app->user->id;
-        $ahora  = date('Y-m-d H:i:s');
+        $userId = (int) \Yii::$app->user->id;
+        $ahora = date('Y-m-d H:i:s');
         $hace10 = date('Y-m-d H:i:s', strtotime('-10 minutes'));
 
         // Tickets del usuario que inician en la ventana de los últimos 10 minutos
@@ -1027,8 +1043,8 @@ class TicketsController extends Controller
             $yaExiste = Notificaciones::find()
                 ->where([
                     'usuario_id' => $userId,
-                    'ticket_id'  => $ticket->id,
-                    'tipo'       => 'recordatorio',
+                    'ticket_id' => $ticket->id,
+                    'tipo' => 'recordatorio',
                 ])
                 ->andWhere(['>=', 'fecha_creacion', date('Y-m-d H:i:s', strtotime('-2 hours'))])
                 ->exists();
@@ -1083,11 +1099,11 @@ class TicketsController extends Controller
 
                     //la url para ir al index y lo de los comentarios apa 
                     'url' => \yii\helpers\Url::to([
-                    'tickets/index',
-                    'openComments' => 1,
-                    'ticket_id' => $notif->ticket_id,
-                    'notif_id' => $notif->id, // opcional, para marcar leída
-                      ]),
+                        'tickets/index',
+                        'openComments' => 1,
+                        'ticket_id' => $notif->ticket_id,
+                        'notif_id' => $notif->id, // opcional, para marcar leída
+                    ]),
                 ];
             }
 
@@ -1429,7 +1445,7 @@ class TicketsController extends Controller
         }
     }
 
-//funcion para buscar usuario que pertenezcan a esos roles 
+    //funcion para buscar usuario que pertenezcan a esos roles 
     private function notificarRoles(array $roles, string $tipo, string $titulo, string $mensaje, ?int $ticketId = null, array $skipUserIds = []): void
     {
         $query = Usuarios::find()
@@ -1444,7 +1460,7 @@ class TicketsController extends Controller
         $usuarios = $query->asArray()->all();
 
         foreach ($usuarios as $u) {
-            $this->crearNotificacion((int)$u['id'], $tipo, $titulo, $mensaje, $ticketId);
+            $this->crearNotificacion((int) $u['id'], $tipo, $titulo, $mensaje, $ticketId);
         }
     }
 
@@ -1476,16 +1492,16 @@ class TicketsController extends Controller
     public function actionExportar()
     {
         // Mismo TicketsSearch que el index — respeta todos los filtros activos incluyendo asignado_a por defecto
-        $searchModel  = new TicketsSearch();
+        $searchModel = new TicketsSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         $dataProvider->pagination = false;
 
         $tickets = $dataProvider->getModels();
 
-       // --- Crear Excel ---
+        // --- Crear Excel ---
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
- 
+
         // Encabezados
         $headers = [
             'Folio',
@@ -1503,16 +1519,16 @@ class TicketsController extends Controller
             'Solucion',
             'Asignado a',
         ];
- 
+
         $sheet->fromArray($headers, null, 'A1');
- 
+
         // Función color
         function hexToARGB($hex)
         {
             $hex = str_replace('#', '', $hex);
             return 'FF' . strtoupper($hex);
         }
- 
+
         // --- Estilo encabezado ---
         $headerStyle = [
             'font' => [
@@ -1524,16 +1540,16 @@ class TicketsController extends Controller
                 'color' => ['argb' => hexToARGB('A0BAA5')]
             ]
         ];
- 
+
         $sheet->getStyle('A1:N1')->applyFromArray($headerStyle);
- 
+
         // --- CONFIGURACIÓN GENERAL (FUERA DEL FOREACH) ---
         $sheet->freezePane('A2');
         $sheet->setAutoFilter('A1:N1');
         $sheet->getStyle('A1:N1')->getAlignment()->setHorizontal('center');
         $sheet->getRowDimension(1)->setRowHeight(25);
         $spreadsheet->getDefaultStyle()->getFont()->setName('Calibri')->setSize(11);
- 
+
         // Columnas largas
         $sheet->getColumnDimension('L')->setWidth(50);
         $sheet->getColumnDimension('M')->setWidth(50);
@@ -1541,24 +1557,24 @@ class TicketsController extends Controller
         $sheet->getStyle('L:M')->getAlignment()->setVertical(
             \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP
         );
- 
+
         // Autosize (excepto columnas largas)
         foreach (range('A', 'N') as $col) {
             if (!in_array($col, ['L', 'M'])) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
         }
- 
+
         // Centrar columnas
         $sheet->getStyle('A:A')->getAlignment()->setHorizontal('center');
         $sheet->getStyle('F:F')->getAlignment()->setHorizontal('center');
         $sheet->getStyle('G:G')->getAlignment()->setHorizontal('center');
         $sheet->getStyle('H:I')->getAlignment()->setHorizontal('center');
         $sheet->getStyle('J:J')->getAlignment()->setHorizontal('center');
- 
+
         // --- DATOS ---
         $row = 2;
- 
+
         $meses = [
             '01' => 'Enero',
             '02' => 'Febrero',
@@ -1573,15 +1589,15 @@ class TicketsController extends Controller
             '11' => 'Noviembre',
             '12' => 'Diciembre'
         ];
- 
+
         foreach ($tickets as $t) {
- 
-            $sheet->setCellValue("A$row", $t->Folio);
+
             $sheet->setCellValue("B$row", $t->cliente->Nombre ?? '');
+            $sheet->setCellValue("A$row", $t->Folio);
             $sheet->setCellValue("C$row", $t->Usuario_reporta ?? '');
             $sheet->setCellValue("D$row", $t->sistema->Nombre ?? '');
             $sheet->setCellValue("E$row", $t->cliente->Tipo_servicio ?? '');
- 
+
             // Fecha bonita
             if ($t->HoraFinalizo) {
                 $fecha = strtotime($t->HoraFinalizo);
@@ -1589,7 +1605,7 @@ class TicketsController extends Controller
             } else {
                 $fechaFormateada = '';
             }
- 
+
             $sheet->setCellValue("F$row", $fechaFormateada);
             $sheet->setCellValue("G$row", $t->Estado);
             $sheet->setCellValue("H$row", $t->HoraInicio ? date('H:i', strtotime($t->HoraInicio)) : '');
@@ -1608,7 +1624,7 @@ class TicketsController extends Controller
                 $color = 'FFF4D262';
             elseif ($estado == 'en proceso')
                 $color = 'FFFDE68A';
- 
+
             // Zebra + estado (prioridad al estado)
             if ($color) {
                 $sheet->getStyle("A$row:N$row")->applyFromArray([
@@ -1625,16 +1641,16 @@ class TicketsController extends Controller
                     ]
                 ]);
             }
- 
+
             // Ajuste altura automática
             $sheet->getRowDimension($row)->setRowHeight(-1);
- 
+
             $row++;
         }
- 
+
         // Bordes (AL FINAL)
         $lastRow = $row - 1;
- 
+
         $sheet->getStyle("A1:N$lastRow")->applyFromArray([
             'borders' => [
                 'allBorders' => [
@@ -1643,12 +1659,12 @@ class TicketsController extends Controller
                 ]
             ]
         ]);
- 
+
         // --- Descargar ---
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="Bitacora_' . date('d-m-Y_His') . '.xlsx"');
         header('Cache-Control: max-age=0');
- 
+
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
@@ -1667,14 +1683,14 @@ class TicketsController extends Controller
             // Soporte multipart (archivo) y JSON plano
             if (strpos($request->contentType, 'application/json') !== false) {
                 $data = json_decode($request->getRawBody(), true);
-                $ticketId       = $data['ticket_id'] ?? null;
-                $comentarioTx   = $data['comentario'] ?? null;
-                $tipo           = $data['tipo'] ?? 'comentario';
+                $ticketId = $data['ticket_id'] ?? null;
+                $comentarioTx = $data['comentario'] ?? null;
+                $tipo = $data['tipo'] ?? 'comentario';
                 $destinatarioId = $data['destinatario_id'] ?? null;
             } else {
-                $ticketId       = $request->post('ticket_id');
-                $comentarioTx   = $request->post('comentario');
-                $tipo           = $request->post('tipo', 'comentario');
+                $ticketId = $request->post('ticket_id');
+                $comentarioTx = $request->post('comentario');
+                $tipo = $request->post('tipo', 'comentario');
                 $destinatarioId = $request->post('destinatario_id') ?: null;
             }
 
@@ -1687,23 +1703,23 @@ class TicketsController extends Controller
                 $comentarioTx = $_FILES['archivo']['name'];
             }
 
-            $ticket = Tickets::findOne((int)$ticketId);
+            $ticket = Tickets::findOne((int) $ticketId);
             if (!$ticket) {
                 return ['success' => false, 'message' => 'Ticket no encontrado'];
             }
 
             $comentario = new Comentarios();
-            $comentario->ticket_id      = (int)$ticketId;
-            $comentario->usuario_id     = \Yii::$app->user->id;
-            $comentario->comentario     = (string)$comentarioTx;
-            $comentario->tipo           = $tipo;
+            $comentario->ticket_id = (int) $ticketId;
+            $comentario->usuario_id = \Yii::$app->user->id;
+            $comentario->comentario = (string) $comentarioTx;
+            $comentario->tipo = $tipo;
             $comentario->destinatario_id = ($tipo === 'nota_interna' && $destinatarioId)
-                ? (int)$destinatarioId : null;
+                ? (int) $destinatarioId : null;
 
             // ── Manejo de archivo adjunto ──────────────────────────────────
             $archivoNombre = null;
-            $uploadDir     = \Yii::getAlias('@webroot/uploads/comentarios/');
-            $uploadedFile  = \yii\web\UploadedFile::getInstanceByName('archivo');
+            $uploadDir = \Yii::getAlias('@webroot/uploads/comentarios/');
+            $uploadedFile = \yii\web\UploadedFile::getInstanceByName('archivo');
 
             if ($uploadedFile && $uploadedFile->size > 0) {
                 $ext = strtolower($uploadedFile->extension) ?: 'bin';
@@ -1728,12 +1744,12 @@ class TicketsController extends Controller
             }
 
             $usuarioActualNombre = Yii::$app->user->identity->Nombre ?? (Yii::$app->user->identity->email ?? '');
-            $usuarioActualEmail  = Yii::$app->user->identity->email ?? '';
+            $usuarioActualEmail = Yii::$app->user->identity->email ?? '';
 
             // Nota privada P2P → notificar solo al destinatario
             if ($tipo === 'nota_interna' && $comentario->destinatario_id) {
-                $destId = (int)$comentario->destinatario_id;
-                if ($destId !== (int)Yii::$app->user->id) {
+                $destId = (int) $comentario->destinatario_id;
+                if ($destId !== (int) Yii::$app->user->id) {
                     $this->crearNotificacion(
                         $destId,
                         'mencion',
@@ -1744,9 +1760,9 @@ class TicketsController extends Controller
                 }
             } else {
                 // Notificación al asignado (solo para comentarios/soluciones públicas)
-                if ($ticket->Asignado_a && (int)$ticket->Asignado_a !== (int)Yii::$app->user->id) {
+                if ($ticket->Asignado_a && (int) $ticket->Asignado_a !== (int) Yii::$app->user->id) {
                     $this->crearNotificacion(
-                        (int)$ticket->Asignado_a,
+                        (int) $ticket->Asignado_a,
                         'comentario',
                         'Nuevo comentario en ticket ' . $ticket->Folio,
                         $usuarioActualEmail . ' agregó un comentario',
@@ -1763,17 +1779,20 @@ class TicketsController extends Controller
                     ->all();
 
                 foreach ($usuariosMencionados as $u) {
-                    $uid = (int)$u->id;
-                    if ($uid === (int)Yii::$app->user->id) continue;
-                    $this->crearNotificacionMencion($uid, $ticket, (int)$comentario->id);
+                    $uid = (int) $u->id;
+                    if ($uid === (int) Yii::$app->user->id)
+                        continue;
+                    $this->crearNotificacionMencion($uid, $ticket, (int) $comentario->id);
                 }
             }
 
             DevLog::log(
                 DevLog::TIPO_CREAR,
                 "Comentario [{$comentario->tipo}] en ticket [{$ticket->Folio}]",
-                ['folio' => $ticket->Folio, 'tipo' => $comentario->tipo, 'tiene_archivo' => (bool)$archivoNombre, 'preview' => mb_substr($comentario->comentario, 0, 150)],
-                'tickets', $ticket->id, 'Comentarios'
+                ['folio' => $ticket->Folio, 'tipo' => $comentario->tipo, 'tiene_archivo' => (bool) $archivoNombre, 'preview' => mb_substr($comentario->comentario, 0, 150)],
+                'tickets',
+                $ticket->id,
+                'Comentarios'
             );
 
             $archivoUrl = $archivoNombre
@@ -1783,13 +1802,13 @@ class TicketsController extends Controller
             return [
                 'success' => true,
                 'comentario' => [
-                    'id'         => $comentario->id,
-                    'usuario'    => $usuarioActualEmail,
+                    'id' => $comentario->id,
+                    'usuario' => $usuarioActualEmail,
                     'comentario' => $comentario->comentario,
-                    'tipo'       => $comentario->tipo,
-                    'fecha'      => date('d/m/Y H:i'),
-                    'archivo'    => $archivoUrl,
-                    'esImagen'   => $archivoNombre ? in_array(strtolower(pathinfo($archivoNombre, PATHINFO_EXTENSION)), ['jpg','jpeg','png','gif','webp']) : false,
+                    'tipo' => $comentario->tipo,
+                    'fecha' => date('d/m/Y H:i'),
+                    'archivo' => $archivoUrl,
+                    'esImagen' => $archivoNombre ? in_array(strtolower(pathinfo($archivoNombre, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']) : false,
                 ]
             ];
 
@@ -1812,7 +1831,7 @@ class TicketsController extends Controller
                 return ['success' => false, 'message' => 'ID de ticket requerido'];
             }
 
-            $currentUserId = (int)Yii::$app->user->id;
+            $currentUserId = (int) Yii::$app->user->id;
 
             // Notas privadas solo visibles para remitente o destinatario
             $comentarios = Comentarios::find()
@@ -1832,10 +1851,10 @@ class TicketsController extends Controller
             $result = [];
             foreach ($comentarios as $com) {
                 $archivoUrl = null;
-                $esImagen   = false;
+                $esImagen = false;
                 if (!empty($com->archivo)) {
                     $archivoUrl = \yii\helpers\Url::to('@web/uploads/comentarios/' . $com->archivo);
-                    $esImagen   = in_array(strtolower(pathinfo($com->archivo, PATHINFO_EXTENSION)), $imageExts);
+                    $esImagen = in_array(strtolower(pathinfo($com->archivo, PATHINFO_EXTENSION)), $imageExts);
                 }
 
                 $avatarRaw = $com->usuario->avatar ?? null;
@@ -1844,16 +1863,16 @@ class TicketsController extends Controller
                     : null;
 
                 $result[] = [
-                    'id'                 => $com->id,
-                    'usuario'            => $com->usuario->email ?? 'Usuario desconocido',
-                    'nombre'             => $com->usuario->Nombre ?? 'Usuario',
-                    'avatar'             => $avatarUrl,
-                    'comentario'         => $com->comentario,
-                    'tipo'               => $com->tipo,
-                    'fecha'              => $com->fecha_creacion ? date('d/m/Y H:i', strtotime($com->fecha_creacion)) : date('d/m/Y H:i'),
-                    'archivo'            => $archivoUrl,
-                    'esImagen'           => $esImagen,
-                    'destinatarioId'     => $com->destinatario_id,
+                    'id' => $com->id,
+                    'usuario' => $com->usuario->email ?? 'Usuario desconocido',
+                    'nombre' => $com->usuario->Nombre ?? 'Usuario',
+                    'avatar' => $avatarUrl,
+                    'comentario' => $com->comentario,
+                    'tipo' => $com->tipo,
+                    'fecha' => $com->fecha_creacion ? date('d/m/Y H:i', strtotime($com->fecha_creacion)) : date('d/m/Y H:i'),
+                    'archivo' => $archivoUrl,
+                    'esImagen' => $esImagen,
+                    'destinatarioId' => $com->destinatario_id,
                     'destinatarioNombre' => $com->destinatario ? ($com->destinatario->Nombre ?: $com->destinatario->email) : null,
                 ];
             }
@@ -1870,16 +1889,16 @@ class TicketsController extends Controller
     public function actionContarComentarios()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
+
         $ticket_id = Yii::$app->request->post('ticket_id');
         if (!$ticket_id) {
             return ['success' => false, 'count' => 0];
         }
-        
+
         $count = Comentarios::find()
             ->where(['ticket_id' => $ticket_id])
             ->count();
-        
+
         return ['success' => true, 'count' => $count];
     }
 }
