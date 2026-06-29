@@ -1592,8 +1592,8 @@ class TicketsController extends Controller
 
         foreach ($tickets as $t) {
 
-            $sheet->setCellValue("B$row", $t->cliente->Nombre ?? '');
             $sheet->setCellValue("A$row", $t->Folio);
+            $sheet->setCellValue("B$row", $t->cliente->Nombre ?? '');
             $sheet->setCellValue("C$row", $t->Usuario_reporta ?? '');
             $sheet->setCellValue("D$row", $t->sistema->Nombre ?? '');
             $sheet->setCellValue("E$row", $t->cliente->Tipo_servicio ?? '');
@@ -1662,7 +1662,7 @@ class TicketsController extends Controller
 
         // --- Descargar ---
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Bitacora_' . date('d-m-Y_His') . '.xlsx"');
+        header('Content-Disposition: attachment; filename="BitacoraPruebadeModificaciones_' . date('d-m-Y_His') . '.xlsx"');
         header('Cache-Control: max-age=0');
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
