@@ -560,6 +560,7 @@ class TicketsController extends Controller
         try {
             $usuarioActual = \Yii::$app->user->identity->email;
             $foliosCreados = [];
+            $idsCreados = [];
             foreach ($tickets as $ticketData) {
                 $ticket = new Tickets();
                 // Folio temporal único: el definitivo se asigna tras el save con el id
@@ -584,6 +585,7 @@ class TicketsController extends Controller
                 // Folio definitivo basado en el ID real
                 $ticket->Folio = str_pad($ticket->id, 4, '0', STR_PAD_LEFT);
                 $ticket->save(false);
+                $idsCreados[] = $ticket->id;
                 $foliosCreados[] = $ticket->Folio;
 
                 // ✅ CREAR NOTIFICACIÓN CUANDO SE ASIGNA
@@ -599,7 +601,7 @@ class TicketsController extends Controller
             }
 
             DevLog::log(DevLog::TIPO_CREAR, count($tickets) . ' ticket(s) creados en lote', ['total' => count($tickets), 'folios' => $foliosCreados], 'tickets', null, 'Tickets');
-            return ['success' => true, 'folios' => $foliosCreados];
+            return ['success' => true, 'folios' => $foliosCreados, 'ids' => $idsCreados];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -1383,7 +1385,7 @@ class TicketsController extends Controller
                                         <tr>
                                             <td align="center">
                                                 <p style="margin: 0; font-size: 13px; color: #a0a0a0; font-weight: 400;">
-                                                    Wicontrol
+                                                    Wintick
                                                 </p>
                                                 <p style="margin: 8px 0 0; font-size: 11px; color: #c0c0c0;">
                                                     Este mensaje fue generado automáticamente
@@ -1416,7 +1418,7 @@ class TicketsController extends Controller
         HTML;
 
             \Yii::$app->mailer->compose()
-                ->setFrom(['consultoria@winetpc.com' => 'Wicontrol'])
+                ->setFrom(['consultoria@winetpc.com' => 'Wintick'])
                 ->setTo($usuario->email)
                 ->setSubject('Ticket #' . $ticket->Folio . ' · ' . $servicioNombre)
                 ->setHtmlBody($htmlBody)
@@ -1505,19 +1507,19 @@ class TicketsController extends Controller
         // Encabezados
         $headers = [
             'Folio',
-            'Cliente',
-            'Usuario Reporta',
-            'Sistema',
+            'Fecha',
+            'Estatus',
+            'Consultor / Asignado a',
             'Esquema',
-            'Fecha de Finalizacion',
-            'Estado',
-            'Hora Inicio',
-            'Hora Finalizacion',
-            'Tiempo Efectivo',
+            'Usuario',
+            'Cliente',
+            'Sistema',
             'Servicio',
-            'Descripcion',
-            'Solucion',
-            'Asignado a',
+            'Descripción',
+            'Solución',
+            'Tiempo Efectivo',
+            'Hora Inicio',
+            'Hora Finalización',
         ];
 
         $sheet->fromArray($headers, null, 'A1');
@@ -1550,27 +1552,58 @@ class TicketsController extends Controller
         $sheet->getRowDimension(1)->setRowHeight(25);
         $spreadsheet->getDefaultStyle()->getFont()->setName('Calibri')->setSize(11);
 
-        // Columnas largas
-        $sheet->getColumnDimension('L')->setWidth(50);
-        $sheet->getColumnDimension('M')->setWidth(50);
-        $sheet->getStyle('L:M')->getAlignment()->setWrapText(true);
-        $sheet->getStyle('L:M')->getAlignment()->setVertical(
+        // Columnas con texto largo
+        $sheet->getColumnDimension('J')->setWidth(45); // Descripción
+        $sheet->getColumnDimension('K')->setWidth(45); // Solución
+
+        $sheet->getStyle('J:K')->getAlignment()->setWrapText(true);
+        $sheet->getStyle('J:K')->getAlignment()->setVertical(
             \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP
         );
+        $sheet->getStyle('J:K')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT
+        );
 
-        // Autosize (excepto columnas largas)
+        // Columnas con ancho fijo
+        $sheet->getColumnDimension('L')->setWidth(18); // Tiempo Efectivo
+        $sheet->getColumnDimension('M')->setWidth(15); // Hora Inicio
+        $sheet->getColumnDimension('N')->setWidth(18); // Hora Finalización
+
+        // AutoSize para el resto de columnas
         foreach (range('A', 'N') as $col) {
-            if (!in_array($col, ['L', 'M'])) {
+            if (!in_array($col, ['J', 'K', 'L', 'M', 'N'])) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
         }
 
         // Centrar columnas
-        $sheet->getStyle('A:A')->getAlignment()->setHorizontal('center');
-        $sheet->getStyle('F:F')->getAlignment()->setHorizontal('center');
-        $sheet->getStyle('G:G')->getAlignment()->setHorizontal('center');
-        $sheet->getStyle('H:I')->getAlignment()->setHorizontal('center');
-        $sheet->getStyle('J:J')->getAlignment()->setHorizontal('center');
+        $sheet->getStyle('A:A')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Folio
+
+        $sheet->getStyle('B:B')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Fecha
+
+        $sheet->getStyle('C:C')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Estatus
+
+        $sheet->getStyle('D:D')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Consultor
+
+        $sheet->getStyle('E:E')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Esquema
+
+        $sheet->getStyle('L:L')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Tiempo Efectivo
+
+        $sheet->getStyle('M:N')->getAlignment()->setHorizontal(
+            \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER
+        ); // Horas
 
         // --- DATOS ---
         $row = 2;
@@ -1592,12 +1625,6 @@ class TicketsController extends Controller
 
         foreach ($tickets as $t) {
 
-            $sheet->setCellValue("A$row", $t->Folio);
-            $sheet->setCellValue("B$row", $t->cliente->Nombre ?? '');
-            $sheet->setCellValue("C$row", $t->Usuario_reporta ?? '');
-            $sheet->setCellValue("D$row", $t->sistema->Nombre ?? '');
-            $sheet->setCellValue("E$row", $t->cliente->Tipo_servicio ?? '');
-
             // Fecha bonita
             if ($t->HoraFinalizo) {
                 $fecha = strtotime($t->HoraFinalizo);
@@ -1606,15 +1633,20 @@ class TicketsController extends Controller
                 $fechaFormateada = '';
             }
 
-            $sheet->setCellValue("F$row", $fechaFormateada);
-            $sheet->setCellValue("G$row", $t->Estado);
-            $sheet->setCellValue("H$row", $t->HoraInicio ? date('H:i', strtotime($t->HoraInicio)) : '');
-            $sheet->setCellValue("I$row", $t->HoraFinalizo ? date('H:i', strtotime($t->HoraFinalizo)) : '');
-            $sheet->setCellValue("J$row", $t->TiempoEfectivo ?? '');
-            $sheet->setCellValue("K$row", $t->servicio->Nombre ?? '');
-            $sheet->setCellValue("L$row", $t->Descripcion);
-            $sheet->setCellValue("M$row", $t->Solucion);
-            $sheet->setCellValue("N$row", $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? '');
+            $sheet->setCellValue("A$row", $t->Folio);
+            $sheet->setCellValue("B$row", $fechaFormateada);
+            $sheet->setCellValue("C$row", $t->Estado);
+            $sheet->setCellValue("D$row", $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? '');
+            $sheet->setCellValue("E$row", $t->cliente->Tipo_servicio ?? '');
+            $sheet->setCellValue("F$row", $t->Usuario_reporta ?? '');
+            $sheet->setCellValue("G$row", $t->cliente->Nombre ?? '');
+            $sheet->setCellValue("H$row", $t->sistema->Nombre ?? '');
+            $sheet->setCellValue("I$row", $t->servicio->Nombre ?? '');
+            $sheet->setCellValue("J$row", $t->Descripcion);
+            $sheet->setCellValue("K$row", $t->Solucion);
+            $sheet->setCellValue("L$row", $t->TiempoEfectivo ?? '');
+            $sheet->setCellValue("M$row", $t->HoraInicio ? date('H:i', strtotime($t->HoraInicio)) : '');
+            $sheet->setCellValue("N$row", $t->HoraFinalizo ? date('H:i', strtotime($t->HoraFinalizo)) : '');
 
             // Colores por estado
             $estado = strtolower($t->Estado);
@@ -1648,6 +1680,7 @@ class TicketsController extends Controller
             $row++;
         }
 
+
         // Bordes (AL FINAL)
         $lastRow = $row - 1;
 
@@ -1662,7 +1695,7 @@ class TicketsController extends Controller
 
         // --- Descargar ---
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="BitacoraPruebadeModificaciones_' . date('d-m-Y_His') . '.xlsx"');
+        header('Content-Disposition: attachment; filename="Bitacora_' . date('d-m-Y_His') . '.xlsx"');
         header('Cache-Control: max-age=0');
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);

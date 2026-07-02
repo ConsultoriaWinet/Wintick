@@ -151,6 +151,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                                 <option value="EN PROCESO" <?= ($_GET['Estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
                                 <option value="CONTPAQi" <?= ($_GET['Estado'] ?? '') == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi </option>
                                 <option value="CERRADO" <?= ($_GET['Estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
+                                <option value="CERRADO_CLIENTE"<?= ($_GET['Estado'] ?? '') == 'CERRADO_CLIENTE' ? 'selected' : '' ?>>Cerrado por Cliente</option>
                             </select>
                         </div>
 
@@ -309,6 +310,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <option value="EN PROCESO">En Proceso</option>
                         <option value="CONTPAQi">CONTPAQi</option>
                         <option value="CERRADO">Cerrado</option>
+                        <option value="CERRADO_CLIENTE">Cerrado por Cliente</option>
                     </select></td>
                     <td style="min-width:165px">
                         <div style="display:flex;flex-direction:column;gap:4px;">
@@ -376,6 +378,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         'EN ESPERA'  => 'tkt-estado-espera',
                         'CONTPAQi'   => 'tkt-estado-contpaqi',
                         'CERRADO'    => 'tkt-estado-cerrado',
+                        'CERRADO_CLIENTE' => 'tkt-estado-cerrado',
                         'CANCELADO'  => 'tkt-estado-cancelado',
                         default      => 'tkt-estado-default',
                     };
@@ -392,6 +395,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         'EN ESPERA'  => 'En espera',
                         'CONTPAQi'   => 'CONTPAQi',
                         'CERRADO'    => 'Cerrado',
+                        'CERRADO_CLIENTE' => 'Cerrado por Cliente',
                         'CANCELADO'  => 'Cancelado',
                         default      => Html::encode($ticket->Estado),
                     };
@@ -445,6 +449,8 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                             <option value="EN PROCESO" <?= $ticket->Estado == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
                             <option value="CONTPAQi"   <?= $ticket->Estado == 'CONTPAQi'   ? 'selected' : '' ?>>CONTPAQi</option>
                             <option value="CERRADO"    <?= $ticket->Estado == 'CERRADO'    ? 'selected' : '' ?>>Cerrado</option>
+                            <option value="CERRADO_CLIENTE"    <?= $ticket->Estado == 'CERRADO_CLIENTE'    ? 'selected' : '' ?>>Cerrado por cliente</option>
+
                         </select>
                     </td>
                     <td class="tkt-fecha-cell">
@@ -1357,19 +1363,37 @@ function saveTicket(row) {
             if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
             return response.json();
         })
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Éxito!',
-                    text: 'Ticket guardado: ' + ((data.folios && data.folios[0]) || ticket.Folio),
-                    showConfirmButton: false,
-                    timer: 100,
-                    timerProgressBar: true,
-                    toast: true,
-                    position: 'top-end'
-                }).then(() => location.reload());
-            } else {
+.then(data => {
+
+    if (data.success) {
+
+        const ticketId = data.ids?.[0];
+        const folio = (data.folios && data.folios[0]) || ticket.Folio;
+
+        // Si el ticket se creó cerrado, abrir el modal de solución
+        if (
+            ticket.Estado === 'CERRADO' ||
+            ticket.Estado === 'CERRADO_CLIENTE'
+        ) {
+
+            openSolutionModal(ticketId, folio, true, ticket.Estado);
+
+        } else {
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: 'Ticket guardado: ' + folio,
+                showConfirmButton: false,
+                timer: 1000,
+                timerProgressBar: true,
+                toast: true,
+                position: 'top-end'
+            }).then(() => location.reload());
+
+        }
+
+    } else {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al guardar',
@@ -1411,7 +1435,7 @@ function updateEstado(selectElement, ticketId) {
 
     // Si se selecciona CERRADO, abrir el modal de solución SIN llamar al backend todavía.
     // La notificación y el cierre real ocurren solo cuando se guarda la solución.
-    if (estado === 'CERRADO') {
+    if (estado === 'CERRADO'|| estado === 'CERRADO_CLIENTE') {
         lastEstadoAnterior        = estadoAnterior;
         solutionOpenedFromEstadoChange = true;
         lastTicketIdSolution      = ticketId;
@@ -1458,6 +1482,7 @@ function getEstadoClass(estado) {
         'EN ESPERA':  'tkt-estado-espera',
         'CONTPAQi':   'tkt-estado-contpaqi',
         'CERRADO':    'tkt-estado-cerrado',
+        'CERRADO_CLIENTE': 'tkt-estado-cerrado',
         'CANCELADO':  'tkt-estado-cancelado',
     };
     return classes[estado] || 'tkt-estado-default';
@@ -1471,6 +1496,7 @@ function getEstadoLabel(estado) {
         'EN ESPERA':  'En espera',
         'CONTPAQi':   'CONTPAQi',
         'CERRADO':    'Cerrado',
+        'CERRADO_CLIENTE': 'Cerrado por Cliente',
         'CANCELADO':  'Cancelado',
     };
     return labels[estado] || estado;
@@ -1482,7 +1508,8 @@ function getEstadoIcon(estado) {
         'PROGRAMADO': 'fa-calendar-check',
         'EN PROCESO': 'fa-spinner',
         'CONTPAQi':  'fa-pause-circle',
-        'CERRADO':    'fa-check-circle'
+        'CERRADO':    'fa-check-circle',
+        'CERRADO_CLIENTE': 'fa-check-circle',
     };
     return icons[estado] || 'fa-question-circle';
 }
@@ -1567,23 +1594,30 @@ function calcularTiempoEfectivo() {
 // ========================================
 // SOLUTION MODAL
 // ========================================
-function openSolutionModal(ticketId, folio, openedFromEstadoChange = false) {
-    const selectElement = document.querySelector('.estado-' + ticketId);
-    if (!selectElement) {
-        console.error('No se encontró el select de estado para el ticket', ticketId);
-        return;
-    }
+function openSolutionModal(ticketId, folio, openedFromEstadoChange = false, estadoActual = null) {
 
-    const estado = selectElement.value;
+    let estado = estadoActual;
+
+    // Si no me enviaron el estado, lo obtengo del select (caso normal)
+    if (!estado) {
+        const selectElement = document.querySelector('.estado-' + ticketId);
+
+        if (!selectElement) {
+            console.error('No se encontró el select de estado para el ticket', ticketId);
+            return;
+        }
+
+        estado = selectElement.value;
+    }
 
     solutionOpenedFromEstadoChange = openedFromEstadoChange;
     lastTicketIdSolution = ticketId;
 
-    if (estado !== 'CERRADO') {
+    if (estado !== 'CERRADO' && estado !== 'CERRADO_CLIENTE') {
         Swal.fire({
             icon: 'warning',
             title: 'Atención',
-            text: 'Solo puedes agregar una solución a un ticket que esté en estado CERRADO. Cambia el estado e inténtalo de nuevo.',
+            text: 'Solo puedes agregar una solución a un ticket cerrado.',
             confirmButtonColor: '#f59e0b'
         });
         return;
@@ -2148,6 +2182,7 @@ function getStatusClass(estado) {
     if (e === 'EN PROCESO') return 'swal-status-en-proceso';
     if (e === 'CONTPAQi')  return 'swal-status-contpaqi';
     if (e === 'CERRADO')    return 'swal-status-cerrado';
+    if (e === 'CERRADO_CLIENTE') return 'swal-status-cerrado';
     return '';
 }
 
