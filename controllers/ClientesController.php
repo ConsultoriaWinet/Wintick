@@ -18,35 +18,35 @@ class ClientesController extends Controller
     /**
      * @inheritDoc
      */
-  public function behaviors()
-{
-    return array_merge(parent::behaviors(), [
-        'access' => [
-            'class' => AccessControl::class,
-            'only' => ['index','view','create','update','delete','historial','search'],
-            'rules' => [
-                // ✅ Ver clientes (Admin, Supervisores, Administracion, etc.)
-                [
-                    'allow' => true,
-                    'actions' => ['index','view','historial','search'],
-                    'roles' => ['verClientes'],
-                ],
-                // ✅ Administrar clientes (Supervisores y arriba)
-                [
-                    'allow' => true,
-                    'actions' => ['create','update','delete'],
-                    'roles' => ['administrarClientes'],
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+            'access' => [
+                'class' => AccessControl::class,
+                'only' => ['index', 'view', 'create', 'update', 'delete', 'historial', 'search'],
+                'rules' => [
+                    // ✅ Ver clientes (Admin, Supervisores, Administracion, etc.)
+                    [
+                        'allow' => true,
+                        'actions' => ['index', 'view', 'historial', 'search'],
+                        'roles' => ['verClientes'],
+                    ],
+                    // ✅ Administrar clientes (Supervisores y arriba)
+                    [
+                        'allow' => true,
+                        'actions' => ['create', 'update', 'delete'],
+                        'roles' => ['administrarClientes'],
+                    ],
                 ],
             ],
-        ],
-        'verbs' => [
-            'class' => VerbFilter::class,
-            'actions' => [
-                'delete' => ['POST'],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'delete' => ['POST'],
+                ],
             ],
-        ],
-    ]);
-}
+        ]);
+    }
     /**
      * Lists all Clientes models.
      *
@@ -57,7 +57,7 @@ class ClientesController extends Controller
         $searchModel = new ClientesSearch();
 
         $validSizes = [10, 20, 50, 100, 500];
-        $pageSize   = (int) Yii::$app->request->get('pageSize', 20);
+        $pageSize = (int) Yii::$app->request->get('pageSize', 20);
         if (!in_array($pageSize, $validSizes)) {
             $pageSize = 20;
         }
@@ -65,9 +65,9 @@ class ClientesController extends Controller
         $dataProvider = $searchModel->search($this->request->queryParams, $pageSize);
 
         return $this->render('index', [
-            'searchModel'  => $searchModel,
+            'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-            'pageSize'     => $pageSize,
+            'pageSize' => $pageSize,
         ]);
     }
 
@@ -98,46 +98,48 @@ class ClientesController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
- public function actionCreate()
-        {
-            $model = new Clientes();
+    public function actionCreate()
+    {
+        $model = new Clientes();
 
-            if ($model->load(Yii::$app->request->post())) {
+        if ($model->load(Yii::$app->request->post())) {
 
-                $time = time();
-                $model->created_at = $time;
-                $model->updated_at = $time;
+            $time = time();
+            $model->created_at = $time;
+            $model->updated_at = $time;
 
-                if ($model->save()) {
-                    DevLog::log(
-                        DevLog::TIPO_CREAR,
-                        "Cliente [{$model->Nombre}] creado — RFC: {$model->RFC} | tipo: {$model->Tipo_servicio} | prioridad: {$model->Prioridad}",
-                        [
-                            'nombre'        => $model->Nombre,
-                            'razon_social'  => $model->Razon_social,
-                            'rfc'           => $model->RFC,
-                            'correo'        => $model->Correo,
-                            'tipo_servicio' => $model->Tipo_servicio,
-                            'prioridad'     => $model->Prioridad,
-                            'criticidad'    => $model->Criticidad,
-                            'tiempo_sla'    => $model->Tiempo,
-                        ],
-                        'clientes', $model->id, 'Clientes'
-                    );
-                    Yii::$app->session->setFlash('success', 'Cliente creado correctamente');
-                    return $this->redirect(['view', 'id' => $model->id]);
-                }
-
-                Yii::$app->session->setFlash(
-                    'error',
-                    'No se pudo guardar: ' . json_encode($model->errors)
+            if ($model->save()) {
+                DevLog::log(
+                    DevLog::TIPO_CREAR,
+                    "Cliente [{$model->Nombre}] creado — RFC: {$model->RFC} | tipo: {$model->Tipo_servicio} | prioridad: {$model->Prioridad}",
+                    [
+                        'nombre' => $model->Nombre,
+                        'razon_social' => $model->Razon_social,
+                        'rfc' => $model->RFC,
+                        'correo' => $model->Correo,
+                        'tipo_servicio' => $model->Tipo_servicio,
+                        'prioridad' => $model->Prioridad,
+                        'criticidad' => $model->Criticidad,
+                        'tiempo_sla' => $model->Tiempo,
+                    ],
+                    'clientes',
+                    $model->id,
+                    'Clientes'
                 );
+                Yii::$app->session->setFlash('success', 'Cliente creado correctamente');
+                return $this->redirect(['view', 'id' => $model->id]);
             }
 
-            return $this->render('create', [
-                'model' => $model,
-            ]);
+            Yii::$app->session->setFlash(
+                'error',
+                'No se pudo guardar: ' . json_encode($model->errors)
+            );
         }
+
+        return $this->render('create', [
+            'model' => $model,
+        ]);
+    }
     /**
      * Updates an existing Clientes model.
      * If update is successful, the browser will be redirected to the 'view' page.
@@ -155,14 +157,16 @@ class ClientesController extends Controller
                 DevLog::TIPO_ACTUALIZAR,
                 "Cliente [{$model->Nombre}] actualizado — RFC: {$model->RFC}",
                 [
-                    'nombre'        => $model->Nombre,
-                    'rfc'           => $model->RFC,
+                    'nombre' => $model->Nombre,
+                    'rfc' => $model->RFC,
                     'tipo_servicio' => $model->Tipo_servicio,
-                    'prioridad'     => $model->Prioridad,
-                    'estado'        => $model->Estado,
-                    'tiempo_sla'    => $model->Tiempo,
+                    'prioridad' => $model->Prioridad,
+                    'estado' => $model->Estado,
+                    'tiempo_sla' => $model->Tiempo,
                 ],
-                'clientes', $model->id, 'Clientes'
+                'clientes',
+                $model->id,
+                'Clientes'
             );
             return $this->redirect(['index']);
         }
@@ -172,35 +176,66 @@ class ClientesController extends Controller
         ]);
     }
 
-
-
-
-
-
-
-
     /**
      * Deletes an existing Clientes model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * Elimina un cliente
+     * @return array
      */
-    public function actionDelete($id)
+    public function actionDelete()
     {
+        $id = Yii::$app->request->post('id');
+
+        if (!$id) {
+            throw new \yii\web\BadRequestHttpException('No se recibió el ID del cliente.');
+        }
+
+        // Solo desarrolladores
+        if (!Yii::$app->user->identity->esDev()) {
+            throw new \yii\web\ForbiddenHttpException('No autorizado.');
+        }
+
         $model = $this->findModel($id);
+
+        // Validar que no tenga tickets
+        if (\app\models\Tickets::find()->where(['Cliente_id' => $model->id])->exists()) {
+
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+            return [
+                'success' => false,
+                'message' => 'No se puede eliminar porque tiene tickets asociados.'
+            ];
+        }
+
         $nombre = $model->Nombre;
-        $rfc    = $model->RFC;
-        $model->delete();
+        $rfc = $model->RFC;
 
-        DevLog::log(
-            DevLog::TIPO_ELIMINAR,
-            "Cliente [{$nombre}] ELIMINADO — RFC: {$rfc} | ID #{$id}",
-            ['nombre' => $nombre, 'rfc' => $rfc, 'id' => $id],
-            'clientes', $id, 'Clientes'
-        );
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        return $this->redirect(['index']);
+        if ($model->delete()) {
+
+            DevLog::log(
+                DevLog::TIPO_ELIMINAR,
+                "Cliente [{$nombre}] ELIMINADO — RFC: {$rfc} | ID #{$id}",
+                [
+                    'nombre' => $nombre,
+                    'rfc' => $rfc,
+                    'id' => $id
+                ],
+                'clientes',
+                $id,
+                'Clientes'
+            );
+
+            return [
+                'success' => true
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'No fue posible eliminar el registro.'
+        ];
     }
 
     /**
@@ -241,11 +276,12 @@ class ClientesController extends Controller
             ->limit(500);
 
         if ($q !== '') {
-            $query->andWhere(['or',
-                ['like', 'Nombre',          $q],
-                ['like', 'Razon_social',    $q],
-                ['like', 'RFC',             $q],
-                ['like', 'Correo',          $q],   // campo JSON, LIKE funciona
+            $query->andWhere([
+                'or',
+                ['like', 'Nombre', $q],
+                ['like', 'Razon_social', $q],
+                ['like', 'RFC', $q],
+                ['like', 'Correo', $q],   // campo JSON, LIKE funciona
                 ['like', 'Contacto_nombre', $q],
             ]);
         }
@@ -258,13 +294,13 @@ class ClientesController extends Controller
             $primerCorreo = $correos[0]['valor'] ?? '';
             $tiempo = (float) $c->Tiempo;
             return [
-                'id'          => $c->id,
-                'Nombre'      => $c->Nombre,
-                'Razon_social'=> (string) ($c->Razon_social ?? ''),
-                'RFC'         => (string) ($c->RFC ?? ''),
-                'Correo'      => $primerCorreo,
-                'Tiempo'      => $c->Tiempo,
-                'tiempoOk'    => $tiempo > 0,
+                'id' => $c->id,
+                'Nombre' => $c->Nombre,
+                'Razon_social' => (string) ($c->Razon_social ?? ''),
+                'RFC' => (string) ($c->RFC ?? ''),
+                'Correo' => $primerCorreo,
+                'Tiempo' => $c->Tiempo,
+                'tiempoOk' => $tiempo > 0,
             ];
         }, $rows);
 
@@ -286,4 +322,6 @@ class ClientesController extends Controller
 
         throw new NotFoundHttpException('The requested page does not exist.');
     }
+
+
 }

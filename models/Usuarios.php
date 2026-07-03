@@ -25,7 +25,7 @@ use Yii;
  */
 class Usuarios extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-public $password; 
+    public $password;
 
     /**
      * {@inheritdoc}
@@ -41,28 +41,28 @@ public $password;
     public function rules()
     {
         return [
-              [['password_reset_token'], 'default', 'value' => null],
-        [['status'], 'default', 'value' => 10],
+            [['password_reset_token'], 'default', 'value' => null],
+            [['status'], 'default', 'value' => 10],
 
-        [['Nombre', 'email', 'rol', 'color'], 'required'],
-        [['email'], 'email'],
-        [['status', 'created_at', 'updated_at'], 'integer'],
-        [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
-        [['color'], 'string', 'max' => 20],
-        [['avatar'], 'string', 'max' => 255],
-        [['failed_attempts'], 'integer'],
-        [['lockout_until'], 'safe'],
+            [['Nombre', 'email', 'rol', 'color'], 'required'],
+            [['email'], 'email'],
+            [['status', 'created_at', 'updated_at'], 'integer'],
+            [['Nombre', 'password_hash', 'password_reset_token', 'email', 'rol'], 'string', 'max' => 255],
+            [['color'], 'string', 'max' => 20],
+            [['avatar'], 'string', 'max' => 255],
+            [['failed_attempts'], 'integer'],
+            [['lockout_until'], 'safe'],
 
-        [['Nombre'], 'unique'],
-        [['email'], 'unique'],
-        [['password_reset_token'], 'unique'],
+            [['Nombre'], 'unique'],
+            [['email'], 'unique'],
+            [['password_reset_token'], 'unique'],
 
-      
-        [['password'], 'required', 'on' => 'create'],
-        [['password'], 'string', 'min' => 6],
 
-      
-        [['password'], 'safe', 'on' => 'update'],
+            [['password'], 'required', 'on' => 'create'],
+            [['password'], 'string', 'min' => 6],
+
+
+            [['password'], 'safe', 'on' => 'update'],
 
 
 
@@ -85,7 +85,7 @@ public $password;
             'rol' => 'Rol',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
-            'color'  => 'Color',
+            'color' => 'Color',
             'avatar' => 'Avatar',
         ];
     }
@@ -197,17 +197,6 @@ public $password;
     {
         return null;
     }
-
-    /////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
     /**
      * Gets query for [[Comentarios]].
      *
@@ -250,4 +239,11 @@ public $password;
         }
     }
 
+    /**
+     * Indica si el usuario es desarrollador.
+     */
+    public function esDev()
+    {
+        return $this->rol === 'Desarrolladores';
+    }
 }

@@ -14,66 +14,147 @@ $this->title = 'Clientes';
 ?>
 
 <style>
-/* ── Tabla ───────────────────────────────────────────── */
-.clientes-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.clientes-table thead tr { border-bottom: 2px solid var(--border, #e5e7eb); }
-.clientes-table thead th {
-    padding: 9px 12px; font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .05em;
-    color: var(--text-3, #6b7280); white-space: nowrap;
-    background: var(--surface, #fff);
-}
-.clientes-table tbody tr {
-    border-bottom: 1px solid var(--border, #e5e7eb);
-    transition: background .1s; cursor: pointer;
-}
-.clientes-table tbody tr:hover { background: var(--surface-2, #f9fafb); }
-.clientes-table td { padding: 10px 12px; color: var(--text, #111827); vertical-align: middle; }
+    /* ── Tabla ───────────────────────────────────────────── */
+    .clientes-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
 
-/* ── Badges tiempo ───────────────────────────────────── */
-.badge-tiempo {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11.5px; font-weight: 600; padding: 3px 9px;
-    border-radius: 20px; white-space: nowrap;
-}
-.badge-tiempo.ok  { background: #F0FDF4; color: #16A34A; }
-.badge-tiempo.sin { background: #FEF2F2; color: #DC2626; }
+    .clientes-table thead tr {
+        border-bottom: 2px solid var(--border, #e5e7eb);
+    }
 
-/* ── Pagination override ─────────────────────────────── */
-.pagination { gap: 4px; flex-wrap: wrap; margin: 0; }
-.pagination .page-item .page-link {
-    border-radius: 6px !important; padding: 5px 11px;
-    font-size: 12.5px; color: var(--text-2, #374151);
-    border: 1px solid var(--border, #e5e7eb);
-    background: var(--surface, #fff); transition: background .15s, color .15s;
-}
-.pagination .page-item.active .page-link {
-    background: var(--accent, #3b82f6); border-color: var(--accent, #3b82f6);
-    color: #fff; font-weight: 600;
-}
-.pagination .page-item:not(.active) .page-link:hover {
-    background: var(--accent-light, #eff6ff); color: var(--accent-dark, #1d4ed8);
-}
-.pagination .page-item.disabled .page-link { color: var(--text-3, #9ca3af); background: var(--surface-2, #f9fafb); }
+    .clientes-table thead th {
+        padding: 9px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-3, #6b7280);
+        white-space: nowrap;
+        background: var(--surface, #fff);
+    }
 
-/* ── Card mobile ─────────────────────────────────────── */
-.card-mobile-cli {
-    background: var(--surface, #fff);
-    border: 1px solid var(--border, #e5e7eb);
-    border-left: 3px solid var(--accent, #3b82f6);
-    border-radius: 10px; padding: 14px 14px 12px;
-    margin-bottom: 10px; cursor: pointer;
-    transition: box-shadow .15s;
-}
-.card-mobile-cli:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-.card-mobile-cli .cli-nombre { font-size: 14px; font-weight: 700; color: var(--text, #111827); margin-bottom: 8px; }
-.card-mobile-cli .cli-field { font-size: 12px; color: var(--text-3, #6b7280); margin-bottom: 4px; }
-.card-mobile-cli .cli-field span { color: var(--text-2, #374151); font-weight: 500; }
+    .clientes-table tbody tr {
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        transition: background .1s;
+        cursor: pointer;
+    }
 
-/* ── Historial modal table ───────────────────────────── */
-#historial-tabla thead th { font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .04em; color: var(--text-3, #6b7280); background: var(--surface-2, #f9fafb); }
-.historial-ticket-row:hover { background: var(--accent-light, #eff6ff) !important; }
+    .clientes-table tbody tr:hover {
+        background: var(--surface-2, #f9fafb);
+    }
+
+    .clientes-table td {
+        padding: 10px 12px;
+        color: var(--text, #111827);
+        vertical-align: middle;
+    }
+
+    /* ── Badges tiempo ───────────────────────────────────── */
+    .badge-tiempo {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .badge-tiempo.ok {
+        background: #F0FDF4;
+        color: #16A34A;
+    }
+
+    .badge-tiempo.sin {
+        background: #FEF2F2;
+        color: #DC2626;
+    }
+
+    /* ── Pagination override ─────────────────────────────── */
+    .pagination {
+        gap: 4px;
+        flex-wrap: wrap;
+        margin: 0;
+    }
+
+    .pagination .page-item .page-link {
+        border-radius: 6px !important;
+        padding: 5px 11px;
+        font-size: 12.5px;
+        color: var(--text-2, #374151);
+        border: 1px solid var(--border, #e5e7eb);
+        background: var(--surface, #fff);
+        transition: background .15s, color .15s;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--accent, #3b82f6);
+        border-color: var(--accent, #3b82f6);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .pagination .page-item:not(.active) .page-link:hover {
+        background: var(--accent-light, #eff6ff);
+        color: var(--accent-dark, #1d4ed8);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: var(--text-3, #9ca3af);
+        background: var(--surface-2, #f9fafb);
+    }
+
+    /* ── Card mobile ─────────────────────────────────────── */
+    .card-mobile-cli {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #e5e7eb);
+        border-left: 3px solid var(--accent, #3b82f6);
+        border-radius: 10px;
+        padding: 14px 14px 12px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: box-shadow .15s;
+    }
+
+    .card-mobile-cli:hover {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+    }
+
+    .card-mobile-cli .cli-nombre {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text, #111827);
+        margin-bottom: 8px;
+    }
+
+    .card-mobile-cli .cli-field {
+        font-size: 12px;
+        color: var(--text-3, #6b7280);
+        margin-bottom: 4px;
+    }
+
+    .card-mobile-cli .cli-field span {
+        color: var(--text-2, #374151);
+        font-weight: 500;
+    }
+
+    /* ── Historial modal table ───────────────────────────── */
+    #historial-tabla thead th {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--text-3, #6b7280);
+        background: var(--surface-2, #f9fafb);
+    }
+
+    .historial-ticket-row:hover {
+        background: var(--accent-light, #eff6ff) !important;
+    }
 </style>
 
 <div class="clientes-index">
@@ -82,7 +163,8 @@ $this->title = 'Clientes';
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; margin-top:4px;">
         <div>
             <h1 style="margin:0; font-size:20px; font-weight:700; color:var(--text,#111827);">Clientes</h1>
-            <p style="margin:2px 0 0; font-size:12.5px; color:var(--text-3,#6b7280);">Gestión de clientes y tiempo disponible</p>
+            <p style="margin:2px 0 0; font-size:12.5px; color:var(--text-3,#6b7280);">Gestión de clientes y tiempo
+                disponible</p>
         </div>
         <div style="display:flex; gap:8px;">
             <?= Html::a('<i class="fas fa-plus"></i> Crear Cliente', ['create'], [
@@ -95,7 +177,8 @@ $this->title = 'Clientes';
     </div>
 
     <!-- Card principal -->
-    <div style="background:var(--surface,#fff); border:1px solid var(--border,#e5e7eb); border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.05);">
+    <div
+        style="background:var(--surface,#fff); border:1px solid var(--border,#e5e7eb); border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.05);">
 
         <!-- Barra de búsqueda -->
         <div style="padding:14px 16px; border-bottom:1px solid var(--border,#e5e7eb); background:var(--surface,#fff);">
@@ -103,13 +186,12 @@ $this->title = 'Clientes';
                 <input type="hidden" name="pageSize" id="pageSizeHidden" value="<?= $pageSize ?>">
                 <div style="display:flex; gap:8px; align-items:center;">
                     <div style="position:relative; flex:1;">
-                        <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3,#9ca3af);font-size:12px;"></i>
+                        <i class="fas fa-search"
+                            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3,#9ca3af);font-size:12px;"></i>
                         <input type="text" id="universalSearch" name="ClientesSearch[q]"
                             style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border,#e5e7eb);border-radius:8px;font-size:13px;background:var(--surface-2,#f9fafb);color:var(--text,#111827);outline:none;"
-                            placeholder="Buscar en todos los clientes..."
-                            value="" autocomplete="off">
-                        <button type="button" id="clearSearchBtn"
-                            onclick="clearCliSearch()"
+                            placeholder="Buscar en todos los clientes..." value="" autocomplete="off">
+                        <button type="button" id="clearSearchBtn" onclick="clearCliSearch()"
                             style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3,#9ca3af);font-size:13px;padding:0;">
                             <i class="fas fa-times"></i>
                         </button>
@@ -133,117 +215,124 @@ $this->title = 'Clientes';
         <!-- Contenido normal (paginado) — se oculta durante búsqueda AJAX -->
         <div id="clientes-normal-content">
 
-        <!-- Tabla desktop -->
-        <div class="d-none d-md-block" style="overflow-x:auto;">
-            <?= GridView::widget([
-                'dataProvider' => $dataProvider,
-                'layout'       => '{items}{pager}',
-                'rowOptions'   => function ($model) {
-                    $search = strtolower(implode(' ', array_filter([
+            <!-- Tabla desktop -->
+            <div class="d-none d-md-block" style="overflow-x:auto;">
+                <?= GridView::widget([
+                    'dataProvider' => $dataProvider,
+                    'layout' => '{items}{pager}',
+                    'rowOptions' => function ($model) {
+                            $search = strtolower(implode(' ', array_filter([
+                                $model->Nombre,
+                                $model->Razon_social,
+                                $model->RFC,
+                                $model->getPrimerCorreo(),
+                            ])));
+                            return [
+                                'onclick' => "openModal({$model->id})",
+                                'data-search' => $search,
+                            ];
+                        },
+                    'tableOptions' => ['class' => 'clientes-table'],
+                    'headerRowOptions' => [],
+                    'columns' => [
+                        [
+                            'class' => 'yii\grid\SerialColumn',
+                            'headerOptions' => ['style' => 'width:40px;'],
+                        ],
+                        [
+                            'attribute' => 'id',
+                            'headerOptions' => ['style' => 'width:55px;'],
+                            'contentOptions' => ['style' => 'color:var(--text-3,#6b7280);font-size:12px;'],
+                        ],
+                        [
+                            'attribute' => 'Nombre',
+                            'value' => function ($m) {
+                                    return $m->Nombre;
+                                },
+                            'contentOptions' => ['style' => 'font-weight:600;'],
+                        ],
+                        [
+                            'attribute' => 'Razon_social',
+                            'label' => 'Razón Social',
+                            'contentOptions' => ['style' => 'max-width:160px;white-space:normal;color:var(--text-2,#374151);'],
+                        ],
+                        [
+                            'attribute' => 'Tiempo',
+                            'label' => 'Tiempo Restante',
+                            'format' => 'raw',
+                            'headerOptions' => ['style' => 'text-align:center;'],
+                            'contentOptions' => ['style' => 'text-align:center;'],
+                            'value' => function ($m) {
+                                    $n = floatval($m->Tiempo);
+                                    $cls = $n <= 0 ? 'sin' : 'ok';
+                                    $txt = $n <= 0 ? Html::encode($m->Tiempo) . ' SIN HORAS' : Html::encode($m->Tiempo) . ' h';
+                                    return "<span class='badge-tiempo {$cls}'>{$txt}</span>";
+                                },
+                        ],
+                        [
+                            'attribute' => 'RFC',
+                            'contentOptions' => ['style' => 'font-family:monospace;font-size:12px;color:var(--text-2,#374151);'],
+                        ],
+                        [
+                            'attribute' => 'Correo',
+                            'label' => 'Correo',
+                            'format' => 'raw',
+                            'headerOptions' => ['class' => 'col-correo'],
+                            'contentOptions' => ['class' => 'col-correo'],
+                            'value' => function ($m) {
+                                    $correo = $m->getPrimerCorreo();
+                                    if (!$correo)
+                                        return '<span style="color:var(--text-3,#9ca3af);font-size:12px;">—</span>';
+                                    return Html::a(Html::encode($correo), '#', [
+                                        'onclick' => "copyToClipboard(event, '" . Html::encode($correo) . "')",
+                                        'style' => 'color:var(--accent,#3b82f6);text-decoration:none;',
+                                    ]);
+                                },
+                        ],
+                    ],
+                    'pager' => [
+                        'options' => ['style' => 'display:flex;justify-content:center;padding:12px 0 6px;list-style:none;'],
+                        'linkOptions' => [],
+                        'pageCssClass' => 'page-item',
+                        'firstPageCssClass' => 'page-item',
+                        'lastPageCssClass' => 'page-item',
+                        'prevPageCssClass' => 'page-item',
+                        'nextPageCssClass' => 'page-item',
+                        'linkContainerOptions' => ['class' => 'pagination'],
+                    ],
+                ]); ?>
+            </div>
+
+            <!-- Cards mobile -->
+            <div class="d-block d-md-none" style="padding:12px;">
+                <?php foreach ($dataProvider->models as $model): ?>
+                    <?php $searchAttr = strtolower(implode(' ', array_filter([
                         $model->Nombre,
                         $model->Razon_social,
                         $model->RFC,
-                        $model->getPrimerCorreo(),
-                    ])));
-                    return [
-                        'onclick'     => "openModal({$model->id})",
-                        'data-search' => $search,
-                    ];
-                },
-                'tableOptions' => ['class' => 'clientes-table'],
-                'headerRowOptions' => [],
-                'columns' => [
-                    [
-                        'class'          => 'yii\grid\SerialColumn',
-                        'headerOptions'  => ['style' => 'width:40px;'],
-                    ],
-                    [
-                        'attribute'     => 'id',
-                        'headerOptions' => ['style' => 'width:55px;'],
-                        'contentOptions'=> ['style' => 'color:var(--text-3,#6b7280);font-size:12px;'],
-                    ],
-                    [
-                        'attribute' => 'Nombre',
-                        'value'     => function ($m) { return $m->Nombre; },
-                        'contentOptions' => ['style' => 'font-weight:600;'],
-                    ],
-                    [
-                        'attribute' => 'Razon_social',
-                        'label'     => 'Razón Social',
-                        'contentOptions' => ['style' => 'max-width:160px;white-space:normal;color:var(--text-2,#374151);'],
-                    ],
-                    [
-                        'attribute'      => 'Tiempo',
-                        'label'          => 'Tiempo Restante',
-                        'format'         => 'raw',
-                        'headerOptions'  => ['style' => 'text-align:center;'],
-                        'contentOptions' => ['style' => 'text-align:center;'],
-                        'value'          => function ($m) {
-                            $n = floatval($m->Tiempo);
-                            $cls = $n <= 0 ? 'sin' : 'ok';
-                            $txt = $n <= 0 ? Html::encode($m->Tiempo) . ' SIN HORAS' : Html::encode($m->Tiempo) . ' h';
-                            return "<span class='badge-tiempo {$cls}'>{$txt}</span>";
-                        },
-                    ],
-                    [
-                        'attribute'     => 'RFC',
-                        'contentOptions'=> ['style' => 'font-family:monospace;font-size:12px;color:var(--text-2,#374151);'],
-                    ],
-                    [
-                        'attribute'      => 'Correo',
-                        'label'          => 'Correo',
-                        'format'         => 'raw',
-                        'headerOptions'  => ['class' => 'col-correo'],
-                        'contentOptions' => ['class' => 'col-correo'],
-                        'value'          => function ($m) {
-                            $correo = $m->getPrimerCorreo();
-                            if (!$correo) return '<span style="color:var(--text-3,#9ca3af);font-size:12px;">—</span>';
-                            return Html::a(Html::encode($correo), '#', [
-                                'onclick' => "copyToClipboard(event, '" . Html::encode($correo) . "')",
-                                'style'   => 'color:var(--accent,#3b82f6);text-decoration:none;',
-                            ]);
-                        },
-                    ],
-                ],
-                'pager' => [
-                    'options'           => ['style' => 'display:flex;justify-content:center;padding:12px 0 6px;list-style:none;'],
-                    'linkOptions'       => [],
-                    'pageCssClass'      => 'page-item',
-                    'firstPageCssClass' => 'page-item',
-                    'lastPageCssClass'  => 'page-item',
-                    'prevPageCssClass'  => 'page-item',
-                    'nextPageCssClass'  => 'page-item',
-                    'linkContainerOptions' => ['class' => 'pagination'],
-                ],
-            ]); ?>
-        </div>
-
-        <!-- Cards mobile -->
-        <div class="d-block d-md-none" style="padding:12px;">
-            <?php foreach ($dataProvider->models as $model): ?>
-                <?php $searchAttr = strtolower(implode(' ', array_filter([
-                    $model->Nombre, $model->Razon_social, $model->RFC, $model->getPrimerCorreo()
-                ]))); ?>
-                <div class="card-mobile-cli" onclick="openModal(<?= $model->id ?>)" data-search="<?= Html::encode($searchAttr) ?>">
-                    <div class="cli-nombre"><?= Html::encode($model->Nombre) ?></div>
-                    <div class="cli-field">RFC: <span><?= Html::encode($model->RFC) ?></span></div>
-                    <div class="cli-field">Razón Social: <span><?= Html::encode($model->Razon_social) ?></span></div>
-                    <div class="cli-field">Correo:
-                        <?php $c = $model->getPrimerCorreo(); ?>
-                        <span><?= $c ? Html::a(Html::encode($c), '#', [
-                            'onclick' => "copyToClipboard(event, '" . Html::encode($c) . "')",
-                            'style'   => 'color:var(--accent,#3b82f6);',
-                        ]) : '—' ?></span>
+                        $model->getPrimerCorreo()
+                    ]))); ?>
+                    <div class="card-mobile-cli" onclick="openModal(<?= $model->id ?>)"
+                        data-search="<?= Html::encode($searchAttr) ?>">
+                        <div class="cli-nombre"><?= Html::encode($model->Nombre) ?></div>
+                        <div class="cli-field">RFC: <span><?= Html::encode($model->RFC) ?></span></div>
+                        <div class="cli-field">Razón Social: <span><?= Html::encode($model->Razon_social) ?></span></div>
+                        <div class="cli-field">Correo:
+                            <?php $c = $model->getPrimerCorreo(); ?>
+                            <span><?= $c ? Html::a(Html::encode($c), '#', [
+                                'onclick' => "copyToClipboard(event, '" . Html::encode($c) . "')",
+                                'style' => 'color:var(--accent,#3b82f6);',
+                            ]) : '—' ?></span>
+                        </div>
+                        <div style="margin-top:8px;">
+                            <?php $n = floatval($model->Tiempo); ?>
+                            <span class="badge-tiempo <?= $n <= 0 ? 'sin' : 'ok' ?>">
+                                <?= Html::encode($model->Tiempo) ?>     <?= $n <= 0 ? ' SIN HORAS' : ' h' ?>
+                            </span>
+                        </div>
                     </div>
-                    <div style="margin-top:8px;">
-                        <?php $n = floatval($model->Tiempo); ?>
-                        <span class="badge-tiempo <?= $n <= 0 ? 'sin' : 'ok' ?>">
-                            <?= Html::encode($model->Tiempo) ?><?= $n <= 0 ? ' SIN HORAS' : ' h' ?>
-                        </span>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+                <?php endforeach; ?>
+            </div>
 
         </div><!-- /#clientes-normal-content -->
     </div>
@@ -252,7 +341,8 @@ $this->title = 'Clientes';
 <!-- Modal principal del cliente -->
 <div id="modal-clientes" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content" style="border:1px solid var(--border,#e5e7eb);border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12);">
+        <div class="modal-content"
+            style="border:1px solid var(--border,#e5e7eb);border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.12);">
             <div class="modal-header py-2 px-3 border-bottom-0 bg-transparent">
                 <button id="btn-historial-cliente" class="btn btn-sm d-none"
                     style="font-size:12px;gap:5px;display:inline-flex!important;align-items:center;padding:5px 12px;border-radius:7px;border:1px solid var(--border,#e5e7eb);background:var(--surface-2,#f9fafb);color:var(--text-2,#374151);"
@@ -270,8 +360,10 @@ $this->title = 'Clientes';
 <div id="modal-historial" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md" role="document">
         <div class="modal-content" style="border:1px solid var(--border,#e5e7eb);border-radius:14px;overflow:hidden;">
-            <div class="modal-header" style="background:var(--surface-2,#f9fafb);border-bottom:1px solid var(--border,#e5e7eb);padding:12px 16px;">
-                <h6 class="modal-title fw-semibold" id="historial-titulo" style="font-size:14px;color:var(--text,#111827);">
+            <div class="modal-header"
+                style="background:var(--surface-2,#f9fafb);border-bottom:1px solid var(--border,#e5e7eb);padding:12px 16px;">
+                <h6 class="modal-title fw-semibold" id="historial-titulo"
+                    style="font-size:14px;color:var(--text,#111827);">
                     <i class="fas fa-history me-1" style="color:var(--text-3,#9ca3af);"></i> Historial de tickets
                 </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -280,11 +372,13 @@ $this->title = 'Clientes';
                 <div id="historial-loading" class="text-center py-5" style="display:none;color:var(--text-3,#6b7280);">
                     <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
                 </div>
-                <div id="historial-vacio" class="text-center py-5" style="display:none;color:var(--text-3,#6b7280);font-size:13px;">
+                <div id="historial-vacio" class="text-center py-5"
+                    style="display:none;color:var(--text-3,#6b7280);font-size:13px;">
                     <i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:.4;"></i>
                     Sin tickets registrados para este cliente.
                 </div>
-                <table id="historial-tabla" class="table table-hover table-sm mb-0" style="display:none;font-size:13px;">
+                <table id="historial-tabla" class="table table-hover table-sm mb-0"
+                    style="display:none;font-size:13px;">
                     <thead>
                         <tr>
                             <th class="ps-3">Folio</th>
@@ -296,7 +390,8 @@ $this->title = 'Clientes';
                     <tbody id="historial-body"></tbody>
                 </table>
             </div>
-            <div class="modal-footer py-2" style="font-size:11px;color:var(--text-3,#9ca3af);border-top:1px solid var(--border,#e5e7eb);">
+            <div class="modal-footer py-2"
+                style="font-size:11px;color:var(--text-3,#9ca3af);border-top:1px solid var(--border,#e5e7eb);">
                 <i class="fas fa-hand-pointer me-1"></i> Doble clic en un ticket para abrirlo
             </div>
         </div>
@@ -305,13 +400,13 @@ $this->title = 'Clientes';
 
 <?php
 $estadoClasses = json_encode([
-    'ABIERTO'    => 'dp-e-abierto',
+    'ABIERTO' => 'dp-e-abierto',
     'EN PROCESO' => 'dp-e-proceso',
     'PROGRAMADO' => 'dp-e-programado',
-    'EN ESPERA'  => 'dp-e-espera',
-    'CERRADO'    => 'dp-e-cerrado',
-    'CANCELADO'  => 'dp-e-cancelado',
-    'CONTPAQi'   => 'dp-e-contpaqi',
+    'EN ESPERA' => 'dp-e-espera',
+    'CERRADO' => 'dp-e-cerrado',
+    'CANCELADO' => 'dp-e-cancelado',
+    'CONTPAQi' => 'dp-e-contpaqi',
 ]);
 
 $this->registerJs("
@@ -496,5 +591,7 @@ $this->registerJs(<<<JS
     });
 })();
 JS
-, \yii\web\View::POS_END);
+    ,
+    \yii\web\View::POS_END
+);
 ?>

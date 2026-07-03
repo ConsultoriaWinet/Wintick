@@ -45,34 +45,55 @@ class Clientes extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id'                => 'ID',
-            'Nombre'            => 'Nombre',
-            'Razon_social'      => 'Razón Social',
-            'RFC'               => 'RFC',
-            'Correo'            => 'Correos',
-            'Contacto_nombre'   => 'Contacto Principal',
-            'Tiempo'            => 'Tiempo',
+            'id' => 'ID',
+            'Nombre' => 'Nombre',
+            'Razon_social' => 'Razón Social',
+            'RFC' => 'RFC',
+            'Correo' => 'Correos',
+            'Contacto_nombre' => 'Contacto Principal',
+            'Tiempo' => 'Tiempo',
             'Whatsapp_contacto' => 'WhatsApp',
-            'Telefono'          => 'Teléfonos',
-            'Prioridad'         => 'Prioridad',
-            'Criticidad'        => 'Criticidad',
-            'Tipo_servicio'     => 'Tipo de Servicio',
-            'Estado'            => 'Estado',
-            'created_at'        => 'Creado',
-            'updated_at'        => 'Actualizado',
+            'Telefono' => 'Teléfonos',
+            'Prioridad' => 'Prioridad',
+            'Criticidad' => 'Criticidad',
+            'Tipo_servicio' => 'Tipo de Servicio',
+            'Estado' => 'Estado',
+            'created_at' => 'Creado',
+            'updated_at' => 'Actualizado',
         ];
     }
 
     /** Devuelve el array decodificado de teléfonos. */
     public function getTelefonos(): array
     {
-        return json_decode($this->Telefono ?? '[]', true) ?: [];
+        if (empty($this->Telefono)) {
+            return [];
+        }
+
+        $telefonos = json_decode($this->Telefono, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($telefonos)) {
+            return $telefonos;
+        }
+
+        // Compatibilidad con registros antiguos
+        return [$this->Telefono];
     }
 
     /** Devuelve el array decodificado de WhatsApps. */
     public function getWhatsapps(): array
     {
-        return json_decode($this->Whatsapp_contacto ?? '[]', true) ?: [];
+        if (empty($this->Whatsapp_contacto)) {
+            return [];
+        }
+
+        $datos = json_decode($this->Whatsapp_contacto, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($datos)) {
+            return $datos;
+        }
+
+        return [$this->Whatsapp_contacto];
     }
 
     /** Devuelve el array decodificado de correos. */
