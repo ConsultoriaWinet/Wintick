@@ -153,6 +153,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                                 <option value="ABIERTO" <?= ($_GET['Estado'] ?? '') == 'ABIERTO' ? 'selected' : '' ?>>Abierto</option>
                                 <option value="PROGRAMADO" <?= ($_GET['Estado'] ?? '') == 'PROGRAMADO' ? 'selected' : '' ?>>Programado</option>
                                 <option value="EN PROCESO" <?= ($_GET['Estado'] ?? '') == 'EN PROCESO' ? 'selected' : '' ?>>En Proceso</option>
+                                <option value="EN ESPERA" <?= ($_GET['Estado'] ?? '') == 'EN ESPERA' ? 'selected' : '' ?>>En Espera</option>
                                 <option value="CONTPAQi" <?= ($_GET['Estado'] ?? '') == 'CONTPAQi' ? 'selected' : '' ?>>CONTPAQi </option>
                                 <option value="CERRADO" <?= ($_GET['Estado'] ?? '') == 'CERRADO' ? 'selected' : '' ?>>Cerrado</option>
                                 <option value="CERRADO_CLIENTE"<?= ($_GET['Estado'] ?? '') == 'CERRADO_CLIENTE' ? 'selected' : '' ?>>Cerrado por Cliente</option>
