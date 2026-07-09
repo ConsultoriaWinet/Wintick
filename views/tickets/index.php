@@ -317,6 +317,7 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                         <option value="ABIERTO" selected>Abierto</option>
                         <option value="PROGRAMADO">Programado</option>
                         <option value="EN PROCESO">En Proceso</option>
+                        <option value="EN ESPERA">En Espera</option>
                         <option value="CONTPAQi">CONTPAQi</option>
                         <option value="CERRADO">Cerrado</option>
                         <option value="CERRADO_CLIENTE">Cerrado por Cliente</option>
