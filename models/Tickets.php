@@ -43,7 +43,7 @@ class Tickets extends \yii\db\ActiveRecord
     {
         return [
             [
-                'class'           => AuditBehavior::class,
+                'class' => AuditBehavior::class,
                 'camposIgnorados' => ['Fecha_actualizacion'],
             ],
         ];
@@ -69,7 +69,7 @@ class Tickets extends \yii\db\ActiveRecord
             [['Asignado_a', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
             [['Descripcion', 'Solucion'], 'string'],
             [['HoraProgramada', 'HoraInicio', 'HoraFinalizo', 'Fecha_creacion', 'Fecha_actualizacion'], 'safe'],
-           
+
             [['Folio', 'Usuario_reporta', 'Estado'], 'string', 'max' => 255],
             [['Folio'], 'unique'],
         ];
@@ -194,5 +194,18 @@ class Tickets extends \yii\db\ActiveRecord
             $this->Usuario_reporta = mb_strtoupper($this->Usuario_reporta, 'UTF-8');
         }
         return parent::beforeSave($insert);
+    }
+
+    public static function getEstados()
+    {
+        return [
+            'ABIERTO' => 'ABIERTO',
+            'PROGRAMADO' => 'PROGRAMADO',
+            'EN PROCESO' => 'EN PROCESO',
+            'EN ESPERA' => 'EN ESPERA',
+            'ESCALADO CONTPAQi' => 'ESCALADO CONTPAQi',
+            'CERRADO' => 'CERRADO',
+            'CERRADO_CLIENTE' => 'CERRADO POR CLIENTE',
+        ];
     }
 }

@@ -15,6 +15,7 @@ class TicketsSearch extends Tickets
     public $fecha_inicio;
     public $fecha_fin;
     public $mes;
+    public $globalSearch;
 
     /**
      * {@inheritdoc}
@@ -23,7 +24,7 @@ class TicketsSearch extends Tickets
     {
         return [
             [['id', 'Asignado_a', 'TiempoRestante', 'HoraFinalizo', 'TiempoEfectivo', 'Cliente_id', 'Sistema_id', 'Servicio_id', 'Creado_por'], 'integer'],
-            [['Folio', 'Usuario_reporta', 'Estado', 'Descripcion', 'Solucion', 'HoraProgramada', 'HoraInicio', 'Fecha_creacion', 'Fecha_actualizacion', 'fecha_inicio', 'fecha_fin', 'mes', 'Prioridad'], 'safe'],
+            [['Folio', 'Usuario_reporta', 'Estado', 'Descripcion', 'Solucion', 'HoraProgramada', 'HoraInicio', 'Fecha_creacion', 'Fecha_actualizacion', 'fecha_inicio', 'fecha_fin', 'mes', 'Prioridad', 'globalSearch'], 'safe'],
         ];
     }
 
@@ -55,8 +56,8 @@ class TicketsSearch extends Tickets
             'query' => $query,
             'pagination' => [
                 'defaultPageSize' => 20,         // fallback cuando no viene ?per-page en la URL
-                'pageSizeParam'   => 'per-page', // lee ?per-page=N de la URL
-                'pageSizeLimit'   => [10, 100],  // mínimo 10, máximo 100
+                'pageSizeParam' => 'per-page', // lee ?per-page=N de la URL
+                'pageSizeLimit' => [10, 100],  // mínimo 10, máximo 100
             ],
             'sort' => [
                 'defaultOrder' => ['Fecha_creacion' => SORT_DESC],
@@ -73,8 +74,8 @@ class TicketsSearch extends Tickets
 
         // ✅ LÓGICA DE USUARIO ASIGNADO - APLICAR FILTRO POR DEFECTO
         $asignadoParam = isset($params['asignado_a']) ? $params['asignado_a'] : null;
-        $rolActual     = \Yii::$app->user->isGuest ? '' : (\Yii::$app->user->identity->rol ?? '');
-        $rolesVerTodo  = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
+        $rolActual = \Yii::$app->user->isGuest ? '' : (\Yii::$app->user->identity->rol ?? '');
+        $rolesVerTodo = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
 
         if (!isset($params['asignado_a']) && !\Yii::$app->user->isGuest) {
             // Roles con visibilidad total no tienen filtro por defecto → ven todos los tickets
@@ -112,9 +113,9 @@ class TicketsSearch extends Tickets
             $primerDia = $this->mes . '-01 00:00:00';
             $ultimoDia = date('Y-m-t 23:59:59', strtotime($this->mes . '-01'));
             $query->andWhere(['>=', 'HoraProgramada', $primerDia])
-                  ->andWhere(['<=', 'HoraProgramada', $ultimoDia]);
+                ->andWhere(['<=', 'HoraProgramada', $ultimoDia]);
         }
-        
+
         // Filtro por rango de fechas (DESDE - HASTA)
         if (!empty($this->fecha_inicio)) {
             // Convertir formato YYYY-MM-DD a YYYY-MM-DD 00:00:00
@@ -123,13 +124,36 @@ class TicketsSearch extends Tickets
                 $query->andWhere(['>=', 'HoraProgramada', date('Y-m-d 00:00:00', $fechaInicio)]);
             }
         }
-        
+
         if (!empty($this->fecha_fin)) {
             // Convertir formato YYYY-MM-DD a YYYY-MM-DD 23:59:59
             $fechaFin = strtotime($this->fecha_fin);
             if ($fechaFin) {
                 $query->andWhere(['<=', 'HoraProgramada', date('Y-m-d 23:59:59', $fechaFin)]);
             }
+        }
+
+        if (!empty($this->globalSearch)) {
+
+            $query->joinWith([
+                'cliente',
+                'sistema',
+                'servicio',
+                'usuarioAsignado'
+            ]);
+
+            $query->andWhere([
+                'or',
+                ['like', 'tickets.Folio', $this->globalSearch],
+                ['like', 'tickets.Usuario_reporta', $this->globalSearch],
+                ['like', 'tickets.Descripcion', $this->globalSearch],
+                ['like', 'tickets.Estado', $this->globalSearch],
+                ['like', 'clientes.Nombre', $this->globalSearch],
+                ['like', 'sistemas.Nombre', $this->globalSearch],
+                ['like', 'servicios.Nombre', $this->globalSearch],
+                ['like', 'usuarios.Nombre', $this->globalSearch],
+            ]);
+
         }
 
         return $dataProvider;

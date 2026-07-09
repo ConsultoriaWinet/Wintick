@@ -49,10 +49,14 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
             <!-- Buscador Universal Instantáneo -->
             <div class="global-search-container">
                 <i class="fas fa-search"></i>
-                <input type="text" 
-                       id="globalSearch" 
-                       placeholder="Buscar por cualquier cosa..."
-                       autocomplete="off">
+
+                <input type="text"
+                    id="globalSearch"
+                    name="globalSearch"
+                    value="<?= Html::encode($_GET['globalSearch'] ?? '') ?>"
+                    placeholder="Buscar por cualquier cosa..."
+                    autocomplete="off">
+
                 <button class="search-clear-btn" id="clearSearch" title="Limpiar búsqueda">
                     <i class="fas fa-times"></i>
                 </button>
@@ -191,6 +195,11 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                class="btn btn-outline-success btn-sm">
                 <i class="fas fa-file-csv"></i> Exportar CSV
             </a>
+
+                <a href="<?= Url::to(['agenda/index']) ?>"
+       class="btn btn-outline-primary btn-sm ms-2">
+        <i class="fas fa-clipboard-list"></i> Pendientes
+    </a>
         </div>
         </div><!-- /.th-row-main -->
 
@@ -621,18 +630,18 @@ $mesActual = Yii::$app->request->get('mes', date('Y-m'));
                     <div class="d-field-group">
                         <label><i class="fas fa-circle-notch"></i> Estado</label>
                         <select id="de-Estado">
-                            <option value="ABIERTO">Abierto</option>
-                            <option value="PROGRAMADO">Programado</option>
-                            <option value="EN PROCESO">En Proceso</option>
+                            <option value="ABIERTO">ABIERTO</option>
+                            <option value="PROGRAMADO">PROGRAMADO</option>
+                            <option value="EN PROCESO">EN PROCESO</option>
                             <option value="CONTPAQi">CONTPAQi</option>
                         </select>
                     </div>
                     <div class="d-field-group">
                         <label><i class="fas fa-exclamation-circle"></i> Prioridad</label>
                         <select id="de-Prioridad">
-                            <option value="ALTA">Alta</option>
-                            <option value="MEDIA">Media</option>
-                            <option value="BAJA">Baja</option>
+                            <option value="ALTA">ALTA</option>
+                            <option value="MEDIA">MEDIA</option>
+                            <option value="BAJA">BAJA</option>
                         </select>
                     </div>
                     <div class="d-field-group">
@@ -2100,18 +2109,52 @@ document.addEventListener('DOMContentLoaded', function () {
         loadNextFolio(row.querySelector('.folio'));
     });
 
-    if (searchInput) searchInput.addEventListener('input', function (e) {
-        const query = e.target.value.trim();
-        clearButton?.classList.toggle('active', !!query);
-        debouncedSearch(query);
+let searchTimeout;
+
+if (searchInput) {
+
+    searchInput.addEventListener('keydown', function (e) {
+
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        e.preventDefault();
+
+        const query = this.value.trim();
+
+        const url = new URL(window.location.href);
+
+        if (query !== '') {
+            url.searchParams.set('globalSearch', query);
+        } else {
+            url.searchParams.delete('globalSearch');
+        }
+
+        url.searchParams.delete('page');
+
+        window.location.href = url;
+
     });
 
-    if (clearButton) clearButton.addEventListener('click', function () {
+}
+
+if (clearButton) {
+
+    clearButton.addEventListener('click', function () {
+
         searchInput.value = '';
-        clearButton.classList.remove('active');
-        performSearch('');
-        searchInput.focus();
+
+        const url = new URL(window.location.href);
+
+        url.searchParams.delete('globalSearch');
+        url.searchParams.delete('page');
+
+        window.location.href = url;
+
     });
+
+}
 
     if (filterBtn && filterMenu) {
         filterBtn.addEventListener('click', function (e) {

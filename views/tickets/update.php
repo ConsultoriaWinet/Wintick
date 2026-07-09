@@ -16,74 +16,91 @@ $this->title = 'Actualizar Ticket: ' . $model->Folio;
 // Texto pre-seleccionado para ss-wrap
 $clienteNombre = '';
 if ($model->Cliente_id) {
-    foreach ($clientes as $c) { if ($c['id'] == $model->Cliente_id) { $clienteNombre = $c['Nombre']; break; } }
+    foreach ($clientes as $c) {
+        if ($c['id'] == $model->Cliente_id) {
+            $clienteNombre = $c['Nombre'];
+            break;
+        }
+    }
 }
 $sistemaNombre = '';
 if ($model->Sistema_id) {
-    foreach ($sistemas as $s) { if ($s['id'] == $model->Sistema_id) { $sistemaNombre = $s['Nombre']; break; } }
+    foreach ($sistemas as $s) {
+        if ($s['id'] == $model->Sistema_id) {
+            $sistemaNombre = $s['Nombre'];
+            break;
+        }
+    }
 }
 $servicioNombre = '';
 if ($model->Servicio_id) {
-    foreach ($servicios as $s) { if ($s['id'] == $model->Servicio_id) { $servicioNombre = $s['Nombre']; break; } }
+    foreach ($servicios as $s) {
+        if ($s['id'] == $model->Servicio_id) {
+            $servicioNombre = $s['Nombre'];
+            break;
+        }
+    }
 }
 
 // Valores en formato datetime-local (YYYY-MM-DDTHH:MM)
 $horaProgramadaVal = $model->HoraProgramada ? date('Y-m-d\TH:i', strtotime($model->HoraProgramada)) : '';
-$horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($model->HoraInicio))     : '';
+$horaInicioVal = $model->HoraInicio ? date('Y-m-d\TH:i', strtotime($model->HoraInicio)) : '';
 ?>
 
 <style>
     .ticket-update {
-     
-        margin:auto;
+
+        margin: auto;
         background: white;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         overflow: hidden;
     }
-    
+
     .update-header {
-       
+
         color: white;
         padding: 25px 30px;
         text-align: center;
     }
-    
+
     .update-header h1 {
         margin: 0;
         font-size: 24px;
         font-weight: 600;
     }
-    
+
     .update-form {
         padding: 30px;
     }
-    
+
     .form-group {
         margin-bottom: 20px;
     }
-    
+
     .form-label {
         font-weight: 600;
         color: #374151;
         margin-bottom: 8px;
         display: block;
     }
-    
-    .form-control, .form-select {
+
+    .form-control,
+    .form-select {
         border: 2px solid #e5e7eb;
         border-radius: 8px;
         padding: 10px 12px;
         font-size: 14px;
         transition: all 0.2s ease;
     }
-    
-    .form-control:focus, .form-select:focus {
+
+    .form-control:focus,
+    .form-select:focus {
         border-color: #667eea;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         outline: none;
     }
-    
+
     .btn-group {
         display: flex;
         gap: 10px;
@@ -91,7 +108,7 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
         padding-top: 20px;
         border-top: 2px solid #e5e7eb;
     }
-    
+
     .btn {
         padding: 12px 24px;
         border-radius: 8px;
@@ -103,24 +120,24 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
         align-items: center;
         gap: 8px;
     }
-    
+
     .btn-primary {
         background: #667eea;
         border-color: #667eea;
         color: white;
     }
-    
+
     .btn-primary:hover {
         background: #5a67d8;
         transform: translateY(-2px);
     }
-    
+
     .btn-secondary {
         background: #6b7280;
         border-color: #6b7280;
         color: white;
     }
-    
+
     .btn-secondary:hover {
         background: #4b5563;
         transform: translateY(-2px);
@@ -156,13 +173,12 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
             <label class="form-label">Cliente</label>
             <div class="ss-wrap">
                 <input type="text" class="form-control ss-input" placeholder="Buscar cliente..."
-                       value="<?= Html::encode($clienteNombre) ?>">
+                    value="<?= Html::encode($clienteNombre) ?>">
                 <div class="ss-dropdown"></div>
                 <select id="tickets-cliente_id" name="Tickets[Cliente_id]" style="display:none">
                     <option value="">Seleccionar Cliente</option>
                     <?php foreach ($clientes as $c): ?>
-                        <option value="<?= $c['id'] ?>"
-                            <?= $model->Cliente_id == $c['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $c['id'] ?>" <?= $model->Cliente_id == $c['id'] ? 'selected' : '' ?>>
                             <?= Html::encode($c['Nombre']) ?>
                         </option>
                     <?php endforeach; ?>
@@ -174,13 +190,12 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
             <label class="form-label">Sistema</label>
             <div class="ss-wrap">
                 <input type="text" class="form-control ss-input" placeholder="Buscar sistema..."
-                       value="<?= Html::encode($sistemaNombre) ?>">
+                    value="<?= Html::encode($sistemaNombre) ?>">
                 <div class="ss-dropdown"></div>
                 <select id="tickets-sistema_id" name="Tickets[Sistema_id]" style="display:none">
                     <option value="">Seleccionar Sistema</option>
                     <?php foreach ($sistemas as $s): ?>
-                        <option value="<?= $s['id'] ?>"
-                            <?= $model->Sistema_id == $s['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $s['id'] ?>" <?= $model->Sistema_id == $s['id'] ? 'selected' : '' ?>>
                             <?= Html::encode($s['Nombre']) ?>
                         </option>
                     <?php endforeach; ?>
@@ -192,13 +207,12 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
             <label class="form-label">Servicio</label>
             <div class="ss-wrap">
                 <input type="text" class="form-control ss-input" placeholder="Buscar servicio..."
-                       value="<?= Html::encode($servicioNombre) ?>">
+                    value="<?= Html::encode($servicioNombre) ?>">
                 <div class="ss-dropdown"></div>
                 <select id="tickets-servicio_id" name="Tickets[Servicio_id]" style="display:none">
                     <option value="">Seleccionar Servicio</option>
                     <?php foreach ($servicios as $s): ?>
-                        <option value="<?= $s['id'] ?>"
-                            <?= $model->Servicio_id == $s['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $s['id'] ?>" <?= $model->Servicio_id == $s['id'] ? 'selected' : '' ?>>
                             <?= Html::encode($s['Nombre']) ?>
                         </option>
                     <?php endforeach; ?>
@@ -226,18 +240,16 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
         <div class="col-md-6">
             <div class="form-group">
                 <label class="form-label">Hora Reporte</label>
-                <input type="datetime-local" class="form-control"
-                       name="Tickets[HoraProgramada]"
-                       value="<?= Html::encode($horaProgramadaVal) ?>">
+                <input type="datetime-local" class="form-control" name="Tickets[HoraProgramada]"
+                    value="<?= Html::encode($horaProgramadaVal) ?>">
             </div>
         </div>
 
         <div class="col-md-6">
             <div class="form-group">
                 <label class="form-label">Hora Inicio</label>
-                <input type="datetime-local" class="form-control"
-                       name="Tickets[HoraInicio]"
-                       value="<?= Html::encode($horaInicioVal) ?>">
+                <input type="datetime-local" class="form-control" name="Tickets[HoraInicio]"
+                    value="<?= Html::encode($horaInicioVal) ?>">
             </div>
         </div>
 
@@ -252,7 +264,7 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
         <div class="col-md-4">
             <?= $form->field($model, 'Prioridad')->dropDownList([
                 'BAJA' => 'Baja',
-                'MEDIA' => 'Media', 
+                'MEDIA' => 'Media',
                 'ALTA' => 'Alta'
             ], [
                 'prompt' => 'Seleccionar Prioridad',
@@ -261,17 +273,17 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
         </div>
 
         <div class="col-md-4">
-            <?= $form->field($model, 'Estado')->dropDownList([
-                'ABIERTO'    => 'Abierto',
-                'EN PROCESO' => 'En Proceso',
-                'EN ESPERA'  => 'En Espera',
-            ], [
-                'class' => 'form-select'
-            ])->label('Estado') ?>
+            <?= $form->field($model, 'Estado')->dropDownList(
+                \app\models\Tickets::getEstados(),
+                [
+                    'class' => 'form-select',
+                ]
+            )->label('Estado') ?>
         </div>
 
         <div class="col-md-8">
-            <div class="alert alert-info d-flex align-items-center gap-2 mb-0 mt-3" style="border-radius:8px; font-size:13px;">
+            <div class="alert alert-info d-flex align-items-center gap-2 mb-0 mt-3"
+                style="border-radius:8px; font-size:13px;">
                 <i class="fas fa-info-circle fa-lg"></i>
                 <div>
                     Para <strong>cerrar</strong> el ticket con solución, tiempo efectivo y fecha de cierre,
@@ -284,7 +296,7 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
             <?= Html::submitButton('<i class="fas fa-save"></i> Guardar Cambios', [
                 'class' => 'btn btn-primary'
             ]) ?>
-            
+
             <?= Html::a('<i class="fas fa-arrow-left"></i> Regresar', ['index'], [
                 'class' => 'btn btn-secondary'
             ]) ?>
@@ -295,94 +307,94 @@ $horaInicioVal     = $model->HoraInicio     ? date('Y-m-d\TH:i', strtotime($mode
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Selects buscables (cliente / sistema / servicio) ──
-    (function() {
-        function normalize(s) {
-            return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-        }
+        // ── Selects buscables (cliente / sistema / servicio) ──
+        (function () {
+            function normalize(s) {
+                return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            }
 
-        function initWrap(wrap) {
-            const input    = wrap.querySelector('.ss-input');
-            const dropdown = wrap.querySelector('.ss-dropdown');
-            const select   = wrap.querySelector('select');
-            if (!input || !dropdown || !select) return;
+            function initWrap(wrap) {
+                const input = wrap.querySelector('.ss-input');
+                const dropdown = wrap.querySelector('.ss-dropdown');
+                const select = wrap.querySelector('select');
+                if (!input || !dropdown || !select) return;
 
-            const allOptions = Array.from(select.options).filter(o => o.value !== '');
-            let _guard = false;
+                const allOptions = Array.from(select.options).filter(o => o.value !== '');
+                let _guard = false;
 
-            function render(items) {
-                if (!items.length) {
-                    const empty = document.createElement('div');
-                    empty.className = 'ss-empty';
-                    empty.textContent = 'Sin resultados';
-                    dropdown.replaceChildren(empty);
-                } else {
-                    const q   = normalize(input.value);
-                    const re  = q ? new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi') : null;
-                    const frag = document.createDocumentFragment();
-                    items.forEach(opt => {
-                        const el = document.createElement('div');
-                        el.className     = 'ss-item';
-                        el.dataset.value = String(opt.value);
-                        el.innerHTML = re ? opt.text.replace(re, '<strong>$1</strong>') : opt.text;
-                        el.addEventListener('mousedown', e => {
-                            e.preventDefault();
-                            input.value  = opt.text;
-                            select.value = opt.value;
-                            dropdown.style.display = 'none';
+                function render(items) {
+                    if (!items.length) {
+                        const empty = document.createElement('div');
+                        empty.className = 'ss-empty';
+                        empty.textContent = 'Sin resultados';
+                        dropdown.replaceChildren(empty);
+                    } else {
+                        const q = normalize(input.value);
+                        const re = q ? new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi') : null;
+                        const frag = document.createDocumentFragment();
+                        items.forEach(opt => {
+                            const el = document.createElement('div');
+                            el.className = 'ss-item';
+                            el.dataset.value = String(opt.value);
+                            el.innerHTML = re ? opt.text.replace(re, '<strong>$1</strong>') : opt.text;
+                            el.addEventListener('mousedown', e => {
+                                e.preventDefault();
+                                input.value = opt.text;
+                                select.value = opt.value;
+                                dropdown.style.display = 'none';
+                            });
+                            frag.appendChild(el);
                         });
-                        frag.appendChild(el);
-                    });
-                    dropdown.replaceChildren(frag);
-                }
-                dropdown.style.display = 'block';
-            }
-
-            function filterAndShow() {
-                const q = normalize(input.value);
-                render((q ? allOptions.filter(o => normalize(o.text).includes(q)) : allOptions).slice(0, 12));
-                if (!_guard && document.activeElement !== input) {
-                    _guard = true;
-                    const ss = input.selectionStart ?? input.value.length;
-                    const se = input.selectionEnd   ?? input.value.length;
-                    input.focus();
-                    try { input.setSelectionRange(ss, se); } catch (_) {}
-                    _guard = false;
-                }
-            }
-
-            input.addEventListener('focus',   () => { if (!_guard) filterAndShow(); });
-            input.addEventListener('input',   filterAndShow);
-            input.addEventListener('blur',    () => setTimeout(() => { dropdown.style.display = 'none'; }, 160));
-            input.addEventListener('keydown', e => {
-                if (dropdown.style.display === 'none') return;
-                const items  = [...dropdown.querySelectorAll('.ss-item')];
-                const active = dropdown.querySelector('.ss-active');
-                const idx    = items.indexOf(active);
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    items.forEach(i => i.classList.remove('ss-active'));
-                    (items[Math.min(idx + 1, items.length - 1)] || items[0])?.classList.add('ss-active');
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    items.forEach(i => i.classList.remove('ss-active'));
-                    (items[Math.max(idx - 1, 0)])?.classList.add('ss-active');
-                } else if (e.key === 'Enter' || e.key === 'Tab') {
-                    const target = dropdown.querySelector('.ss-active') || items[0];
-                    if (target) {
-                        e.preventDefault();
-                        const opt = allOptions.find(o => o.value === target.dataset.value);
-                        if (opt) { input.value = opt.text; select.value = opt.value; dropdown.style.display = 'none'; }
+                        dropdown.replaceChildren(frag);
                     }
-                } else if (e.key === 'Escape') {
-                    dropdown.style.display = 'none';
+                    dropdown.style.display = 'block';
                 }
-            });
-        }
 
-        document.querySelectorAll('.ss-wrap').forEach(initWrap);
-    })();
-});
+                function filterAndShow() {
+                    const q = normalize(input.value);
+                    render((q ? allOptions.filter(o => normalize(o.text).includes(q)) : allOptions).slice(0, 12));
+                    if (!_guard && document.activeElement !== input) {
+                        _guard = true;
+                        const ss = input.selectionStart ?? input.value.length;
+                        const se = input.selectionEnd ?? input.value.length;
+                        input.focus();
+                        try { input.setSelectionRange(ss, se); } catch (_) { }
+                        _guard = false;
+                    }
+                }
+
+                input.addEventListener('focus', () => { if (!_guard) filterAndShow(); });
+                input.addEventListener('input', filterAndShow);
+                input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 160));
+                input.addEventListener('keydown', e => {
+                    if (dropdown.style.display === 'none') return;
+                    const items = [...dropdown.querySelectorAll('.ss-item')];
+                    const active = dropdown.querySelector('.ss-active');
+                    const idx = items.indexOf(active);
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        items.forEach(i => i.classList.remove('ss-active'));
+                        (items[Math.min(idx + 1, items.length - 1)] || items[0])?.classList.add('ss-active');
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        items.forEach(i => i.classList.remove('ss-active'));
+                        (items[Math.max(idx - 1, 0)])?.classList.add('ss-active');
+                    } else if (e.key === 'Enter' || e.key === 'Tab') {
+                        const target = dropdown.querySelector('.ss-active') || items[0];
+                        if (target) {
+                            e.preventDefault();
+                            const opt = allOptions.find(o => o.value === target.dataset.value);
+                            if (opt) { input.value = opt.text; select.value = opt.value; dropdown.style.display = 'none'; }
+                        }
+                    } else if (e.key === 'Escape') {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            }
+
+            document.querySelectorAll('.ss-wrap').forEach(initWrap);
+        })();
+    });
 </script>

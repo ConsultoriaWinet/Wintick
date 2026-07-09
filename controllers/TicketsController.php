@@ -558,7 +558,7 @@ class TicketsController extends Controller
         $tickets = $data['tickets'] ?? [];
 
         try {
-            $usuarioActual = \Yii::$app->user->identity->email;
+            $usuarioActual = \Yii::$app->user->identity->Nombre;
             $foliosCreados = [];
             $idsCreados = [];
             foreach ($tickets as $ticketData) {
@@ -640,12 +640,12 @@ class TicketsController extends Controller
 
         // Notificar cambio de estado al consultor asignado
         if ($estadoAnterior !== $ticket->Estado && $ticket->Asignado_a) {
-            $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
+            $usuarioActualNombre = Yii::$app->user->identity->Nombre ?? 'Alguien';
             $this->crearNotificacion(
                 (int) $ticket->Asignado_a,
                 'estado_cambio',
                 'Cambio de estado: ' . $ticket->Folio,
-                $usuarioActualEmail . ' cambió el estado a ' . $ticket->Estado,
+                $usuarioActualNombre . ' cambió el estado a ' . $ticket->Estado,
                 $ticket->id
             );
         }
@@ -839,7 +839,7 @@ class TicketsController extends Controller
             $transaction->commit();
 
             // Notificaciones — se envían DESPUÉS del commit, cuando la solución ya está guardada
-            $usuarioActualEmail = Yii::$app->user->identity->email ?? 'Alguien';
+            $usuarioActualNombre = Yii::$app->user->identity->Nombre ?? 'Alguien';
 
             // 1) Notificar al consultor asignado del cambio de estado a CERRADO
             if ($ticket->Asignado_a) {
@@ -847,7 +847,7 @@ class TicketsController extends Controller
                     (int) $ticket->Asignado_a,
                     'estado_cambio',
                     'Ticket cerrado: ' . $ticket->Folio,
-                    $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio . ' con solución.',
+                    $usuarioActualNombre . ' cerró el ticket ' . $ticket->Folio . ' con solución.',
                     $ticket->id
                 );
             }
@@ -863,7 +863,7 @@ class TicketsController extends Controller
                 ['Administracion', 'Administradores', 'Desarrolladores'],
                 'ticket_cerrado',
                 'Ticket cerrado: ' . $ticket->Folio,
-                $usuarioActualEmail . ' cerró el ticket ' . $ticket->Folio,
+                $usuarioActualNombre . ' cerró el ticket ' . $ticket->Folio,
                 $ticket->id,
                 $skip
             );
@@ -1497,6 +1497,10 @@ class TicketsController extends Controller
         $searchModel = new TicketsSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         $dataProvider->pagination = false;
+
+        // Mostrar primero los tickets más antiguos
+        $dataProvider->sort->defaultOrder = ['Fecha_creacion' => SORT_ASC];
+        $dataProvider->sort->sortParam = false;
 
         $tickets = $dataProvider->getModels();
 
