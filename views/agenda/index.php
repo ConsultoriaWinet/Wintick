@@ -97,10 +97,10 @@ $this->title = 'Agenda de Pendientes';
                         <td><?= $ticket->cliente->Nombre ?? '-' ?></td>
                         <td><?= $ticket->Usuario_reporta ?></td>
                         <td><?= $ticket->Descripcion ?></td>
-                        <td><?= $ticket->HoraProgramada ? date('d/m/Y', strtotime($ticket->HoraProgramada)) : '-' ?></td>
+                        <td><?= $ticket->HoraInicio ? date('d/m/Y', strtotime($ticket->HoraInicio)) : '-' ?></td>
                         <td><?= $ticket->HoraInicio ? date('H:i', strtotime($ticket->HoraInicio)) : '-' ?></td>
                         <td><?= $ticket->usuarioAsignado->Nombre ?? '-' ?></td>
-                        <td><?= date('d/m/Y', strtotime($ticket->Fecha_creacion)) ?></td>
+                        <td><?= $ticket->Fecha_creacion ? date('d/m/Y', strtotime($ticket->Fecha_creacion)) : '-' ?></td>
                         <td>
                             <span class="badge <?= $badge ?>">
                                 <?= $ticket->Estado ?>
