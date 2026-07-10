@@ -308,7 +308,7 @@ if ($model->Servicio_id) {
 
                 <div class="form-group">
                     <?= $form->field($model, 'Estado')->dropDownList(
-                        \app\models\Tickets::getEstados(),
+                        \app\models\Tickets::getEstadosCreacion(),
                         [
                             'class' => 'form-select',
                         ]

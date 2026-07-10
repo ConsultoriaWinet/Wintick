@@ -208,4 +208,15 @@ class Tickets extends \yii\db\ActiveRecord
             'CERRADO_CLIENTE' => 'CERRADO POR CLIENTE',
         ];
     }
+    public static function getEstadosCreacion()
+    {
+        return [
+            'ABIERTO' => 'ABIERTO',
+            'PROGRAMADO' => 'PROGRAMADO',
+            'EN PROCESO' => 'EN PROCESO',
+            'EN ESPERA' => 'EN ESPERA',
+            'CONTPAQi' => 'CONTPAQi',
+            'Escalado ContPAQi' => 'ESCALADO CONTPAQi',
+        ];
+    }
 }
