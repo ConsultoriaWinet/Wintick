@@ -10,6 +10,9 @@ use app\models\Comentarios;
 use app\models\Clientes;
 use app\models\Usuarios;
 use yii\db\Expression;
+use yii\db\Query;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class EstadisticasController extends Controller
 {
@@ -30,46 +33,46 @@ class EstadisticasController extends Controller
 
     public function actionIndex()
     {
-        $mesActual  = Yii::$app->request->get('mes', date('Y-m'));
+        $mesActual = Yii::$app->request->get('mes', date('Y-m'));
         $yearActual = date('Y', strtotime($mesActual . '-01'));
 
         // Rango de fechas calculado UNA sola vez y reutilizado en todos los métodos
         $inicio = $mesActual . '-01 00:00:00';
-        $fin    = date('Y-m-t 23:59:59', strtotime($inicio));
+        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
 
         // 1 query en vez de 4 para los totales del mes
         $estadisticasTickets = $this->getEstadisticasTickets($inicio, $fin);
 
         // tasaResolucion se calcula con los mismos datos — sin query adicional
         $tasaResolucion = [
-            'total'    => $estadisticasTickets['total'],
+            'total' => $estadisticasTickets['total'],
             'cerrados' => $estadisticasTickets['cerrados'],
-            'tasa'     => $estadisticasTickets['total'] > 0
+            'tasa' => $estadisticasTickets['total'] > 0
                 ? round($estadisticasTickets['cerrados'] / $estadisticasTickets['total'] * 100, 2)
                 : 0,
         ];
 
-        $ticketsPorEstado    = $this->getTicketsPorEstado($inicio, $fin);
+        $ticketsPorEstado = $this->getTicketsPorEstado($inicio, $fin);
         $ticketsPorPrioridad = $this->getTicketsPorPrioridad($inicio, $fin);
-        $ticketsPorCliente   = $this->getTicketsPorCliente($inicio, $fin);
-        $ticketsPorTecnico   = $this->getTicketsPorTecnico($inicio, $fin);
-        $tiempoPromedio      = $this->getTiempoPromedioResolucion($inicio, $fin);
-        $ticketsPorDia       = $this->getTicketsPorDia($inicio, $fin);
+        $ticketsPorCliente = $this->getTicketsPorCliente($inicio, $fin);
+        $ticketsPorTecnico = $this->getTicketsPorTecnico($inicio, $fin);
+        $tiempoPromedio = $this->getTiempoPromedioResolucion($inicio, $fin);
+        $ticketsPorDia = $this->getTicketsPorDia($inicio, $fin);
 
-        $consultoresDelMes  = $this->getConsultoresDelMes($inicio, $fin);
+        $consultoresDelMes = $this->getConsultoresDelMes($inicio, $fin);
         $consultoresDelAnio = $this->getConsultoresDelAnio($yearActual);
-        $topConsultoresMes  = $this->getTopConsultoresMes($inicio, $fin);
+        $topConsultoresMes = $this->getTopConsultoresMes($inicio, $fin);
         $topConsultoresAnio = $this->getTopConsultoresAnio($yearActual);
 
-        $clientesMasAtendidos     = $this->getClientesMasAtendidos($inicio, $fin);
+        $clientesMasAtendidos = $this->getClientesMasAtendidos($inicio, $fin);
         $clientesMasAtendidosAnio = $this->getClientesMasAtendidosAnio($yearActual);
-        $ticketsPorSistema        = $this->getTicketsPorSistema($inicio, $fin);
-        $ticketsPorServicio       = $this->getTicketsPorServicio($inicio, $fin);
+        $ticketsPorSistema = $this->getTicketsPorSistema($inicio, $fin);
+        $ticketsPorServicio = $this->getTicketsPorServicio($inicio, $fin);
 
         // 1 query en vez de 2 para comparar mes actual vs anterior
         $comparacionMes = $this->getComparacionMesAnterior($mesActual, $inicio, $fin);
 
-        $ticketsPorHora  = $this->getTicketsPorHora($inicio, $fin);
+        $ticketsPorHora = $this->getTicketsPorHora($inicio, $fin);
         $tiempoRespuesta = $this->getTiempoRespuestaPromedio($inicio, $fin);
 
         return $this->render('index', [
@@ -95,9 +98,9 @@ class EstadisticasController extends Controller
             'tiempoRespuesta' => $tiempoRespuesta,
             'tasaResolucion' => $tasaResolucion,
         ]);
-    }        
-    
-    
+    }
+
+
     /**
      * Totales del mes en UNA sola query (antes eran 4 queries separadas).
      */
@@ -115,13 +118,13 @@ class EstadisticasController extends Controller
             ->one();
 
         return [
-            'total'     => (int)($row['total']      ?? 0),
-            'abiertos'  => (int)($row['abiertos']   ?? 0),
-            'enProceso' => (int)($row['en_proceso']  ?? 0),
-            'cerrados'  => (int)($row['cerrados']    ?? 0),
+            'total' => (int) ($row['total'] ?? 0),
+            'abiertos' => (int) ($row['abiertos'] ?? 0),
+            'enProceso' => (int) ($row['en_proceso'] ?? 0),
+            'cerrados' => (int) ($row['cerrados'] ?? 0),
         ];
     }
-    
+
     private function getTicketsPorEstado(string $inicio, string $fin): array
     {
         return Tickets::find()
@@ -194,7 +197,7 @@ class EstadisticasController extends Controller
     }
 
     // ✅ NUEVAS FUNCIONES - ESTADÍSTICAS DE CONSULTORES
-    
+
     private function getConsultoresDelMes(string $inicio, string $fin): array
     {
         return Tickets::find()
@@ -213,12 +216,12 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
+
     private function getConsultoresDelAnio($year)
     {
         $inicio = $year . '-01-01 00:00:00';
         $fin = $year . '-12-31 23:59:59';
-        
+
         return Tickets::find()
             ->select([
                 'usuarios.email as nombre',
@@ -234,7 +237,7 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
+
     private function getTopConsultoresMes(string $inicio, string $fin): array
     {
         return Tickets::find()
@@ -252,12 +255,12 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
+
     private function getTopConsultoresAnio($year)
     {
         $inicio = $year . '-01-01 00:00:00';
         $fin = $year . '-12-31 23:59:59';
-        
+
         return Tickets::find()
             ->select([
                 'usuarios.email as nombre',
@@ -273,9 +276,9 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
+
     // ✅ ESTADÍSTICAS DE CLIENTES
-    
+
     private function getClientesMasAtendidos(string $inicio, string $fin): array
     {
         return Tickets::find()
@@ -293,12 +296,12 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
+
     private function getClientesMasAtendidosAnio($year)
     {
         $inicio = $year . '-01-01 00:00:00';
         $fin = $year . '-12-31 23:59:59';
-        
+
         return Tickets::find()
             ->select([
                 'clientes.Nombre as cliente',
@@ -313,7 +316,7 @@ class EstadisticasController extends Controller
             ->asArray()
             ->all();
     }
-    
+
     private function getTicketsPorSistema(string $inicio, string $fin): array
     {
         return Tickets::find()
@@ -346,9 +349,9 @@ class EstadisticasController extends Controller
      */
     private function getComparacionMesAnterior(string $mes, string $inicioActual, string $finActual): array
     {
-        $mesAnterior  = date('Y-m', strtotime($mes . '-01 -1 month'));
+        $mesAnterior = date('Y-m', strtotime($mes . '-01 -1 month'));
         $inicioAnterior = $mesAnterior . '-01 00:00:00';
-        $finAnterior    = date('Y-m-t 23:59:59', strtotime($inicioAnterior));
+        $finAnterior = date('Y-m-t 23:59:59', strtotime($inicioAnterior));
 
         $rows = Tickets::find()
             ->select([
@@ -365,13 +368,13 @@ class EstadisticasController extends Controller
             $porMes[$row['mes']] = (int) $row['total'];
         }
 
-        $actual   = $porMes[$mes]        ?? 0;
+        $actual = $porMes[$mes] ?? 0;
         $anterior = $porMes[$mesAnterior] ?? 0;
         $diferencia = $actual - $anterior;
 
         return [
-            'actual'     => $actual,
-            'anterior'   => $anterior,
+            'actual' => $actual,
+            'anterior' => $anterior,
             'diferencia' => $diferencia,
             'porcentaje' => $anterior > 0 ? round(($diferencia / $anterior) * 100, 2) : 0,
         ];
@@ -399,4 +402,136 @@ class EstadisticasController extends Controller
 
         return round($resultado['minutos_promedio'] ?? 0, 2);
     }
+
+    public function actionExportarIndicadores()
+    {
+        $query = (new Query())
+            ->select([
+                'tickets.Folio',
+                'tickets.Fecha_creacion',
+                'YEAR(tickets.Fecha_creacion) AS Anio',
+                'MONTH(tickets.Fecha_creacion) AS MesNumero',
+                'MONTHNAME(tickets.Fecha_creacion) AS Mes',
+                'DAY(tickets.Fecha_creacion) AS Dia',
+                'WEEK(tickets.Fecha_creacion) AS Semana',
+
+                'clientes.Nombre AS Cliente',
+                'sistemas.Nombre AS Sistema',
+                'servicios.Nombre AS Servicio',
+                'usuarios.Nombre AS Consultor',
+
+                'tickets.Estado',
+                'tickets.Prioridad',
+                'tickets.TiempoEfectivo'
+            ])
+
+            ->from('tickets')
+
+            ->leftJoin(
+                'clientes',
+                'clientes.id=tickets.Cliente_id'
+            )
+
+            ->leftJoin(
+                'sistemas',
+                'sistemas.id=tickets.Sistema_id'
+            )
+
+            ->leftJoin(
+                'servicios',
+                'servicios.id=tickets.Servicio_id'
+            )
+
+            ->leftJoin(
+                'usuarios',
+                'usuarios.id=tickets.Asignado_a'
+            );
+        $mes = Yii::$app->request->get('mes');
+
+        if (!empty($mes)) {
+
+            $partes = explode('-', $mes);
+
+            if (count($partes) == 2) {
+
+                $query->andWhere([
+                    'MONTH(tickets.Fecha_creacion)' => $partes[1],
+                    'YEAR(tickets.Fecha_creacion)' => $partes[0],
+                ]);
+            }
+        }
+        $tickets = $query
+            ->orderBy([
+                'tickets.Fecha_creacion' => SORT_DESC
+            ])
+            ->all();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Indicadores');
+
+        $encabezados = [
+            'Folio',
+            'Fecha',
+            'Año',
+            'Mes',
+            'Día',
+            'Semana',
+            'Cliente',
+            'Sistema',
+            'Servicio',
+            'Consultor',
+            'Estado',
+            'Prioridad',
+            'Tiempo Efectivo'
+        ];
+
+        $columna = 'A';
+
+        foreach ($encabezados as $encabezado) {
+            $sheet->setCellValue($columna . '1', $encabezado);
+            $columna++;
+        }
+
+        $sheet->getStyle('A1:M1')
+            ->getFont()
+            ->setBold(true);
+
+        $fila = 2;
+
+        foreach ($tickets as $ticket) {
+
+            $sheet->setCellValue('A' . $fila, $ticket['Folio']);
+            $sheet->setCellValue('B' . $fila, $ticket['Fecha_creacion']);
+            $sheet->setCellValue('C' . $fila, $ticket['Anio']);
+            $sheet->setCellValue('D' . $fila, $ticket['Mes']);
+            $sheet->setCellValue('E' . $fila, $ticket['Dia']);
+            $sheet->setCellValue('F' . $fila, $ticket['Semana']);
+            $sheet->setCellValue('G' . $fila, $ticket['Cliente']);
+            $sheet->setCellValue('H' . $fila, $ticket['Sistema']);
+            $sheet->setCellValue('I' . $fila, $ticket['Servicio']);
+            $sheet->setCellValue('J' . $fila, $ticket['Consultor']);
+            $sheet->setCellValue('K' . $fila, $ticket['Estado']);
+            $sheet->setCellValue('L' . $fila, $ticket['Prioridad']);
+            $sheet->setCellValue('M' . $fila, $ticket['TiempoEfectivo']);
+
+            $fila++;
+        }
+
+        foreach (range('A', 'M') as $columna) {
+            $sheet->getColumnDimension($columna)
+                ->setAutoSize(true);
+        }
+
+        $nombreArchivo = 'Indicadores_' . date('Y_m_d_His') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $nombreArchivo . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
 }

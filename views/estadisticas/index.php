@@ -1,137 +1,157 @@
-
 <?php
 
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 $this->title = 'Estadísticas de Tickets';
-?><style>
-:root {
-    --primary: #A0BAA5;
-    --primary-dark: #8BA590;
-    --text: #1f2937;
-    --muted: #6b7280;
-    --card-bg: #f8f9fa;
-}
+?>
+<style>
+    :root {
+        --primary: #A0BAA5;
+        --primary-dark: #8BA590;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --card-bg: #f8f9fa;
+    }
 
-.estadisticas-index {
-    padding: 24px;
-}
+    .estadisticas-index {
+        padding: 24px;
+    }
 
-.page-header {
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 3px solid var(--primary);
-}
+    .page-header {
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid var(--primary);
+    }
 
-.page-header h1 {
-    color: var(--text);
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+    .page-header h1 {
+        color: var(--text);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-.page-header p {
-    color: var(--muted);
-    margin: 0;
-}
+    .page-header p {
+        color: var(--muted);
+        margin: 0;
+    }
 
-/* Cards */
-.card {
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-    overflow: hidden;
-}
+    /* Cards */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
 
-.card-header {
-    background: var(--card-bg);
-    border-bottom: 1px solid #e5e7eb;
-    padding: 14px 18px;
-    font-weight: 600;
-    color: var(--text);
-}
+    .card-header {
+        background: var(--card-bg);
+        border-bottom: 1px solid #e5e7eb;
+        padding: 14px 18px;
+        font-weight: 600;
+        color: var(--text);
+    }
 
-.card-body {
-    padding: 18px;
-}
+    .card-body {
+        padding: 18px;
+    }
 
-.kpi-card {
-    color: #fff;
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-}
+    .kpi-card {
+        color: #fff;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
 
-.kpi-card .card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+    .kpi-card .card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
 
-.kpi-title {
-    font-size: 14px;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+    .kpi-title {
+        font-size: 14px;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 
-.kpi-value {
-    font-size: 28px;
-    font-weight: 700;
-}
+    .kpi-value {
+        font-size: 28px;
+        font-weight: 700;
+    }
 
-.kpi-sub {
-    font-size: 13px;
-    opacity: 0.9;
-}
+    .kpi-sub {
+        font-size: 13px;
+        opacity: 0.9;
+    }
 
-/* Colors */
-.bg-primary-soft { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
-.bg-warning-soft { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); }
-.bg-info-soft    { background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%); }
-.bg-success-soft { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
+    /* Colors */
+    .bg-primary-soft {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
 
-/* Tables & badges */
-.badge {
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 10px;
-}
+    .bg-warning-soft {
+        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    }
 
-.table {
-    margin: 0;
-}
-.table thead {
-    background: var(--primary);
-    color: #fff;
-}
-.table thead th {
-    border: none;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-.table tbody tr:hover {
-    background: #f3f4f6;
-}
+    .bg-info-soft {
+        background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+    }
 
-/* Progress */
-.progress {
-    height: 10px;
-    border-radius: 10px;
-    background: #e5e7eb;
-}
-.progress-bar {
-    background: var(--primary);
-}
+    .bg-success-soft {
+        background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .estadisticas-index { padding: 16px; }
-    .page-header h1 { font-size: 22px; }
-}
+    /* Tables & badges */
+    .badge {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 10px;
+    }
+
+    .table {
+        margin: 0;
+    }
+
+    .table thead {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    .table thead th {
+        border: none;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .table tbody tr:hover {
+        background: #f3f4f6;
+    }
+
+    /* Progress */
+    .progress {
+        height: 10px;
+        border-radius: 10px;
+        background: #e5e7eb;
+    }
+
+    .progress-bar {
+        background: var(--primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .estadisticas-index {
+            padding: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 22px;
+        }
+    }
 </style>
 
 <div class="estadisticas-index">
@@ -146,10 +166,26 @@ $this->title = 'Estadísticas de Tickets';
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label"><i class="fas fa-calendar"></i> Seleccionar Mes</label>
-                    <input type="month" name="mes" class="form-control" value="<?= $mesActual ?>" onchange="this.form.submit()">
+                    <input type="month" name="mes" class="form-control" value="<?= $mesActual ?>"
+                        onchange="this.form.submit()">
                 </div>
                 <div class="col-md-8 text-end">
-                    <span class="badge bg-info fs-6">Año: <?= $yearActual ?></span>
+
+                    <span class="badge bg-info fs-6 me-2">
+                        Año: <?= $yearActual ?>
+                    </span>
+
+                    <?= Html::a(
+                        '<i class="fas fa-file-excel"></i> Exportar Indicadores',
+                        [
+                            'estadisticas/exportar-indicadores',
+                            'mes' => $mesActual
+                        ],
+                        [
+                            'class' => 'btn btn-success'
+                        ]
+                    ) ?>
+
                 </div>
             </form>
         </div>
@@ -189,7 +225,8 @@ $this->title = 'Estadísticas de Tickets';
                         <div>
                             <h6 class="card-title mb-1"><i class="fas fa-folder-open"></i> Abiertos</h6>
                             <h2 class="mb-0"><?= $estadisticasTickets['abiertos'] ?></h2>
-                            <small><?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['abiertos'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>% del total</small>
+                            <small><?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['abiertos'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>%
+                                del total</small>
                         </div>
                         <div class="icon-large">
                             <i class="fas fa-folder-open fa-3x opacity-50"></i>
@@ -205,7 +242,8 @@ $this->title = 'Estadísticas de Tickets';
                         <div>
                             <h6 class="card-title mb-1"><i class="fas fa-spinner"></i> En Proceso</h6>
                             <h2 class="mb-0"><?= $estadisticasTickets['enProceso'] ?></h2>
-                            <small><?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['enProceso'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>% del total</small>
+                            <small><?= $estadisticasTickets['total'] > 0 ? round(($estadisticasTickets['enProceso'] / $estadisticasTickets['total']) * 100, 1) : 0 ?>%
+                                del total</small>
                         </div>
                         <div class="icon-large">
                             <i class="fas fa-spinner fa-3x opacity-50"></i>
@@ -243,7 +281,7 @@ $this->title = 'Estadísticas de Tickets';
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4">
             <div class="card text-center">
                 <div class="card-body">
@@ -321,12 +359,14 @@ $this->title = 'Estadísticas de Tickets';
                     <!-- Tabs -->
                     <ul class="nav nav-tabs mb-3" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#consultoresMes" type="button">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#consultoresMes"
+                                type="button">
                                 <i class="fas fa-calendar-day"></i> Mes Actual
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#consultoresAnio" type="button">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#consultoresAnio"
+                                type="button">
                                 <i class="fas fa-calendar-alt"></i> Año <?= $yearActual ?>
                             </button>
                         </li>
@@ -349,17 +389,21 @@ $this->title = 'Estadísticas de Tickets';
                                                 <th>#</th>
                                                 <th><i class="fas fa-user"></i> Consultor</th>
                                                 <th class="text-center"><i class="fas fa-list"></i> Total</th>
-                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados</th>
-                                                <th class="text-center"><i class="fas fa-folder-open text-info"></i> Abiertos</th>
-                                                <th class="text-center"><i class="fas fa-spinner text-warning"></i> En Proceso</th>
+                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados
+                                                </th>
+                                                <th class="text-center"><i class="fas fa-folder-open text-info"></i>
+                                                    Abiertos</th>
+                                                <th class="text-center"><i class="fas fa-spinner text-warning"></i> En
+                                                    Proceso</th>
                                                 <th class="text-center"><i class="fas fa-chart-pie"></i> Eficiencia</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php $pos = 1; foreach ($consultoresDelMes as $consultor): ?>
-                                                <?php 
-                                                    $eficiencia = $consultor['total'] > 0 ? round(($consultor['cerrados'] / $consultor['total']) * 100, 1) : 0;
-                                                    $colorEficiencia = $eficiencia >= 80 ? 'success' : ($eficiencia >= 50 ? 'warning' : 'danger');
+                                            <?php $pos = 1;
+                                            foreach ($consultoresDelMes as $consultor): ?>
+                                                <?php
+                                                $eficiencia = $consultor['total'] > 0 ? round(($consultor['cerrados'] / $consultor['total']) * 100, 1) : 0;
+                                                $colorEficiencia = $eficiencia >= 80 ? 'success' : ($eficiencia >= 50 ? 'warning' : 'danger');
                                                 ?>
                                                 <tr>
                                                     <td><strong><?= $pos++ ?></strong></td>
@@ -368,19 +412,24 @@ $this->title = 'Estadísticas de Tickets';
                                                         <?= Html::encode($consultor['nombre']) ?>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-primary rounded-pill"><?= $consultor['total'] ?></span>
+                                                        <span
+                                                            class="badge bg-primary rounded-pill"><?= $consultor['total'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-success rounded-pill"><?= $consultor['cerrados'] ?></span>
+                                                        <span
+                                                            class="badge bg-success rounded-pill"><?= $consultor['cerrados'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-info rounded-pill"><?= $consultor['abiertos'] ?></span>
+                                                        <span
+                                                            class="badge bg-info rounded-pill"><?= $consultor['abiertos'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-warning rounded-pill"><?= $consultor['en_proceso'] ?></span>
+                                                        <span
+                                                            class="badge bg-warning rounded-pill"><?= $consultor['en_proceso'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-<?= $colorEficiencia ?> rounded-pill"><?= $eficiencia ?>%</span>
+                                                        <span
+                                                            class="badge bg-<?= $colorEficiencia ?> rounded-pill"><?= $eficiencia ?>%</span>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -405,16 +454,18 @@ $this->title = 'Estadísticas de Tickets';
                                                 <th>#</th>
                                                 <th><i class="fas fa-user"></i> Consultor</th>
                                                 <th class="text-center"><i class="fas fa-list"></i> Total Tickets</th>
-                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados</th>
+                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados
+                                                </th>
                                                 <th class="text-center"><i class="fas fa-clock"></i> Tiempo Prom. (hrs)</th>
                                                 <th class="text-center"><i class="fas fa-chart-pie"></i> Eficiencia</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php $pos = 1; foreach ($consultoresDelAnio as $consultor): ?>
-                                                <?php 
-                                                    $eficiencia = $consultor['total'] > 0 ? round(($consultor['cerrados'] / $consultor['total']) * 100, 1) : 0;
-                                                    $colorEficiencia = $eficiencia >= 80 ? 'success' : ($eficiencia >= 50 ? 'warning' : 'danger');
+                                            <?php $pos = 1;
+                                            foreach ($consultoresDelAnio as $consultor): ?>
+                                                <?php
+                                                $eficiencia = $consultor['total'] > 0 ? round(($consultor['cerrados'] / $consultor['total']) * 100, 1) : 0;
+                                                $colorEficiencia = $eficiencia >= 80 ? 'success' : ($eficiencia >= 50 ? 'warning' : 'danger');
                                                 ?>
                                                 <tr>
                                                     <td><strong><?= $pos++ ?></strong></td>
@@ -423,16 +474,20 @@ $this->title = 'Estadísticas de Tickets';
                                                         <?= Html::encode($consultor['nombre']) ?>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-primary rounded-pill fs-6"><?= $consultor['total'] ?></span>
+                                                        <span
+                                                            class="badge bg-primary rounded-pill fs-6"><?= $consultor['total'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-success rounded-pill fs-6"><?= $consultor['cerrados'] ?></span>
+                                                        <span
+                                                            class="badge bg-success rounded-pill fs-6"><?= $consultor['cerrados'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-info rounded-pill"><?= round($consultor['tiempo_promedio'] ?? 0, 2) ?></span>
+                                                        <span
+                                                            class="badge bg-info rounded-pill"><?= round($consultor['tiempo_promedio'] ?? 0, 2) ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-<?= $colorEficiencia ?> rounded-pill fs-6"><?= $eficiencia ?>%</span>
+                                                        <span
+                                                            class="badge bg-<?= $colorEficiencia ?> rounded-pill fs-6"><?= $eficiencia ?>%</span>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -458,7 +513,8 @@ $this->title = 'Estadísticas de Tickets';
                     <!-- Tabs -->
                     <ul class="nav nav-tabs mb-3" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#clientesMes" type="button">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#clientesMes"
+                                type="button">
                                 <i class="fas fa-calendar-day"></i> Mes Actual
                             </button>
                         </li>
@@ -486,16 +542,18 @@ $this->title = 'Estadísticas de Tickets';
                                                 <th>#</th>
                                                 <th><i class="fas fa-building"></i> Cliente</th>
                                                 <th class="text-center"><i class="fas fa-list"></i> Total Tickets</th>
-                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados</th>
+                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados
+                                                </th>
                                                 <th class="text-center"><i class="fas fa-clock"></i> Tiempo Prom. (hrs)</th>
                                                 <th class="text-center"><i class="fas fa-chart-bar"></i> % del Total</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php $pos = 1; $totalGeneral = array_sum(array_column($clientesMasAtendidos, 'total')); ?>
+                                            <?php $pos = 1;
+                                            $totalGeneral = array_sum(array_column($clientesMasAtendidos, 'total')); ?>
                                             <?php foreach ($clientesMasAtendidos as $cliente): ?>
-                                                <?php 
-                                                    $porcentaje = $totalGeneral > 0 ? round(($cliente['total'] / $totalGeneral) * 100, 1) : 0;
+                                                <?php
+                                                $porcentaje = $totalGeneral > 0 ? round(($cliente['total'] / $totalGeneral) * 100, 1) : 0;
                                                 ?>
                                                 <tr>
                                                     <td><strong><?= $pos++ ?></strong></td>
@@ -504,17 +562,21 @@ $this->title = 'Estadísticas de Tickets';
                                                         <?= Html::encode($cliente['cliente']) ?>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-primary rounded-pill"><?= $cliente['total'] ?></span>
+                                                        <span
+                                                            class="badge bg-primary rounded-pill"><?= $cliente['total'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-success rounded-pill"><?= $cliente['cerrados'] ?></span>
+                                                        <span
+                                                            class="badge bg-success rounded-pill"><?= $cliente['cerrados'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-warning"><?= round($cliente['tiempo_promedio'] ?? 0, 2) ?></span>
+                                                        <span
+                                                            class="badge bg-warning"><?= round($cliente['tiempo_promedio'] ?? 0, 2) ?></span>
                                                     </td>
                                                     <td class="text-center">
                                                         <div class="progress" style="height: 20px;">
-                                                            <div class="progress-bar bg-info" role="progressbar" style="width: <?= $porcentaje ?>%">
+                                                            <div class="progress-bar bg-info" role="progressbar"
+                                                                style="width: <?= $porcentaje ?>%">
                                                                 <?= $porcentaje ?>%
                                                             </div>
                                                         </div>
@@ -542,15 +604,17 @@ $this->title = 'Estadísticas de Tickets';
                                                 <th>#</th>
                                                 <th><i class="fas fa-building"></i> Cliente</th>
                                                 <th class="text-center"><i class="fas fa-list"></i> Total Tickets</th>
-                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados</th>
+                                                <th class="text-center"><i class="fas fa-check text-success"></i> Cerrados
+                                                </th>
                                                 <th class="text-center"><i class="fas fa-chart-bar"></i> % del Total</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php $pos = 1; $totalGeneralAnio = array_sum(array_column($clientesMasAtendidosAnio, 'total')); ?>
+                                            <?php $pos = 1;
+                                            $totalGeneralAnio = array_sum(array_column($clientesMasAtendidosAnio, 'total')); ?>
                                             <?php foreach ($clientesMasAtendidosAnio as $cliente): ?>
-                                                <?php 
-                                                    $porcentaje = $totalGeneralAnio > 0 ? round(($cliente['total'] / $totalGeneralAnio) * 100, 1) : 0;
+                                                <?php
+                                                $porcentaje = $totalGeneralAnio > 0 ? round(($cliente['total'] / $totalGeneralAnio) * 100, 1) : 0;
                                                 ?>
                                                 <tr>
                                                     <td><strong><?= $pos++ ?></strong></td>
@@ -559,14 +623,17 @@ $this->title = 'Estadísticas de Tickets';
                                                         <?= Html::encode($cliente['cliente']) ?>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-primary rounded-pill fs-6"><?= $cliente['total'] ?></span>
+                                                        <span
+                                                            class="badge bg-primary rounded-pill fs-6"><?= $cliente['total'] ?></span>
                                                     </td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-success rounded-pill fs-6"><?= $cliente['cerrados'] ?></span>
+                                                        <span
+                                                            class="badge bg-success rounded-pill fs-6"><?= $cliente['cerrados'] ?></span>
                                                     </td>
                                                     <td class="text-center">
                                                         <div class="progress" style="height: 25px;">
-                                                            <div class="progress-bar bg-info" role="progressbar" style="width: <?= $porcentaje ?>%">
+                                                            <div class="progress-bar bg-info" role="progressbar"
+                                                                style="width: <?= $porcentaje ?>%">
                                                                 <strong><?= $porcentaje ?>%</strong>
                                                             </div>
                                                         </div>
@@ -610,312 +677,313 @@ $this->title = 'Estadísticas de Tickets';
 </div>
 
 <style>
-.estadisticas-index {
-    padding: 20px;
-}
-
-.page-header {
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 3px solid #0891b2;
-}
-
-.page-header h1 {
-    color: #0891b2;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.card {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border: none;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
-}
-
-.card-header {
-    border-bottom: 2px solid #e5e7eb;
-    background: #f8f9fa !important;
-    border-radius: 12px 12px 0 0 !important;
-    padding: 15px 20px;
-}
-
-.card-header h5, .card-header h4 {
-    font-weight: 600;
-    color: #374151;
-}
-
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
-}
-
-.bg-gradient-info {
-    background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%) !important;
-}
-
-.bg-primary { 
-    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
-}
-
-.bg-info { 
-    background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%) !important;
-}
-
-.bg-warning { 
-    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
-}
-
-.bg-success { 
-    background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
-}
-
-.icon-large {
-    opacity: 0.3;
-}
-
-.table {
-    font-size: 14px;
-}
-
-.table thead {
-    background: #2c3e50;
-    color: white;
-}
-
-.table thead th {
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    border: none !important;
-}
-
-.table-hover tbody tr:hover {
-    background-color: #f1f5f9;
-}
-
-.badge {
-    font-size: 13px;
-    padding: 6px 12px;
-}
-
-.nav-tabs .nav-link {
-    color: #6c757d;
-    font-weight: 500;
-}
-
-.nav-tabs .nav-link.active {
-    color: #0891b2;
-    font-weight: 600;
-}
-
-.progress {
-    border-radius: 10px;
-}
-
-.progress-bar {
-    font-weight: 600;
-}
-
-@media (max-width: 768px) {
-    .row.mb-4 .col-md-3 {
-        margin-bottom: 15px;
+    .estadisticas-index {
+        padding: 20px;
     }
-}
+
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #0891b2;
+    }
+
+    .page-header h1 {
+        color: #0891b2;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .card {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: none;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        border-bottom: 2px solid #e5e7eb;
+        background: #f8f9fa !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 15px 20px;
+    }
+
+    .card-header h5,
+    .card-header h4 {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%) !important;
+    }
+
+    .bg-primary {
+        background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
+    }
+
+    .bg-info {
+        background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%) !important;
+    }
+
+    .bg-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+    }
+
+    .bg-success {
+        background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+    }
+
+    .icon-large {
+        opacity: 0.3;
+    }
+
+    .table {
+        font-size: 14px;
+    }
+
+    .table thead {
+        background: #2c3e50;
+        color: white;
+    }
+
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        border: none !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+
+    .badge {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #0891b2;
+        font-weight: 600;
+    }
+
+    .progress {
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .row.mb-4 .col-md-3 {
+            margin-bottom: 15px;
+        }
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// Datos para gráficos
-const dataEstado = <?= json_encode($ticketsPorEstado) ?>;
-const dataPrioridad = <?= json_encode($ticketsPorPrioridad) ?>;
-const dataDias = <?= json_encode($ticketsPorDia) ?>;
-const dataHoras = <?= json_encode($ticketsPorHora) ?>;
-const dataSistemas = <?= json_encode($ticketsPorSistema) ?>;
-const dataServicios = <?= json_encode($ticketsPorServicio) ?>;
+    // Datos para gráficos
+    const dataEstado = <?= json_encode($ticketsPorEstado) ?>;
+    const dataPrioridad = <?= json_encode($ticketsPorPrioridad) ?>;
+    const dataDias = <?= json_encode($ticketsPorDia) ?>;
+    const dataHoras = <?= json_encode($ticketsPorHora) ?>;
+    const dataSistemas = <?= json_encode($ticketsPorSistema) ?>;
+    const dataServicios = <?= json_encode($ticketsPorServicio) ?>;
 
-// Colores
-const coloresEstado = {
-    'ABIERTO': '#0891b2',
-    'EN PROCESO': '#f59e0b',
-    'CERRADO': '#10b981',
-    'CANCELADO': '#ef4444'
-};
+    // Colores
+    const coloresEstado = {
+        'ABIERTO': '#0891b2',
+        'EN PROCESO': '#f59e0b',
+        'CERRADO': '#10b981',
+        'CANCELADO': '#ef4444'
+    };
 
-const coloresPrioridad = {
-    'BAJA': '#06b6d4',
-    'MEDIA': '#f59e0b',
-    'ALTA': '#ef4444',
-    'URGENTE': '#8b5cf6'
-};
+    const coloresPrioridad = {
+        'BAJA': '#06b6d4',
+        'MEDIA': '#f59e0b',
+        'ALTA': '#ef4444',
+        'URGENTE': '#8b5cf6'
+    };
 
-// Gráfico de Estado
-if (dataEstado.length > 0) {
-    new Chart(document.getElementById('chartEstado'), {
-        type: 'pie',
-        data: {
-            labels: dataEstado.map(d => d.Estado),
-            datasets: [{
-                data: dataEstado.map(d => d.total),
-                backgroundColor: dataEstado.map(d => coloresEstado[d.Estado] || '#6c757d'),
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom' },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            let percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+    // Gráfico de Estado
+    if (dataEstado.length > 0) {
+        new Chart(document.getElementById('chartEstado'), {
+            type: 'pie',
+            data: {
+                labels: dataEstado.map(d => d.Estado),
+                datasets: [{
+                    data: dataEstado.map(d => d.total),
+                    backgroundColor: dataEstado.map(d => coloresEstado[d.Estado] || '#6c757d'),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
                         }
                     }
                 }
             }
-        }
-    });
-}
+        });
+    }
 
-// Gráfico de Prioridad
-if (dataPrioridad.length > 0) {
-    new Chart(document.getElementById('chartPrioridad'), {
-        type: 'doughnut',
-        data: {
-            labels: dataPrioridad.map(d => d.Prioridad),
-            datasets: [{
-                data: dataPrioridad.map(d => d.total),
-                backgroundColor: dataPrioridad.map(d => coloresPrioridad[d.Prioridad] || '#6c757d'),
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom' },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            let percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+    // Gráfico de Prioridad
+    if (dataPrioridad.length > 0) {
+        new Chart(document.getElementById('chartPrioridad'), {
+            type: 'doughnut',
+            data: {
+                labels: dataPrioridad.map(d => d.Prioridad),
+                datasets: [{
+                    data: dataPrioridad.map(d => d.total),
+                    backgroundColor: dataPrioridad.map(d => coloresPrioridad[d.Prioridad] || '#6c757d'),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
                         }
                     }
                 }
             }
-        }
-    });
-}
+        });
+    }
 
-// Gráfico de Días
-if (dataDias.length > 0) {
-    new Chart(document.getElementById('chartDias'), {
-        type: 'line',
-        data: {
-            labels: dataDias.map(d => new Date(d.fecha + 'T00:00:00').toLocaleDateString('es-MX', {day: '2-digit', month: '2-digit'})),
-            datasets: [{
-                label: 'Tickets Creados',
-                data: dataDias.map(d => d.total),
-                borderColor: '#0891b2',
-                backgroundColor: 'rgba(8, 145, 178, 0.1)',
-                tension: 0.4,
-                fill: true,
-                borderWidth: 3,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    // Gráfico de Días
+    if (dataDias.length > 0) {
+        new Chart(document.getElementById('chartDias'), {
+            type: 'line',
+            data: {
+                labels: dataDias.map(d => new Date(d.fecha + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })),
+                datasets: [{
+                    label: 'Tickets Creados',
+                    data: dataDias.map(d => d.total),
+                    borderColor: '#0891b2',
+                    backgroundColor: 'rgba(8, 145, 178, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
             }
-        }
-    });
-}
+        });
+    }
 
-// Gráfico de Horas
-if (dataHoras.length > 0) {
-    new Chart(document.getElementById('chartHoras'), {
-        type: 'bar',
-        data: {
-            labels: dataHoras.map(d => d.hora + ':00'),
-            datasets: [{
-                label: 'Tickets por Hora',
-                data: dataHoras.map(d => d.total),
-                backgroundColor: '#06b6d4',
-                borderColor: '#0891b2',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    // Gráfico de Horas
+    if (dataHoras.length > 0) {
+        new Chart(document.getElementById('chartHoras'), {
+            type: 'bar',
+            data: {
+                labels: dataHoras.map(d => d.hora + ':00'),
+                datasets: [{
+                    label: 'Tickets por Hora',
+                    data: dataHoras.map(d => d.total),
+                    backgroundColor: '#06b6d4',
+                    borderColor: '#0891b2',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
             }
-        }
-    });
-}
+        });
+    }
 
-// Gráfico de Sistemas
-if (dataSistemas.length > 0) {
-    new Chart(document.getElementById('chartSistemas'), {
-        type: 'bar',
-        data: {
-            labels: dataSistemas.map(d => d.sistema),
-            datasets: [{
-                label: 'Tickets',
-                data: dataSistemas.map(d => d.total),
-                backgroundColor: '#8b5cf6',
-                borderWidth: 0
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { beginAtZero: true }
+    // Gráfico de Sistemas
+    if (dataSistemas.length > 0) {
+        new Chart(document.getElementById('chartSistemas'), {
+            type: 'bar',
+            data: {
+                labels: dataSistemas.map(d => d.sistema),
+                datasets: [{
+                    label: 'Tickets',
+                    data: dataSistemas.map(d => d.total),
+                    backgroundColor: '#8b5cf6',
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true }
+                }
             }
-        }
-    });
-}
+        });
+    }
 
-// Gráfico de Servicios
-if (dataServicios.length > 0) {
-    new Chart(document.getElementById('chartServicios'), {
-        type: 'bar',
-        data: {
-            labels: dataServicios.map(d => d.servicio),
-            datasets: [{
-                label: 'Tickets',
-                data: dataServicios.map(d => d.total),
-                backgroundColor: '#f59e0b',
-                borderWidth: 0
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { beginAtZero: true }
+    // Gráfico de Servicios
+    if (dataServicios.length > 0) {
+        new Chart(document.getElementById('chartServicios'), {
+            type: 'bar',
+            data: {
+                labels: dataServicios.map(d => d.servicio),
+                datasets: [{
+                    label: 'Tickets',
+                    data: dataServicios.map(d => d.total),
+                    backgroundColor: '#f59e0b',
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true }
+                }
             }
-        }
-    });
-}
+        });
+    }
 </script>
