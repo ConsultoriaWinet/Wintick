@@ -29,9 +29,8 @@ class AgendaController extends Controller
         $userId = Yii::$app->user->id;
         $rol = Yii::$app->user->identity->rol;
 
-        // Solo el rol Administracion puede ver todos los pendientes.
-        // Los demás solo ven los suyos.
-        $soloMios = $rol !== 'Administracion';
+        // Solo los consultores ven únicamente sus tickets.
+        $soloMios = ($rol === 'Consultores');
 
         $query = Tickets::find()
             ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado'])
