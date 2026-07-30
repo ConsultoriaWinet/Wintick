@@ -36,7 +36,7 @@ class AgendaController extends Controller
             ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado'])
             ->where(['not in', 'Estado', ['CERRADO', 'CERRADO_CLIENTE']])
             ->orderBy([
-                'HoraProgramada' => SORT_ASC,
+                'Horainicio' => SORT_ASC,
             ]);
 
         if ($soloMios) {
