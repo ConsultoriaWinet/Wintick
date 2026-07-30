@@ -169,6 +169,28 @@ $this->title = 'Estadísticas de Tickets';
                     <input type="month" name="mes" class="form-control" value="<?= $mesActual ?>"
                         onchange="this.form.submit()">
                 </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-week"></i> Periodo
+                    </label>
+
+                    <select name="periodo" class="form-select" onchange="this.form.submit()">
+
+                        <option value="mes" <?= ($periodo ?? 'mes') == 'mes' ? 'selected' : '' ?>>
+                            Mes completo
+                        </option>
+
+                        <option value="q1" <?= ($periodo ?? '') == 'q1' ? 'selected' : '' ?>>
+                            Primera quincena
+                        </option>
+
+                        <option value="q2" <?= ($periodo ?? '') == 'q2' ? 'selected' : '' ?>>
+                            Segunda quincena
+                        </option>
+
+                    </select>
+                </div>
                 <div class="col-md-8 text-end">
 
                     <span class="badge bg-info fs-6 me-2">
@@ -367,7 +389,14 @@ $this->title = 'Estadísticas de Tickets';
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#consultoresAnio"
                                 type="button">
-                                <i class="fas fa-calendar-alt"></i> Año <?= $yearActual ?>
+                                <i class="fas fa-calendar-alt"></i> Año
+                                <?= $yearActual ?>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#evaluacionConsultores"
+                                type="button">
+                                <i class="fas fa-clipboard-check"></i> Evaluación Quincenal
                             </button>
                         </li>
                     </ul>
@@ -495,6 +524,81 @@ $this->title = 'Estadísticas de Tickets';
                                     </table>
                                 </div>
                             <?php endif; ?>
+                        </div>
+
+                        <div class="tab-pane fade" id="evaluacionConsultores">
+
+                            <div class="table-responsive">
+
+                                <table class="table table-hover table-bordered">
+
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Consultor</th>
+                                            <th class="text-center">Asignados</th>
+                                            <th class="text-center">Cerrados</th>
+                                            <th class="text-center">Pendientes</th>
+                                            <th class="text-center">Capacitaciones</th>
+                                            <th class="text-center">Cumplimiento</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        <?php foreach ($evaluacionConsultores as $consultor): ?>
+
+                                            <tr>
+
+                                                <td>
+                                                    <?= $consultor['consultor'] ?>
+                                                </td>
+
+                                                <td class="text-center">
+                                                    <?= $consultor['asignados'] ?>
+                                                </td>
+
+                                                <td class="text-center">
+                                                    <?= $consultor['cerrados'] ?>
+                                                </td>
+
+                                                <td class="text-center">
+                                                    <?= $consultor['pendientes'] ?>
+                                                </td>
+
+                                                <td class="text-center">
+                                                    <?= $consultor['capacitaciones'] ?>
+                                                </td>
+
+                                                <td class="text-center">
+
+                                                    <?php
+                                                    if ($consultor['cumplimiento'] == 100) {
+
+                                                        echo '<span class="badge bg-success">100%</span>';
+
+                                                    } elseif ($consultor['cumplimiento'] == 50) {
+
+                                                        echo '<span class="badge bg-warning">50%</span>';
+
+                                                    } else {
+
+                                                        echo '<span class="badge bg-danger">0%</span>';
+
+                                                    }
+                                                    ?>
+
+                                                </td>
+
+                                            </tr>
+
+                                        <?php endforeach; ?>
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
                         </div>
                     </div>
                 </div>

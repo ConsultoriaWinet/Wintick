@@ -27,15 +27,17 @@ class AgendaController extends Controller
     public function actionIndex()
     {
         $userId = Yii::$app->user->id;
+        $rol = Yii::$app->user->identity->rol;
 
-        $soloMios = Yii::$app->user->can('verTickets') && !Yii::$app->user->can('asignarTicket');
+        // Solo el rol Administracion puede ver todos los pendientes.
+        // Los demás solo ven los suyos.
+        $soloMios = $rol !== 'Administracion';
 
         $query = Tickets::find()
             ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado'])
             ->where(['not in', 'Estado', ['CERRADO', 'CERRADO_CLIENTE']])
             ->orderBy([
                 'HoraProgramada' => SORT_ASC,
-                'HoraInicio' => SORT_ASC,
             ]);
 
         if ($soloMios) {

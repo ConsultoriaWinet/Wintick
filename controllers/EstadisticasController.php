@@ -34,11 +34,35 @@ class EstadisticasController extends Controller
     public function actionIndex()
     {
         $mesActual = Yii::$app->request->get('mes', date('Y-m'));
+        $periodo = Yii::$app->request->get('periodo', 'mes');
         $yearActual = date('Y', strtotime($mesActual . '-01'));
 
-        // Rango de fechas calculado UNA sola vez y reutilizado en todos los métodos
-        $inicio = $mesActual . '-01 00:00:00';
-        $fin = date('Y-m-t 23:59:59', strtotime($inicio));
+        switch ($periodo) {
+
+            case 'q1':
+                // Primera quincena (1 al 15)
+                $inicio = $mesActual . '-01 00:00:00';
+                $fin = $mesActual . '-15 23:59:59';
+                break;
+
+            case 'q2':
+                // Segunda quincena (16 al último día)
+                $inicio = $mesActual . '-16 00:00:00';
+                $fin = date(
+                    'Y-m-t 23:59:59',
+                    strtotime($mesActual . '-01')
+                );
+                break;
+
+            default:
+                // Mes completo
+                $inicio = $mesActual . '-01 00:00:00';
+                $fin = date(
+                    'Y-m-t 23:59:59',
+                    strtotime($mesActual . '-01')
+                );
+                break;
+        }
 
         // 1 query en vez de 4 para los totales del mes
         $estadisticasTickets = $this->getEstadisticasTickets($inicio, $fin);
@@ -60,6 +84,7 @@ class EstadisticasController extends Controller
         $ticketsPorDia = $this->getTicketsPorDia($inicio, $fin);
 
         $consultoresDelMes = $this->getConsultoresDelMes($inicio, $fin);
+        $evaluacionConsultores = $this->getEvaluacionConsultores($inicio, $fin);
         $consultoresDelAnio = $this->getConsultoresDelAnio($yearActual);
         $topConsultoresMes = $this->getTopConsultoresMes($inicio, $fin);
         $topConsultoresAnio = $this->getTopConsultoresAnio($yearActual);
@@ -97,6 +122,8 @@ class EstadisticasController extends Controller
             'ticketsPorHora' => $ticketsPorHora,
             'tiempoRespuesta' => $tiempoRespuesta,
             'tasaResolucion' => $tasaResolucion,
+            'evaluacionConsultores' => $evaluacionConsultores,
+            'periodo' => $periodo,
         ]);
     }
 
@@ -217,6 +244,67 @@ class EstadisticasController extends Controller
             ->all();
     }
 
+
+    private function getEvaluacionConsultores(string $inicio, string $fin): array
+    {
+        $datos = (new \yii\db\Query())
+            ->select([
+                'u.Nombre AS consultor',
+
+                'COUNT(t.id) AS asignados',
+
+                "SUM(CASE
+            WHEN t.Estado = 'CERRADO'
+            THEN 1
+            ELSE 0
+        END) AS cerrados",
+
+                "SUM(CASE
+            WHEN t.Estado <> 'CERRADO'
+            THEN 1
+            ELSE 0
+        END) AS pendientes",
+
+                "SUM(CASE
+            WHEN t.Servicio_id = 46
+            THEN 1
+            ELSE 0
+        END) AS capacitaciones",
+            ])
+            ->from('tickets t')
+            ->innerJoin('usuarios u', 'u.id=t.Asignado_a')
+            ->where([
+                'between',
+                't.Fecha_creacion',
+                $inicio,
+                $fin
+            ])
+            ->groupBy('t.Asignado_a')
+            ->orderBy([
+                'u.Nombre' => SORT_ASC
+            ])
+            ->all();
+
+        foreach ($datos as &$fila) {
+
+            if ($fila['capacitaciones'] >= 2) {
+
+                $fila['cumplimiento'] = 100;
+
+            } elseif ($fila['capacitaciones'] == 1) {
+
+                $fila['cumplimiento'] = 50;
+
+            } else {
+
+                $fila['cumplimiento'] = 0;
+
+            }
+
+        }
+
+        return $datos;
+    }
     private function getConsultoresDelAnio($year)
     {
         $inicio = $year . '-01-01 00:00:00';
