@@ -24,7 +24,7 @@ class EstadisticasController extends Controller
                 'rules' => [
                     [
                         'allow' => true,
-                        'roles' => ['@'],
+                        'roles' => ['Desarrolladores'],
                     ],
                 ],
             ],
@@ -127,7 +127,147 @@ class EstadisticasController extends Controller
         ]);
     }
 
+    public function actionSemanal()
+    {
+        $year = (int) Yii::$app->request->get('year', date('o'));
+        $semana = (int) Yii::$app->request->get('semana', date('W'));
 
+        // Obtener lunes y domingo de la semana ISO seleccionada
+        $lunes = new \DateTime();
+        $lunes->setISODate($year, $semana, 1);
+        $lunes->setTime(0, 0, 0);
+
+        $domingo = clone $lunes;
+        $domingo->modify('+6 days');
+        $domingo->setTime(23, 59, 59);
+
+        $inicio = $lunes->format('Y-m-d H:i:s');
+        $fin = $domingo->format('Y-m-d H:i:s');
+
+        // Estadísticas semanales basadas en HoraInicio
+        $estadisticas = $this->getEstadisticasSemanales($inicio, $fin);
+
+        $ticketsPorEstado = $this->getTicketsSemanalesPorEstado($inicio, $fin);
+
+        $ticketsPorConsultor = $this->getTicketsSemanalesPorConsultor($inicio, $fin);
+
+        $ticketsPorServicio = $this->getTicketsSemanalesPorServicio($inicio, $fin);
+
+        return $this->render('semanal', [
+            'year' => $year,
+            'semana' => $semana,
+            'inicio' => $inicio,
+            'fin' => $fin,
+            'estadisticas' => $estadisticas,
+            'ticketsPorEstado' => $ticketsPorEstado,
+            'ticketsPorConsultor' => $ticketsPorConsultor,
+            'ticketsPorServicio' => $ticketsPorServicio,
+        ]);
+    }
+
+    private function getEstadisticasSemanales(string $inicio, string $fin): array
+    {
+        $row = Tickets::find()
+            ->select([
+                'COUNT(*) as total',
+                'SUM(CASE WHEN Estado = "ABIERTO" THEN 1 ELSE 0 END) as abiertos',
+                'SUM(CASE WHEN Estado = "EN PROCESO" THEN 1 ELSE 0 END) as en_proceso',
+                'SUM(CASE WHEN Estado = "PROGRAMADO" THEN 1 ELSE 0 END) as programados',
+                'SUM(CASE WHEN Estado = "CERRADO" THEN 1 ELSE 0 END) as cerrados',
+                'SUM(CASE WHEN Estado = "CERRADO_CLIENTE" THEN 1 ELSE 0 END) as cerrados_cliente',
+            ])
+            ->where(['between', 'HoraInicio', $inicio, $fin])
+            ->asArray()
+            ->one();
+
+        return [
+            'total' => (int) ($row['total'] ?? 0),
+            'abiertos' => (int) ($row['abiertos'] ?? 0),
+            'enProceso' => (int) ($row['en_proceso'] ?? 0),
+            'programados' => (int) ($row['programados'] ?? 0),
+            'cerrados' => (int) ($row['cerrados'] ?? 0),
+            'cerradosCliente' => (int) ($row['cerrados_cliente'] ?? 0),
+        ];
+    }
+
+    private function getTicketsSemanalesPorEstado(string $inicio, string $fin): array
+    {
+        return Tickets::find()
+            ->select([
+                'Estado',
+                'COUNT(*) as total'
+            ])
+            ->where(['between', 'HoraInicio', $inicio, $fin])
+            ->groupBy('Estado')
+            ->orderBy(['total' => SORT_DESC])
+            ->asArray()
+            ->all();
+    }
+
+    private function getTicketsSemanalesPorConsultor(string $inicio, string $fin): array
+    {
+        return Tickets::find()
+            ->select([
+                'usuarios.Nombre AS consultor',
+                'COUNT(tickets.id) AS total',
+
+                'SUM(CASE
+                WHEN tickets.Estado = "CERRADO"
+                THEN 1 ELSE 0
+            END) AS cerrados',
+
+                'SUM(CASE
+                WHEN tickets.Estado = "CERRADO_CLIENTE"
+                THEN 1 ELSE 0
+            END) AS cerrados_cliente',
+
+                'SUM(CASE
+                WHEN tickets.Estado = "PROGRAMADO"
+                THEN 1 ELSE 0
+            END) AS programados',
+
+                'SUM(CASE
+                WHEN tickets.Estado = "EN PROCESO"
+                THEN 1 ELSE 0
+            END) AS en_proceso',
+
+                'SUM(CASE
+                WHEN tickets.Estado = "ABIERTO"
+                THEN 1 ELSE 0
+            END) AS abiertos',
+            ])
+            ->innerJoin(
+                'usuarios',
+                'usuarios.id = tickets.Asignado_a'
+            )
+            ->andWhere(['between', 'tickets.HoraInicio', $inicio, $fin])
+            ->groupBy([
+                'tickets.Asignado_a',
+                'usuarios.Nombre'
+            ])
+            ->orderBy(['total' => SORT_DESC])
+            ->asArray()
+            ->all();
+    }
+
+    private function getTicketsSemanalesPorServicio(string $inicio, string $fin): array
+    {
+        return Tickets::find()
+            ->select([
+                'servicios.Nombre AS servicio',
+                'COUNT(tickets.id) AS total'
+            ])
+            ->innerJoin(
+                'servicios',
+                'servicios.id = tickets.Servicio_id'
+            )
+            ->where(['between', 'tickets.HoraInicio', $inicio, $fin])
+            ->andWhere(['is not', 'tickets.Servicio_id', null])
+            ->groupBy('tickets.Servicio_id')
+            ->orderBy(['total' => SORT_DESC])
+            ->asArray()
+            ->all();
+    }
     /**
      * Totales del mes en UNA sola query (antes eran 4 queries separadas).
      */
