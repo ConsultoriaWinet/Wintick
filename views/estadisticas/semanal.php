@@ -12,6 +12,7 @@ use yii\helpers\Url;
 /** @var array $ticketsPorEstado */
 /** @var array $ticketsPorConsultor */
 /** @var array $ticketsPorServicio */
+/** @var array $ticketsDetalleConsultor */
 
 $this->title = 'Reporte Semanal';
 
@@ -246,13 +247,57 @@ $fechaTexto =
             <div class="card shadow-sm h-100">
 
                 <div class="card-header fw-bold">
-                    % Servicios por Consultor
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <span>
+                            % Servicios por Consultor
+                        </span>
+
+                        <div class="consultor-filter">
+
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultores">
+                                <i class="fas fa-users"></i>
+                                Consultores
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+
+                            <div id="consultoresMenu" class="consultores-menu">
+
+                                <label class="consultor-option todos-option">
+                                    <input type="checkbox" id="checkTodosConsultores" checked>
+                                    <strong>Todos</strong>
+                                </label>
+
+                                <hr>
+
+                                <?php foreach ($ticketsPorConsultor as $index => $consultor): ?>
+
+                                    <label class="consultor-option">
+
+                                        <input type="checkbox" class="check-consultor"
+                                            value="<?= Html::encode($consultor['consultor']) ?>" checked>
+
+                                        <?= Html::encode($consultor['consultor']) ?>
+
+                                    </label>
+
+                                <?php endforeach; ?>
+
+                            </div>
+
+                        </div>
+
+                    </div>
                 </div>
 
                 <div class="card-body">
 
                     <canvas id="graficaConsultores"></canvas>
 
+                </div>
+
+                <div id="resumenConsultores" class="alert alert-info py-2 mb-3 text-center">
+                    Todos los consultores realizaron el 100% de los servicios de la semana.
                 </div>
 
             </div>
@@ -321,10 +366,25 @@ $fechaTexto =
 
                         <?php foreach ($ticketsPorConsultor as $consultor): ?>
 
-                            <tr>
+                            <?php
+                            // Buscar los tickets correspondientes a este consultor
+                            $ticketsConsultor = array_filter(
+                                $ticketsDetalleConsultor,
+                                function ($ticket) use ($consultor) {
+                                    return $ticket['consultor'] === $consultor['consultor'];
+                                }
+                            );
+
+                            // ID seguro para usar en HTML/JavaScript
+                            $consultorId = 'consultor-' . md5($consultor['consultor']);
+                            ?>
+
+                            <!-- FILA DEL CONSULTOR -->
+                            <tr class="consultor-row" onclick="toggleTickets('<?= $consultorId ?>')" style="cursor:pointer;">
 
                                 <td>
                                     <strong>
+                                        <i class="fas fa-chevron-right toggle-icon"></i>
                                         <?= Html::encode($consultor['consultor']) ?>
                                     </strong>
                                 </td>
@@ -351,6 +411,92 @@ $fechaTexto =
 
                                 <td>
                                     <?= $consultor['cerrados_cliente'] ?>
+                                </td>
+
+                            </tr>
+
+
+                            <!-- TICKETS DEL CONSULTOR -->
+                            <tr id="<?= $consultorId ?>" class="tickets-consultor" style="display:none;">
+
+                                <td colspan="7">
+
+                                    <div class="p-3 bg-light">
+
+                                        <?php if (empty($ticketsConsultor)): ?>
+
+                                            <div class="text-muted text-center">
+                                                No hay tickets para este consultor.
+                                            </div>
+
+                                        <?php else: ?>
+
+                                            <table class="table table-sm table-bordered mb-0">
+
+                                                <thead class="table-secondary">
+
+                                                    <tr>
+                                                        <th>Folio</th>
+                                                        <th>Cliente</th>
+                                                        <th>Servicio</th>
+                                                        <th>Estado</th>
+                                                        <th>Fecha / Hora Inicio</th>
+                                                        <th>Descripción</th>
+                                                    </tr>
+
+                                                </thead>
+
+                                                <tbody>
+
+                                                    <?php foreach ($ticketsConsultor as $ticket): ?>
+
+                                                        <tr>
+
+                                                            <td>
+                                                                <?= Html::a(
+                                                                    Html::encode($ticket['Folio']),
+                                                                    ['tickets/view', 'id' => $ticket['id']],
+                                                                    [
+                                                                        'class' => 'fw-bold text-decoration-none',
+                                                                        'target' => '_blank'
+                                                                    ]
+                                                                ) ?>
+                                                            </td>
+
+                                                            <td>
+                                                                <?= Html::encode($ticket['cliente'] ?? '-') ?>
+                                                            </td>
+
+                                                            <td>
+                                                                <?= Html::encode($ticket['servicio'] ?? '-') ?>
+                                                            </td>
+
+                                                            <td>
+                                                                <?= Html::encode($ticket['Estado'] ?? '-') ?>
+                                                            </td>
+
+                                                            <td>
+                                                                <?= !empty($ticket['HoraInicio'])
+                                                                    ? date('d/m/Y H:i', strtotime($ticket['HoraInicio']))
+                                                                    : '-' ?>
+                                                            </td>
+
+                                                            <td>
+                                                                <?= Html::encode($ticket['Descripcion'] ?? '-') ?>
+                                                            </td>
+
+                                                        </tr>
+
+                                                    <?php endforeach; ?>
+
+                                                </tbody>
+
+                                            </table>
+
+                                        <?php endif; ?>
+
+                                    </div>
+
                                 </td>
 
                             </tr>
@@ -421,37 +567,269 @@ $fechaTexto =
        GRÁFICA CONSULTORES
     ========================== */
 
-    new Chart(document.getElementById('graficaConsultores'), {
+    let graficaConsultores;
 
-        type: 'pie',
 
-        data: {
+    /* =================================
+       OBTENER CONSULTORES SELECCIONADOS
+    ================================= */
 
-            labels: consultores.map(item => item.consultor),
+    function obtenerConsultoresSeleccionados() {
 
-            datasets: [{
+        const checks = document.querySelectorAll('.check-consultor');
 
-                data: consultores.map(item => Number(item.total))
+        return Array.from(checks)
+            .filter(check => check.checked)
+            .map(check => check.value);
 
-            }]
+    }
 
-        },
 
-        options: {
+    /* =================================
+       ACTUALIZAR GRÁFICA
+    ================================= */
 
-            responsive: true,
+    function actualizarGraficaConsultores() {
 
-            plugins: {
+        const seleccionados = obtenerConsultoresSeleccionados();
 
-                legend: {
-                    position: 'bottom'
+        const datosFiltrados = consultores.filter(item =>
+            seleccionados.includes(item.consultor)
+        );
+
+        const labels = datosFiltrados.map(
+            item => item.consultor
+        );
+
+        const datos = datosFiltrados.map(
+            item => Number(item.total)
+        );
+
+        // Total de servicios de toda la semana
+        const totalSemana = Number(
+            <?= json_encode($estadisticas['total']) ?>
+        );
+
+        // Total de servicios de los consultores seleccionados
+        const totalSeleccionados = datos.reduce(
+            (a, b) => a + b,
+            0
+        );
+
+        // Porcentaje respecto al total de la semana
+        const porcentajeSemana = totalSemana > 0
+            ? ((totalSeleccionados / totalSemana) * 100).toFixed(1)
+            : 0;
+
+        // Nombres seleccionados
+        const nombres = datosFiltrados.map(
+            item => item.consultor
+        );
+
+        // Actualizar mensaje
+        const resumen = document.getElementById(
+            'resumenConsultores'
+        );
+
+        if (nombres.length === 0) {
+
+            resumen.innerHTML =
+                '<strong>No hay consultores seleccionados.</strong>';
+
+        } else if (nombres.length === consultores.length) {
+
+            resumen.innerHTML =
+                `<strong>Todos los consultores</strong> ` +
+                `realizaron el <strong>100%</strong> ` +
+                `de los servicios de la semana ` +
+                `(${totalSeleccionados} de ${totalSemana}).`;
+
+        } else {
+
+            let textoNombres;
+
+            if (nombres.length === 1) {
+
+                textoNombres = nombres[0];
+
+            } else if (nombres.length === 2) {
+
+                textoNombres =
+                    nombres[0] + ' y ' + nombres[1];
+
+            } else {
+
+                textoNombres =
+                    nombres.slice(0, -1).join(', ') +
+                    ' y ' +
+                    nombres[nombres.length - 1];
+            }
+
+            const verbo =
+                nombres.length === 1
+                    ? 'realizó'
+                    : 'realizaron';
+
+            resumen.innerHTML =
+                `<strong>${textoNombres}</strong> ` +
+                `${verbo} el <strong>${porcentajeSemana}%</strong> ` +
+                `de los servicios de la semana ` +
+                `(${totalSeleccionados} de ${totalSemana}).`;
+        }
+
+        // Destruir gráfica anterior
+        if (graficaConsultores) {
+            graficaConsultores.destroy();
+        }
+
+        // Crear gráfica
+        graficaConsultores = new Chart(
+            document.getElementById('graficaConsultores'),
+            {
+                type: 'pie',
+
+                data: {
+                    labels: labels,
+
+                    datasets: [{
+                        data: datos
+                    }]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    plugins: {
+
+                        legend: {
+                            position: 'bottom'
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label: function (context) {
+
+                                    const total =
+                                        datos.reduce(
+                                            (a, b) => a + b,
+                                            0
+                                        );
+
+                                    const valor = context.raw;
+
+                                    const porcentaje = total > 0
+                                        ? ((valor / total) * 100).toFixed(1)
+                                        : 0;
+
+                                    return `${context.label}: ${valor} (${porcentaje}%)`;
+                                }
+
+                            }
+
+                        }
+
+                    }
+
                 }
 
             }
+        );
+    }
+
+
+    /* =================================
+       ABRIR / CERRAR MENU
+    ================================= */
+
+    const btnConsultores =
+        document.getElementById('btnConsultores');
+
+    const consultoresMenu =
+        document.getElementById('consultoresMenu');
+
+
+    btnConsultores.addEventListener('click', function (e) {
+
+        e.stopPropagation();
+
+        consultoresMenu.classList.toggle('show');
+
+    });
+
+
+    document.addEventListener('click', function (e) {
+
+        if (
+            !consultoresMenu.contains(e.target) &&
+            !btnConsultores.contains(e.target)
+        ) {
+
+            consultoresMenu.classList.remove('show');
 
         }
 
     });
+
+
+    /* =================================
+       CHECK "TODOS"
+    ================================= */
+
+    const checkTodos =
+        document.getElementById('checkTodosConsultores');
+
+
+    checkTodos.addEventListener('change', function () {
+
+        document
+            .querySelectorAll('.check-consultor')
+            .forEach(check => {
+
+                check.checked = this.checked;
+
+            });
+
+        actualizarGraficaConsultores();
+
+    });
+
+
+    /* =================================
+       CHECK INDIVIDUAL
+    ================================= */
+
+    document
+        .querySelectorAll('.check-consultor')
+        .forEach(check => {
+
+            check.addEventListener('change', function () {
+
+                const todos =
+                    document.querySelectorAll('.check-consultor');
+
+                const seleccionados =
+                    document.querySelectorAll(
+                        '.check-consultor:checked'
+                    );
+
+                checkTodos.checked =
+                    todos.length === seleccionados.length;
+
+                actualizarGraficaConsultores();
+
+            });
+
+        });
+
+
+    /* =================================
+       INICIALIZAR
+    ================================= */
+
+    actualizarGraficaConsultores();
 
 
     /* ==========================
@@ -500,6 +878,37 @@ $fechaTexto =
 
     });
 
+    function toggleTickets(id) {
+
+        const fila = document.getElementById(id);
+
+        if (!fila) {
+            return;
+        }
+
+        const consultorRow = fila.previousElementSibling;
+        const icon = consultorRow.querySelector('.toggle-icon');
+
+        if (fila.style.display === 'none' || fila.style.display === '') {
+
+            fila.style.display = 'table-row';
+
+            if (icon) {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            }
+
+        } else {
+
+            fila.style.display = 'none';
+
+            if (icon) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+    }
+
 </script>
 
 
@@ -526,5 +935,83 @@ $fechaTexto =
 
     canvas {
         max-height: 380px;
+    }
+
+    .consultor-row {
+        transition: background-color .15s ease;
+    }
+
+    .consultor-row:hover {
+        background-color: #f3f3f3;
+    }
+
+    .toggle-icon {
+        width: 16px;
+        margin-right: 6px;
+        font-size: 12px;
+    }
+
+    .tickets-consultor td {
+        background-color: #fafafa;
+    }
+
+    .tickets-consultor table {
+        font-size: 13px;
+    }
+
+    .consultor-filter {
+        position: relative;
+    }
+
+    .consultores-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 38px;
+        z-index: 1000;
+
+        width: 220px;
+        max-height: 300px;
+        overflow-y: auto;
+
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+
+        padding: 10px;
+
+        box-shadow: 0 4px 15px rgba(0, 0, 0, .15);
+    }
+
+    .consultores-menu.show {
+        display: block;
+    }
+
+    .consultor-option {
+        display: flex;
+        align-items: center;
+
+        gap: 8px;
+
+        padding: 7px 5px;
+
+        margin: 0;
+
+        cursor: pointer;
+
+        font-size: 13px;
+    }
+
+    .consultor-option:hover {
+        background: #f5f5f5;
+        border-radius: 5px;
+    }
+
+    .consultor-option input {
+        cursor: pointer;
+    }
+
+    .todos-option {
+        padding-bottom: 8px;
     }
 </style>

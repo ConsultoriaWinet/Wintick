@@ -146,11 +146,9 @@ class EstadisticasController extends Controller
 
         // Estadísticas semanales basadas en HoraInicio
         $estadisticas = $this->getEstadisticasSemanales($inicio, $fin);
-
         $ticketsPorEstado = $this->getTicketsSemanalesPorEstado($inicio, $fin);
-
         $ticketsPorConsultor = $this->getTicketsSemanalesPorConsultor($inicio, $fin);
-
+        $ticketsDetalleConsultor = $this->getTicketsDetalleSemanalesPorConsultor($inicio, $fin);
         $ticketsPorServicio = $this->getTicketsSemanalesPorServicio($inicio, $fin);
 
         return $this->render('semanal', [
@@ -162,6 +160,7 @@ class EstadisticasController extends Controller
             'ticketsPorEstado' => $ticketsPorEstado,
             'ticketsPorConsultor' => $ticketsPorConsultor,
             'ticketsPorServicio' => $ticketsPorServicio,
+            'ticketsDetalleConsultor' => $ticketsDetalleConsultor
         ]);
     }
 
@@ -250,6 +249,45 @@ class EstadisticasController extends Controller
             ->all();
     }
 
+    private function getTicketsDetalleSemanalesPorConsultor(string $inicio, string $fin): array
+    {
+        return Tickets::find()
+            ->select([
+                'tickets.id',
+                'tickets.Folio',
+                'tickets.Estado',
+                'tickets.HoraInicio',
+                'tickets.Descripcion',
+                'tickets.Asignado_a',
+                'usuarios.Nombre AS consultor',
+                'clientes.Nombre AS cliente',
+                'servicios.Nombre AS servicio',
+            ])
+            ->innerJoin(
+                'usuarios',
+                'usuarios.id = tickets.Asignado_a'
+            )
+            ->leftJoin(
+                'clientes',
+                'clientes.id = tickets.Cliente_id'
+            )
+            ->leftJoin(
+                'servicios',
+                'servicios.id = tickets.Servicio_id'
+            )
+            ->where([
+                'between',
+                'tickets.HoraInicio',
+                $inicio,
+                $fin
+            ])
+            ->orderBy([
+                'usuarios.Nombre' => SORT_ASC,
+                'tickets.HoraInicio' => SORT_ASC,
+            ])
+            ->asArray()
+            ->all();
+    }
     private function getTicketsSemanalesPorServicio(string $inicio, string $fin): array
     {
         return Tickets::find()
