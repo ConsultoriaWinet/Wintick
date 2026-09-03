@@ -103,7 +103,8 @@ $this->registerCssFile('@web/css/site-dashboard.css');
                 <div class="stats-date-filter">
                     <div class="stats-date-wrap">
                         <i class="fas fa-calendar-alt stats-date-icon"></i>
-                        <input type="text" id="stats-range-picker" class="stats-date-input" placeholder="Seleccionar rango de fechas…" readonly>
+                        <input type="text" id="stats-range-picker" class="stats-date-input"
+                            placeholder="Seleccionar rango de fechas…" readonly>
                         <button class="stats-date-clear" id="stats-range-clear" title="Limpiar — volver al mes actual">
                             <i class="fas fa-times"></i>
                         </button>
@@ -460,12 +461,56 @@ $this->registerCssFile('@web/css/site-dashboard.css');
             selectMirror: !ES_MONITOR,
 
             events: function (info, successCallback, failureCallback) {
+
                 let url = '<?= Url::to(['site/get-tickets']) ?>';
-                if (consultorActual) url += '?consultorId=' + consultorActual;
+
+                const params = new URLSearchParams();
+
+                // Enviar al servidor exactamente el rango que FullCalendar está mostrando.
+                if (info.start) {
+                    params.append(
+                        'desde',
+                        info.start.toISOString().slice(0, 10)
+                    );
+                }
+
+                if (info.end) {
+                    // FullCalendar maneja "end" como límite exclusivo.
+                    // Restamos un día para obtener la última fecha visible.
+                    const fechaHasta = new Date(info.end);
+                    fechaHasta.setDate(fechaHasta.getDate() - 1);
+
+                    params.append(
+                        'hasta',
+                        fechaHasta.toISOString().slice(0, 10)
+                    );
+                }
+
+                // Si hay un consultor seleccionado, agregarlo al filtro.
+                if (consultorActual) {
+                    params.append(
+                        'consultorId',
+                        consultorActual
+                    );
+                }
+
+                url += '?' + params.toString();
+
                 fetch(url)
-                    .then(r => r.json())
-                    .then(data => successCallback(data))
-                    .catch(err => failureCallback(err));
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error('Error HTTP ' + r.status);
+                        }
+
+                        return r.json();
+                    })
+                    .then(data => {
+                        successCallback(data);
+                    })
+                    .catch(err => {
+                        console.error('Error cargando tickets:', err);
+                        failureCallback(err);
+                    });
             },
 
             /* click en evento → muestra solo ese ticket en el panel */
@@ -692,7 +737,7 @@ $this->registerCssFile('@web/css/site-dashboard.css');
                         if (statsCustom) actualizarDashboard(statsDesde, statsHasta);
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }, 5000);
     }
     function stopNowClock() {
@@ -803,10 +848,10 @@ $this->registerCssFile('@web/css/site-dashboard.css');
             });
         });
 
-        document.getElementById('totalTickets').textContent     = total;
-        document.getElementById('abiertosTickets').textContent  = abiertos;
+        document.getElementById('totalTickets').textContent = total;
+        document.getElementById('abiertosTickets').textContent = abiertos;
         document.getElementById('enProcesoTickets').textContent = enProceso;
-        document.getElementById('cerradosTickets').textContent  = cerrados;
+        document.getElementById('cerradosTickets').textContent = cerrados;
 
         const pct = n => total > 0 ? Math.round((n / total) * 1000) / 10 : 0;
         const elPctAb = document.getElementById('pct-abiertos');
@@ -1004,16 +1049,16 @@ $this->registerCssFile('@web/css/site-dashboard.css');
         fetch(url)
             .then(r => r.json())
             .then(data => {
-                document.getElementById('totalTickets').textContent    = data.total;
+                document.getElementById('totalTickets').textContent = data.total;
                 document.getElementById('abiertosTickets').textContent = data.abiertos;
                 document.getElementById('enProcesoTickets').textContent = data.enProceso;
                 document.getElementById('cerradosTickets').textContent = data.cerrados;
 
                 // Porcentajes de las cards secundarias
                 const total = data.total || 0;
-                const pctAb = total > 0 ? Math.round((data.abiertos  / total) * 100 * 10) / 10 : 0;
+                const pctAb = total > 0 ? Math.round((data.abiertos / total) * 100 * 10) / 10 : 0;
                 const pctEn = total > 0 ? Math.round((data.enProceso / total) * 100 * 10) / 10 : 0;
-                const pctCe = total > 0 ? Math.round((data.cerrados  / total) * 100 * 10) / 10 : 0;
+                const pctCe = total > 0 ? Math.round((data.cerrados / total) * 100 * 10) / 10 : 0;
                 const elPctAb = document.getElementById('pct-abiertos');
                 const elPctEn = document.getElementById('pct-enproceso');
                 const elPctCe = document.getElementById('pct-cerrados');
@@ -1021,7 +1066,7 @@ $this->registerCssFile('@web/css/site-dashboard.css');
                 if (elPctEn) elPctEn.textContent = pctEn + '% del total';
                 if (elPctCe) elPctCe.textContent = 'Tasa: ' + pctCe + '%';
             })
-            .catch(() => {});
+            .catch(() => { });
     }
 </script>
 

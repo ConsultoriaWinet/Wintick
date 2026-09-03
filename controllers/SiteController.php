@@ -214,10 +214,10 @@ class SiteController extends Controller
         $reFecha = '/^\d{4}-\d{2}-\d{2}$/';
         if (preg_match($reFecha, $desde) && preg_match($reFecha, $hasta)) {
             $inicio = $desde . ' 00:00:00';
-            $fin    = $hasta . ' 23:59:59';
+            $fin = $hasta . ' 23:59:59';
         } else {
             $inicio = date('Y-m-d 00:00:00');
-            $fin    = date('Y-m-d 23:59:59');
+            $fin = date('Y-m-d 23:59:59');
         }
 
         $total = Tickets::find()
@@ -240,12 +240,12 @@ class SiteController extends Controller
             ->count();
 
         return [
-            'total'    => $total,
+            'total' => $total,
             'abiertos' => $abiertos,
             'enProceso' => $enProceso,
             'cerrados' => $cerrados,
-            'desde'    => $inicio,
-            'hasta'    => $fin,
+            'desde' => $inicio,
+            'hasta' => $fin,
         ];
     }
 
@@ -391,7 +391,7 @@ class SiteController extends Controller
     }
 
     /**
-     * Get tickets for calendar (filtrados por consultor)
+     * Get tickets for calendar (filtrados por consultor y rango visible)
      */
     public function actionGetTickets($consultorId = null)
     {
@@ -399,33 +399,88 @@ class SiteController extends Controller
 
         $userId = Yii::$app->user->id;
 
-        // Roles con visibilidad total ven todos los tickets del calendario
+        // Roles con visibilidad total
         $rol = Yii::$app->user->identity->rol ?? '';
-        $rolesVerTodo = ['Administradores', 'Supervisores', 'Desarrolladores', 'Administracion'];
+        $rolesVerTodo = [
+            'Administradores',
+            'Supervisores',
+            'Desarrolladores',
+            'Administracion'
+        ];
 
+        // Si el usuario no tiene permiso para ver todo,
+        // solamente puede consultar sus propios tickets.
         if (!in_array($rol, $rolesVerTodo, true)) {
-            // Consultores y otros roles: solo ven sus propios tickets
             $consultorId = $userId;
         }
 
-        // Solo cargar tickets de los últimos 3 meses y los próximos 2 meses
-        $desde = date('Y-m-d 00:00:00', strtotime('-3 months'));
-        $hasta = date('Y-m-d 23:59:59', strtotime('+2 months'));
+        // ============================================================
+        // RANGO ENVIADO POR FULLCALENDAR
+        // ============================================================
 
-        $query = \app\models\Tickets::find()
-            ->with(['cliente', 'sistema', 'servicio', 'usuarioAsignado'])
-            ->where(['between', 'Fecha_creacion', $desde, $hasta])
-            ->limit(500);
+        $desde = Yii::$app->request->get('desde', '');
+        $hasta = Yii::$app->request->get('hasta', '');
 
+        $reFecha = '/^\d{4}-\d{2}-\d{2}$/';
+
+        if (
+            !preg_match($reFecha, $desde) ||
+            !preg_match($reFecha, $hasta)
+        ) {
+            // Fallback por seguridad si FullCalendar no manda fechas
+            $desde = date('Y-m-d', strtotime('-3 months'));
+            $hasta = date('Y-m-d', strtotime('+2 months'));
+        }
+
+        $inicio = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+
+        // ============================================================
+        // CONSULTA
+        // ============================================================
+
+        $query = Tickets::find()
+            ->with([
+                'cliente',
+                'sistema',
+                'servicio',
+                'usuarioAsignado'
+            ])
+            ->where(
+                '(HoraInicio BETWEEN :inicio AND :fin)
+             OR
+             (HoraInicio IS NULL AND Fecha_creacion BETWEEN :inicio2 AND :fin2)',
+                [
+                    ':inicio' => $inicio,
+                    ':fin' => $fin,
+                    ':inicio2' => $inicio,
+                    ':fin2' => $fin,
+                ]
+            )
+            ->orderBy([
+                'HoraInicio' => SORT_ASC,
+                'Fecha_creacion' => SORT_ASC
+            ]);
+
+        // Filtro por consultor
         if (!empty($consultorId)) {
-            $query->andWhere(['Asignado_a' => (int) $consultorId]);
+            $query->andWhere([
+                'Asignado_a' => (int) $consultorId
+            ]);
         }
 
         $tickets = $query->all();
 
+        // ============================================================
+        // CONSTRUIR EVENTOS PARA FULLCALENDAR
+        // ============================================================
+
         $events = [];
+
         foreach ($tickets as $t) {
-            //  Usa HoraInicio si existe, si no usa Fecha_creacion
+
+            // Usar HoraInicio si existe.
+            // Si no, usar Fecha_creacion.
             $start = $t->HoraInicio ?: $t->Fecha_creacion;
 
             if (!$start) {
@@ -434,21 +489,49 @@ class SiteController extends Controller
 
             $events[] = [
                 'id' => $t->id,
-                'title' => $t->Folio,
-                'start' => date('c', strtotime($start)), // Formato ISO 8601
 
-                // Opcional: colores por consultor
-                'backgroundColor' => $t->usuarioAsignado->color ?? '#8BA590',
-                'borderColor' => $t->usuarioAsignado->color ?? '#8BA590',
+                'title' => $t->Folio,
+
+                'start' => date(
+                    'c',
+                    strtotime($start)
+                ),
+
+                'backgroundColor' =>
+                    $t->usuarioAsignado->color ?? '#8BA590',
+
+                'borderColor' =>
+                    $t->usuarioAsignado->color ?? '#8BA590',
 
                 'extendedProps' => [
-                    'consultorNombre' => $t->usuarioAsignado->Nombre ?? $t->usuarioAsignado->email ?? 'N/A',
-                    'cliente' => $t->cliente->Nombre ?? 'N/A',
-                    'sistema' => $t->sistema->Nombre ?? 'N/A',
-                    'servicio' => $t->servicio->Nombre ?? 'N/A',
-                    'prioridad' => $t->Prioridad ?? 'N/A',
-                    'estado' => $t->Estado ?? 'N/A',
-                    'description' => $t->Descripcion ?? '',
+                    'consultorNombre' =>
+                        $t->usuarioAsignado->Nombre
+                        ?? $t->usuarioAsignado->email
+                        ?? 'N/A',
+
+                    'cliente' =>
+                        $t->cliente->Nombre
+                        ?? 'N/A',
+
+                    'sistema' =>
+                        $t->sistema->Nombre
+                        ?? 'N/A',
+
+                    'servicio' =>
+                        $t->servicio->Nombre
+                        ?? 'N/A',
+
+                    'prioridad' =>
+                        $t->Prioridad
+                        ?? 'N/A',
+
+                    'estado' =>
+                        $t->Estado
+                        ?? 'N/A',
+
+                    'description' =>
+                        $t->Descripcion
+                        ?? '',
                 ],
             ];
         }
